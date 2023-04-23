@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--/*@thymesVar id="entities" type="com.pocketcombats.admin.data.list.AdminModelEntitiesList"*/-->
+<!--/*@thymesVar id="modelRequest" type="com.pocketcombats.admin.data.list.ModelRequest"*/-->
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${entities.label}"></title>
+</head>
+<body>
+<h1 th:text="${entities.label}"></h1>
+<!-- TODO: filter block -->
+<form id="search-form" th:if="${entities.searchable}" th:object="${modelRequest}">
+    <input maxlength="250" th:field="*{search}"/>
+    <input type="submit" th:value="#{spring-jpa-admin.search.submit}"/>
+</form>
+<!-- TODO: create button -->
+<!-- TODO: paging -->
+<table>
+    <thead>
+    <tr>
+        <th th:each="column: ${entities.columns}" th:text="${column.label}"></th>
+    </tr>
+    </thead>
+    <tbody th:unless="${entities.entities.empty}">
+    <tr th:each="entity: ${entities.entities}">
+        <td th:each="column, columnStat: ${entities.columns}">
+            <a th:if="${columnStat.first}"
+               th:href="@{/admin/{adminModel}/{id}/(adminModel=${entities.modelName}, id=${entity.id})}"
+               th:text="${entity.getAttributeByIndex(columnStat.index)}">
+            </a>
+            <th:block th:unless="${columnStat.first}">
+                <th:block th:if="${column.bool}">
+                    <i class="" th:text="${entity.getAttributeByIndex(columnStat.index) ? '+' : '-'}"></i>
+                </th:block>
+                <span th:unless="${column.bool}" th:text="${entity.getAttributeByIndex(columnStat.index)}"></span>
+            </th:block>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<!-- TODO: paging -->
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--/*@thymesVar id="entity" type="com.pocketcombats.admin.data.form.EntityDetails"*/-->
+<head>
+    <meta charset="UTF-8"/>
+</head>
+<body>
+<form method="post" th:action="@{/admin/{adminModel}/{id}/(adminModel=${entity.modelName}, id=${entity.id})}">
+    <div th:each="fieldGroup: ${entity.fieldGroups}">
+        <h2 th:unless="${#strings.isEmpty(fieldGroup.label())}" th:text="${fieldGroup.label()}"></h2>
+        <div th:each="field: ${fieldGroup.fields()}">
+            <label th:for="${'model-field-' + field.name}" th:text="${field.label}"></label>
+
+            <span th:insert="~{${field.template}}"></span>
+        </div>
+    </div>
+    <div class="actions">
+        <input type="submit" name="save-continue" value="Save and continue editing">
+        <input type="submit" name="save" value="Save">
+    </div>
+</form>
+</body>
+</html>

@@ -1,0 +1,2 @@
+<!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+<input type="checkbox" th:id="${'model-field-' + field.name}" th:name="${'model-field-' + field.name}" th:checked="${field.value}" th:disabled="${field.readonly}" value="true"/>

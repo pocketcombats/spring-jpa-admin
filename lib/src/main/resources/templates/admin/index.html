@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--/*@thymesVar id="models" type="java.util.List<com.pocketcombats.admin.data.AdminModelInfo>"*/-->
+<head>
+    <title>Spring JPA Admin</title>
+</head>
+<body>
+<h1>Spring JPA Admin</h1>
+<ul>
+    <li th:each="model: ${models}">
+        <a th:href="@{/admin/{adminModel}/(adminModel=${model.modelName})}" th:text="${model.label}"></a>
+    </li>
+</ul>
+</body>
+</html>

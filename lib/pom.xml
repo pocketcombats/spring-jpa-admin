@@ -14,6 +14,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.pocketcombats.admin</groupId>
+            <artifactId>annotation</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -21,6 +27,10 @@
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.transaction</groupId>
+            <artifactId>jakarta.transaction-api</artifactId>
         </dependency>
 
         <dependency>
@@ -45,6 +55,17 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -55,6 +76,7 @@
                 <version>4.7.3.2</version>
                 <configuration>
                     <effort>Max</effort>
+                    <excludeFilterFile>spotbugs_exclude_filter.xml</excludeFilterFile>
                 </configuration>
                 <executions>
                     <execution>
