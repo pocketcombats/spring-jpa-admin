@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core.field;
 
+import com.pocketcombats.admin.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
 import com.pocketcombats.admin.widget.Option;
@@ -20,6 +21,7 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor {
 
     private final EntityManager em;
     private final ConversionService conversionService;
+    private final ValueFormatter valueFormatter;
 
     private final Attribute<?, ?> attribute;
     private final Class<?> attributeIdType;
@@ -29,13 +31,15 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor {
             ConversionService conversionService,
             Attribute<?, ?> attribute,
             AdminModelPropertyReader reader,
-            @Nullable AdminModelPropertyWriter writer
+            @Nullable AdminModelPropertyWriter writer,
+            ValueFormatter valueFormatter
     ) {
         super(attribute.getName(), reader, writer);
 
         this.em = em;
         this.conversionService = conversionService;
         this.attribute = attribute;
+        this.valueFormatter = valueFormatter;
 
         this.attributeIdType = em.getEntityManagerFactory().getMetamodel()
                 .entity(attribute.getJavaType()).getIdType().getJavaType();
@@ -63,7 +67,7 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor {
         return Map.of(
                 "_options",
                 resultList.stream()
-                        .map(entity -> new Option(getEntityStringId(entity), String.valueOf(entity)))
+                        .map(entity -> new Option(getEntityStringId(entity), getEntityStringValue(entity)))
                         .toList()
         );
     }
@@ -71,6 +75,10 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor {
     protected String getEntityStringId(Object entity) {
         Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
         return conversionService.convert(id, String.class);
+    }
+
+    protected String getEntityStringValue(Object entity) {
+        return valueFormatter.format(entity);
     }
 
     private Predicate[] restrictions(EntityManager em, CriteriaBuilder cb, Root<?> root) {

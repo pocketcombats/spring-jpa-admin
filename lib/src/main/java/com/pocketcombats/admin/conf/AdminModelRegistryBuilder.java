@@ -97,7 +97,6 @@ import java.util.Set;
     ) {
         EntityType<?> entity = em.getEntityManagerFactory().getMetamodel().entity(targetClass);
         Class<?> adminModelClass = annotatedClass != targetClass ? annotatedClass : null;
-        Object modelBean = adminModelClass != null ? beanFactory.createBean(adminModelClass) : null;
 
         SearchPredicateFactory searchPredicateFactory = createModelSearchPredicateFactory(
                 modelName,
@@ -106,8 +105,8 @@ import java.util.Set;
         );
 
         FieldFactory fieldFactory = new FieldFactory(
-                em, conversionService,
-                modelName, modelAnnotation, entity, adminModelClass, modelBean, targetClass
+                em, conversionService, beanFactory,
+                modelName, modelAnnotation, entity, adminModelClass, targetClass
         );
         List<AdminModelListField> listFields = createListFields(
                 modelName, modelAnnotation, targetClass, entity, adminModelClass, fieldFactory

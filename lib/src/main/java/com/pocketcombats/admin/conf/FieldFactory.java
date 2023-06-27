@@ -3,6 +3,8 @@ package com.pocketcombats.admin.conf;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminFieldOverride;
 import com.pocketcombats.admin.AdminModel;
+import com.pocketcombats.admin.ToStringValueFormatter;
+import com.pocketcombats.admin.ValueFormatter;
 import com.pocketcombats.admin.core.AdminModelField;
 import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
@@ -27,6 +29,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.util.StringUtils;
@@ -47,6 +50,7 @@ public class FieldFactory {
 
     private final EntityManager em;
     private final ConversionService conversionService;
+    private final AutowireCapableBeanFactory beanFactory;
 
     private final String modelName;
     private final AdminModel modelAnnotation;
@@ -59,25 +63,27 @@ public class FieldFactory {
 
     private final Map<String, AdminField> fieldOverrides;
     private final Map<String, AdminField> resolvedFieldsConfigurations = new HashMap<>();
+    private final Map<String, ValueFormatter> fieldValueFormatters = new HashMap<>();
 
     public FieldFactory(
             EntityManager em,
             ConversionService conversionService,
+            AutowireCapableBeanFactory beanFactory,
             String modelName,
             AdminModel modelAnnotation,
             EntityType<?> entity,
             @Nullable Class<?> modelAdminClass,
-            @Nullable Object adminModelBean,
             Class<?> targetClass
     ) {
         this.em = em;
         this.conversionService = conversionService;
+        this.beanFactory = beanFactory;
 
         this.modelName = modelName;
         this.modelAnnotation = modelAnnotation;
         this.entity = entity;
         this.modelAdminClass = modelAdminClass;
-        this.adminModelBean = adminModelBean;
+        this.adminModelBean = modelAdminClass != null ? beanFactory.createBean(modelAdminClass) : null;
         this.targetClass = targetClass;
 
         this.fieldOverrides = Arrays.stream(modelAnnotation.fieldOverrides())
@@ -99,8 +105,17 @@ public class FieldFactory {
             label = AdminStringUtils.toHumanReadableName(name);
         }
 
+        AdminModelPropertyReader reader = resolveListFieldReader(name);
+        ValueFormatter formatter;
+        if (TypeUtils.isBasicType(reader.getJavaType())) {
+            formatter = null;
+        } else {
+            formatter = createValueFormatter(name);
+        }
         return new AdminModelListField(
-                name, label, ArrayUtils.contains(modelAnnotation.sortFields(), name), resolveListFieldReader(name)
+                name, label,
+                ArrayUtils.contains(modelAnnotation.sortFields(), name),
+                reader, formatter
         );
     }
 
@@ -411,7 +426,10 @@ public class FieldFactory {
             return switch (persistentAttributeType) {
                 case MANY_TO_ONE, ONE_TO_ONE ->
                     // TODO: raw id field configuration
-                        new ToOneFormFieldAccessor(em, conversionService, attribute, reader, writer);
+                        new ToOneFormFieldAccessor(
+                                em, conversionService,
+                                attribute, reader, writer, createValueFormatter(name)
+                        );
                 case BASIC -> selectBasicFormFieldAccessor(name, reader, writer);
                 default -> throw new IllegalStateException(
                         "Unsupported attribute type: " + persistentAttributeType +
@@ -420,6 +438,21 @@ public class FieldFactory {
             };
         }
         return selectBasicFormFieldAccessor(name, reader, writer);
+    }
+
+    private ValueFormatter createValueFormatter(String fieldName) {
+        if (!fieldValueFormatters.containsKey(fieldName)) {
+            AdminField fieldConfiguration = resolveFieldConfig(fieldName);
+            if (fieldConfiguration == null) {
+                fieldValueFormatters.put(fieldName, new ToStringValueFormatter());
+            } else {
+                fieldValueFormatters.put(
+                        fieldName,
+                        beanFactory.createBean(fieldConfiguration.valueFormatter())
+                );
+            }
+        }
+        return fieldValueFormatters.get(fieldName);
     }
 
     private AdminFormFieldValueAccessor selectBasicFormFieldAccessor(

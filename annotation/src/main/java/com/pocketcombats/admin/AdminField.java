@@ -30,7 +30,13 @@ public @interface AdminField {
     boolean updatable() default true;
 
     /**
-     * Custom for this field.
+     * Custom template for this field.
      */
     String template() default "";
+
+    /**
+     * Value formatter to for this field.
+     * Typically used by list view and relational form fields.
+     */
+    Class<? extends ValueFormatter> valueFormatter() default ToStringValueFormatter.class;
 }

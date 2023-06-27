@@ -112,15 +112,11 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
         List<Object> attributes = fields.stream()
                 .map(field -> {
                     Object value = field.valueAccessor().getValue(entity);
-                    // convert to string everything except primitive and boxed types
-                    if (!ClassUtils.isPrimitiveOrWrapper(value.getClass())) {
-                        if (conversionService.canConvert(field.valueAccessor().getJavaType(), String.class)) {
-                            value = conversionService.convert(value, String.class);
-                        } else {
-                            value = String.valueOf(value);
-                        }
+                    if (field.valueFormatter() == null) {
+                        return value;
+                    } else {
+                        return field.valueFormatter().format(value);
                     }
-                    return value;
                 })
                 .toList();
 
