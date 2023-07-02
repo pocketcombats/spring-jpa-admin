@@ -12,4 +12,7 @@ public record AdminModelListField(
         @Nullable ValueFormatter valueFormatter
 ) {
 
+    public boolean bool() {
+        return valueAccessor.getJavaType().equals(Boolean.class) || valueAccessor.getJavaType().equals(Boolean.TYPE);
+    }
 }

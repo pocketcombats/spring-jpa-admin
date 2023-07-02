@@ -48,7 +48,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     private EntityDetails getEntityDetails(AdminRegisteredModel model, Object entity) {
         List<AdminFormFieldGroup> formFieldGroups = mapFieldGroups(model.fieldsets(), FormAction.UPDATE, entity);
-        return new EntityDetails(model.modelName(), resolveId(entity), formFieldGroups);
+        return new EntityDetails(model.modelName(), resolveId(entity), model.label(), formFieldGroups);
     }
 
     private Object findEntity(AdminRegisteredModel model, String stringId) {

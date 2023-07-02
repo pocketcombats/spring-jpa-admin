@@ -3,41 +3,167 @@
 <!--/*@thymesVar id="entities" type="com.pocketcombats.admin.data.list.AdminModelEntitiesList"*/-->
 <!--/*@thymesVar id="modelRequest" type="com.pocketcombats.admin.data.list.ModelRequest"*/-->
 <head>
-    <meta charset="UTF-8">
-    <title th:text="${entities.label}"></title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <title th:text="${entities.label}">Model One</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <!-- Google Fonts Roboto -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
+    <!-- MDB -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
+          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
+    <script type="text/javascript"
+            th:src="@{/webjars/mdb-ui-kit/js/mdb.min.js}"
+            src="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/js/mdb.min.js"></script>
+    <!-- Custom styles -->
+    <style>
+        main th {
+            text-transform: uppercase;
+        }
+    </style>
 </head>
 <body>
-<h1 th:text="${entities.label}"></h1>
-<!-- TODO: filter block -->
-<form id="search-form" th:if="${entities.searchable}" th:object="${modelRequest}">
-    <input maxlength="250" th:field="*{search}"/>
-    <input type="submit" th:value="#{spring-jpa-admin.search.submit}"/>
-</form>
-<!-- TODO: create button -->
-<!-- TODO: paging -->
-<table>
-    <thead>
-    <tr>
-        <th th:each="column: ${entities.columns}" th:text="${column.label}"></th>
-    </tr>
-    </thead>
-    <tbody th:unless="${entities.entities.empty}">
-    <tr th:each="entity: ${entities.entities}">
-        <td th:each="column, columnStat: ${entities.columns}">
-            <a th:if="${columnStat.first}"
-               th:href="@{/admin/{adminModel}/{id}/(adminModel=${entities.modelName}, id=${entity.id})}"
-               th:text="${entity.getAttributeByIndex(columnStat.index)}">
-            </a>
-            <th:block th:unless="${columnStat.first}">
-                <th:block th:if="${column.bool}">
-                    <i class="" th:text="${entity.getAttributeByIndex(columnStat.index) ? '+' : '-'}"></i>
-                </th:block>
-                <span th:unless="${column.bool}" th:text="${entity.getAttributeByIndex(columnStat.index)}"></span>
-            </th:block>
-        </td>
-    </tr>
-    </tbody>
-</table>
-<!-- TODO: paging -->
+<header class="bg-light shadow-4 pt-4 pb-3 mb-4">
+    <div class="container">
+        <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
+        <div class="row row-cols-auto align-items-center mt-4">
+            <div class="col col-lg-9 col-xl-10">
+                <h4><a href="entities.html"
+                       th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName})}"
+                       th:text="${entities.label}"
+                       class="text-body">Model One</a></h4>
+            </div>
+            <!-- TODO: check permissions -->
+            <div class="col col-lg-3 col-xl-2">
+                <form action="form.html">
+                    <button type="submit" class="btn btn-outline-secondary">
+                        <i class="fa fa-plus me-2"></i>
+                        <span th:text="#{spring-jpa-admin.action.add(${entities.label})}">Add Model One</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</header>
+<div class="container">
+    <div class="row">
+        <nav class="col-12 order-1 order-lg-2 col-sm-5 col-md-4 col-lg-3 col-xl-2">
+            <h5 class="px-2 px-lg-0" th:text="#{spring-jpa-admin.section.filter}">Filters</h5>
+            <div class="list-group list-group-small mb-4" role="tablist">
+                <h6 class="bg-light list-group-item px-3 mb-0 border-top border-bottom">Enabled</h6>
+                <a class="list-group-item list-group-item-action px-3"
+                   href="#">
+                    All
+                </a>
+                <a class="list-group-item list-group-item-action active px-3"
+                   href="#">
+                    Yes
+                </a>
+                <a class="list-group-item list-group-item-action px-3"
+                   href="#">
+                    No
+                </a>
+            </div>
+        </nav>
+
+        <div class="col-12 order-2 order-lg-1 col-lg-9 col-xl-10">
+            <div th:if="${entities.searchable}"
+                 th:object="${modelRequest}">
+                <form id="search-form"
+                      class="row row-cols-sm-auto g-2 align-items-center pb-2">
+                    <div class="col-12">
+                        <label for="search-input" class="visually-hidden"
+                               th:text="#{spring-jpa-admin.search.prompt}">Search</label>
+                        <input id="search-input"
+                               type="text"
+                               class="form-control"
+                               maxlength="250"
+                               placeholder="Search"
+                               th:placeholder="#{spring-jpa-admin.search.prompt}"
+                               th:field="*{search}"/>
+                    </div>
+                    <div class="col-12">
+                        <input type="submit" class="btn btn-primary" th:value="#{spring-jpa-admin.search.submit}"/>
+                    </div>
+                </form>
+            </div>
+
+            <main class="mt-2">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th th:each="column: ${entities.columns}" th:text="${column.label}">Title</th>
+                            <th th:remove="all">Description</th>
+                            <th th:remove="all">Enabled</th>
+                        </tr>
+                        </thead>
+                        <tbody th:unless="${entities.entities.empty}" class="table-group-divider table-divider-color">
+                        <tr th:each="entity: ${entities.entities}">
+                            <td th:each="column, columnStat: ${entities.columns}">
+                                <a th:if="${columnStat.first}"
+                                   th:href="@{/admin/{adminModel}/{id}/(adminModel=${entities.modelName}, id=${entity.id})}"
+                                   th:text="${entity.getAttributeByIndex(columnStat.index)}"
+                                   href="form.html">
+                                    Demo Entity
+                                </a>
+                                <th:block th:unless="${columnStat.first}" style="display:none">
+                                    <th:block th:if="${column.bool}">
+                                        <th:block th:if="${entity.getAttributeByIndex(columnStat.index)}">
+                                            <i class="fa-solid fa-circle-check text-success"></i>
+                                            <span class="d-none">+</span>
+                                        </th:block>
+                                        <th:block th:unless="${entity.getAttributeByIndex(columnStat.index)}">
+                                            <i class="fa-solid fa-circle-xmark text-danger"></i>
+                                            <span class="d-none">-</span>
+                                        </th:block>
+                                    </th:block>
+                                    <span th:unless="${column.bool}"
+                                          th:text="${entity.getAttributeByIndex(columnStat.index)}"></span>
+                                </th:block>
+                            </td>
+                            <td th:remove="all">Long description of the first entity.<br/>Multiline as well.</td>
+                            <td th:remove="all">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <span class="d-none">+</span>
+                            </td>
+                        </tr>
+                        <tr th:remove="all">
+                            <td><a href="form.html">Another Entity</a></td>
+                            <td>Description</td>
+                            <td><i class="fa-solid fa-circle-xmark text-danger"></i><span class="d-none">-</span></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+
+            <nav th:remove="all">
+                <ul class="pagination">
+                    <li class="page-item disabled">
+                        <span class="page-link" th:text="#{spring-jpa-admin.pagination.prev}">Previous</span>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">
+                            2
+                            <span class="visually-hidden"
+                                  th:text="#{spring-jpa-admin.pagination.current}">(current)</span>
+                        </span>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" th:text="#{spring-jpa-admin.pagination.next}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
 </body>
 </html>

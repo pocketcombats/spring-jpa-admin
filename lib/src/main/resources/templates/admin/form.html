@@ -3,20 +3,118 @@
 <!--/*@thymesVar id="entity" type="com.pocketcombats.admin.data.form.EntityDetails"*/-->
 <head>
     <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <title th:text="#{spring-jpa-admin.action.edit(${entity.label})}">Edit Model One</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <!-- Google Fonts Roboto -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
+    <!-- MDB -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
+          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
+    <script type="text/javascript"
+            th:src="@{/webjars/mdb-ui-kit/js/mdb.min.js}"
+            src="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/js/mdb.min.js"></script>
+    <!-- Custom styles -->
+    <style>
+        .form-row {
+            margin-bottom: 0.75rem;
+        }
+
+        .form-row div:has(input[type=checkbox]) {
+            /* Same as .col-form-label */
+            padding-top: calc(.375rem + 1px);
+        }
+    </style>
 </head>
 <body>
-<form method="post" th:action="@{/admin/{adminModel}/{id}/(adminModel=${entity.modelName}, id=${entity.id})}">
-    <div th:each="fieldGroup: ${entity.fieldGroups}">
-        <h2 th:unless="${#strings.isEmpty(fieldGroup.label())}" th:text="${fieldGroup.label()}"></h2>
-        <div th:each="field: ${fieldGroup.fields()}">
-            <label th:for="${'model-field-' + field.name}" th:text="${field.label}"></label>
-
-            <span th:insert="~{${field.template}}"></span>
+<header class="bg-light shadow-4 pt-4 pb-3">
+    <div class="container">
+        <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
+        <div class="row row-cols-auto align-items-center mt-4">
+            <div class="col col-lg-9 col-xl-10">
+                <h4><a href="entities.html"
+                       th:href="@{/admin/{adminModel}/(adminModel=${entity.modelName})}"
+                       th:text="${entity.label}"
+                       class="text-body">Model One</a></h4>
+            </div>
         </div>
     </div>
-    <div class="actions">
-        <input type="submit" name="save-continue" value="Save and continue editing">
-        <input type="submit" name="save" value="Save">
+</header>
+
+<form method="post"
+      class="pt-4"
+      th:action="@{/admin/{adminModel}/{id}/(adminModel=${entity.modelName}, id=${entity.id})}">
+    <div class="container">
+
+        <div th:each="fieldGroup: ${entity.fieldGroups}">
+            <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->
+            <h2 th:unless="${#strings.isEmpty(fieldGroup.label)}" th:text="${fieldGroup.label}"></h2>
+            <div th:each="field: ${fieldGroup.fields}" class="row form-row">
+                <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+                <label th:for="${'model-field-' + field.name}"
+                       th:text="${field.label}"
+                       class="col-sm-2 col-form-label"></label>
+                <div class="col-sm-10" th:insert="~{${field.template}}"></div>
+            </div>
+        </div>
+
+        <div th:remove="all">
+            <div class="row form-row">
+                <label for="model-field-approved" class="col-sm-2 col-form-label">Approved</label>
+                <div class="col-sm-10">
+                    <input class="form-check-input" type="checkbox" id="model-field-approved" value="true"/>
+                </div>
+            </div>
+            <div class="row form-row">
+                <label for="model-field-author" class="col-sm-2 col-form-label">Author</label>
+                <div class="col-sm-10">
+                    <select id="model-field-author" class="form-select w-auto">
+                        <option>Author 1</option>
+                        <option>Author 2</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row form-row">
+                <label for="model-field-text" class="col-sm-2 col-form-label">Text</label>
+                <div class="col-sm-10">
+                    <textarea id="model-field-text" class="form-control" rows="4" cols="50">Text here</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Default form button to handle [Enter] key -->
+    <input type="submit" name="save" class="visually-hidden"/>
+    <div class="bg-light pt-4 pb-4 mt-4">
+        <div class="container">
+            <div class="row row-cols-auto justify-content-between">
+                <div class="col">
+                    <!-- TODO: check permissions -->
+                    <input type="submit"
+                           name="delete"
+                           class="btn btn-danger"
+                           value="Delete"
+                           th:value="#{spring-jpa-admin.action.delete}"/>
+                </div>
+                <div class="col">
+                    <input type="submit"
+                           name="save-continue"
+                           class="btn btn-secondary me-2"
+                           value="Save and continue editing"
+                           th:value="#{spring-jpa-admin.action.save-continue}"/>
+                    <input type="submit"
+                           name="save"
+                           class="btn btn-primary"
+                           value="Save"
+                           th:value="#{spring-jpa-admin.action.save}"/>
+                </div>
+            </div>
+        </div>
     </div>
 </form>
 </body>

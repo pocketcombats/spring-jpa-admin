@@ -73,7 +73,12 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
         // To be part of admin model
         List<AdminListColumn> columns = model.listFields().stream()
-                .map(listField -> new AdminListColumn(listField.name(), listField.label(), false, listField.sortable()))
+                .map(listField -> new AdminListColumn(
+                        listField.name(),
+                        listField.label(),
+                        listField.bool(),
+                        listField.sortable()
+                ))
                 .toList();
         List<AdminEntityListEntry> entires = resultList.stream()
                 .map(entity -> mapEntry(entity, model.listFields()))

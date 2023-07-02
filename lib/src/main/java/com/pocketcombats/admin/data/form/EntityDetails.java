@@ -6,6 +6,7 @@ import java.util.List;
 public record EntityDetails(
         String modelName,
         String id,
+        String label,
         List<AdminFormFieldGroup> fieldGroups
 ) implements Serializable {
 

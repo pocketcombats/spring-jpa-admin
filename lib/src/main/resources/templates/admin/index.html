@@ -2,14 +2,69 @@
 <html lang="en">
 <!--/*@thymesVar id="models" type="java.util.List<com.pocketcombats.admin.data.AdminModelInfo>"*/-->
 <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
     <title>Spring JPA Admin</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <!-- Google Fonts Roboto -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
+    <!-- MDB -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
+          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
 </head>
 <body>
-<h1>Spring JPA Admin</h1>
-<ul>
-    <li th:each="model: ${models}">
-        <a th:href="@{/admin/{adminModel}/(adminModel=${model.modelName})}" th:text="${model.label}"></a>
-    </li>
-</ul>
+<header class="bg-light shadow-4 pt-4 pb-4 mb-4">
+    <div class="container">
+        <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
+    </div>
+</header>
+<div class="container mt-2 mb-5">
+    <div class="row">
+        <div class="col-12 col-lg-9 col-xl-10">
+            <nav>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                        <th class="h5">Some Module</th>
+                        </thead>
+                        <tbody class="table-group-divider table-divider-color">
+                        <tr th:each="model: ${models}">
+                            <td>
+                                <a href="entities.html"
+                                   th:href="@{/admin/{adminModel}/(adminModel=${model.modelName})}"
+                                   th:text="${model.label}">Model One</a>
+                            </td>
+                        </tr>
+                        <tr th:remove="all">
+                            <td><a href="entities.html">Model Two</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-responsive" th:remove="all">
+                    <table class="table table-striped">
+                        <thead>
+                        <th class="h5">Another Module</th>
+                        </thead>
+                        <tbody class="table-group-divider table-divider-color">
+                        <tr>
+                            <td><a href="entities.html">Model Three</a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </nav>
+        </div>
+        <div class="col-12 order-1 order-lg-2 col-sm-4 col-lg-3 col-xl-2">
+            <h5 class="px-4 mt-4 px-lg-0 mt-lg-0" th:text="#{spring-jpa-admin.section.audit}">Audit</h5>
+        </div>
+    </div>
+</div>
 </body>
 </html>
