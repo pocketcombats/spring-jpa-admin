@@ -15,6 +15,19 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <name>Spring JPA Admin parent</name>
+    <description>
+        Automatic admin interface based on Spring Boot and JPA.
+        It reads metadata from your entities to provide a quick interface where trusted users can manage content.
+    </description>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -22,10 +35,29 @@
     </properties>
 
     <modules>
-        <module>lib</module>
-        <module>demo</module>
         <module>annotation</module>
+        <module>lib</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>demo</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>annotation</module>
+                <module>lib</module>
+                <module>demo</module>
+            </modules>
+        </profile>
+    </profiles>
+
+    <scm>
+        <connection>scm:git:git://github.com/pocketcombats/spring-jpa-admin.git</connection>
+        <developerConnection>scm:git:ssh://github.com:pocketcombats/spring-jpa-admin.git</developerConnection>
+        <url>https://github.com/pocketcombats/spring-jpa-admin/tree/master/</url>
+    </scm>
 
     <build>
         <plugins>

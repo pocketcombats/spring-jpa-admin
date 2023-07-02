@@ -11,6 +11,8 @@
     </parent>
     <artifactId>annotation</artifactId>
 
+    <name>Spring JPA Admin annotations</name>
+
     <dependencies>
         <dependency>
             <groupId>jakarta.annotation</groupId>

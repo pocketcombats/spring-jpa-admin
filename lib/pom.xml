@@ -12,6 +12,8 @@
     <groupId>com.pocketcombats</groupId>
     <artifactId>spring-jpa-admin</artifactId>
 
+    <name>Spring JPA Admin</name>
+
     <dependencies>
         <dependency>
             <groupId>com.pocketcombats.admin</groupId>
