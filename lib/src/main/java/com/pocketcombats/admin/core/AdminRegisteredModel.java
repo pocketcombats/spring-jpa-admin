@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
+import jakarta.annotation.Nullable;
 
 import java.util.List;
 
@@ -10,7 +11,7 @@ public record AdminRegisteredModel(
         Class<?> entityClass,
         int pageSize,
         List<AdminModelListField> listFields,
-        SearchPredicateFactory searchPredicateFactory,
+        @Nullable SearchPredicateFactory searchPredicateFactory,
         List<AdminModelFieldset> fieldsets
 ) {
 

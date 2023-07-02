@@ -80,17 +80,17 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                         listField.sortable()
                 ))
                 .toList();
-        List<AdminEntityListEntry> entires = resultList.stream()
+        List<AdminEntityListEntry> entries = resultList.stream()
                 .map(entity -> mapEntry(entity, model.listFields()))
                 .toList();
         return new AdminModelEntitiesList(
                 model.label(),
                 model.modelName(),
-                true,
+                model.searchPredicateFactory() != null,
                 page,
                 pagesCount,
                 columns,
-                entires
+                entries
         );
     }
 

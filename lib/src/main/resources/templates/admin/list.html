@@ -73,7 +73,8 @@
 
         <div class="col-12 order-2 order-lg-1 col-lg-9 col-xl-10">
             <div th:if="${entities.searchable}"
-                 th:object="${modelRequest}">
+                 th:object="${modelRequest}"
+                 class="mb-2">
                 <form id="search-form"
                       class="row row-cols-sm-auto g-2 align-items-center pb-2">
                     <div class="col-12">
@@ -93,7 +94,7 @@
                 </form>
             </div>
 
-            <main class="mt-2">
+            <main>
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
