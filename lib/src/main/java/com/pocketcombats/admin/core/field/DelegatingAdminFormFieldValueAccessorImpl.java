@@ -3,7 +3,6 @@ package com.pocketcombats.admin.core.field;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
 import jakarta.annotation.Nullable;
-import jakarta.persistence.EntityManager;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
 
@@ -38,12 +37,12 @@ public class DelegatingAdminFormFieldValueAccessorImpl extends AbstractFormField
     public void setValue(Object instance, String value, BindingResult bindingResult) {
         AdminModelPropertyWriter writer = getWriter();
 
-        Object convertedValue = conversionService.convert(value, getWriterJavaType());
+        Object convertedValue = conversionService.convert(value, writer.getJavaType());
         writer.setValue(instance, convertedValue);
     }
 
     @Override
-    public Map<String, Object> getModelAttributes(EntityManager em) {
+    public Map<String, Object> getModelAttributes() {
         return Collections.emptyMap();
     }
 }

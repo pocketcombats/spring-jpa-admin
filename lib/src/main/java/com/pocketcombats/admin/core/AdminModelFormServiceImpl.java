@@ -86,7 +86,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                                         !isEditable(field, action),
                                         field.template(),
                                         field.valueAccessor().readValue(entity),
-                                        field.valueAccessor().getModelAttributes(em)
+                                        field.valueAccessor().getModelAttributes()
                                 ))
                                 .toList()
                 ))

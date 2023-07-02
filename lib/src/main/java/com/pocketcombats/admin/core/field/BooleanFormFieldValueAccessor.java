@@ -3,7 +3,6 @@ package com.pocketcombats.admin.core.field;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
 import jakarta.annotation.Nullable;
-import jakarta.persistence.EntityManager;
 import org.springframework.validation.BindingResult;
 
 import java.util.Collections;
@@ -43,7 +42,7 @@ public class BooleanFormFieldValueAccessor extends AbstractFormFieldValueAccesso
     }
 
     @Override
-    public Map<String, Object> getModelAttributes(EntityManager em) {
+    public Map<String, Object> getModelAttributes() {
         return Collections.emptyMap();
     }
 }

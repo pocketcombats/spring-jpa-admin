@@ -56,7 +56,8 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor {
         return getEntityStringId(currentValue);
     }
 
-    public Map<String, Object> getModelAttributes(EntityManager em) {
+    @Override
+    public Map<String, Object> getModelAttributes() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         Class<?> attributeJavaType = attribute.getJavaType();
         CriteriaQuery<?> query = cb.createQuery(attributeJavaType);
