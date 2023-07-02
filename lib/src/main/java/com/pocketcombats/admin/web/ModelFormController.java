@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.web;
 
+import com.pocketcombats.admin.conf.JpaAdminProperties;
 import com.pocketcombats.admin.core.AdminModelEditingResult;
 import com.pocketcombats.admin.core.AdminModelFormService;
 import com.pocketcombats.admin.core.UnknownModelException;
@@ -17,9 +18,11 @@ import java.util.Map;
 @Controller
 public class ModelFormController {
 
+    private final JpaAdminProperties properties;
     private final AdminModelFormService adminModelFormService;
 
-    public ModelFormController(AdminModelFormService adminModelFormService) {
+    public ModelFormController(JpaAdminProperties properties, AdminModelFormService adminModelFormService) {
+        this.properties = properties;
         this.adminModelFormService = adminModelFormService;
     }
 
@@ -28,7 +31,7 @@ public class ModelFormController {
     public ModelAndView view(@PathVariable String modelName, @PathVariable String id) throws UnknownModelException {
         EntityDetails entity = adminModelFormService.details(modelName, id);
         return new ModelAndView(
-                "admin/form",
+                properties.getTemplates().getForm(),
                 Map.of("entity", entity)
         );
     }
@@ -43,7 +46,7 @@ public class ModelFormController {
         AdminModelEditingResult result = adminModelFormService.update(model, id, data);
         if (result.bindingResult().hasErrors()) {
             return new ModelAndView(
-                    "admin/form",
+                    properties.getTemplates().getForm(),
                     Map.of(
                             "entity", result.entityDetails(),
                             "errors", result.bindingResult()
@@ -54,7 +57,7 @@ public class ModelFormController {
         }
         EntityDetails entity = adminModelFormService.details(model, id);
         return new ModelAndView(
-                "admin/form",
+                properties.getTemplates().getForm(),
                 Map.of("entity", entity)
         );
     }

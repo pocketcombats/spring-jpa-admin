@@ -35,13 +35,13 @@
                         <tbody class="table-group-divider table-divider-color">
                         <tr th:each="model: ${models}">
                             <td>
-                                <a href="entities.html"
+                                <a href="list.html"
                                    th:href="@{/admin/{adminModel}/(adminModel=${model.modelName})}"
                                    th:text="${model.label}">Model One</a>
                             </td>
                         </tr>
                         <tr th:remove="all">
-                            <td><a href="entities.html">Model Two</a></td>
+                            <td><a href="list.html">Model Two</a></td>
                         </tr>
                         </tbody>
                     </table>
@@ -54,7 +54,7 @@
                         </thead>
                         <tbody class="table-group-divider table-divider-color">
                         <tr>
-                            <td><a href="entities.html">Model Three</a></td>
+                            <td><a href="list.html">Model Three</a></td>
                         </tr>
                         </tbody>
                     </table>

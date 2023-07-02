@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.web;
 
+import com.pocketcombats.admin.conf.JpaAdminProperties;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
@@ -11,9 +12,11 @@ import java.util.Map;
 @Controller
 public class IndexController {
 
+    private final JpaAdminProperties properties;
     private final AdminModelRegistry entityRegistry;
 
-    public IndexController(AdminModelRegistry entityRegistry) {
+    public IndexController(JpaAdminProperties properties, AdminModelRegistry entityRegistry) {
+        this.properties = properties;
         this.entityRegistry = entityRegistry;
     }
 
@@ -21,7 +24,7 @@ public class IndexController {
     @Secured("ROLE_JPA_ADMIN")
     public ModelAndView index() {
         return new ModelAndView(
-                "admin/index",
+                properties.getTemplates().getIndex(),
                 Map.of("models", entityRegistry.listModels())
         );
     }

@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.web;
 
+import com.pocketcombats.admin.conf.JpaAdminProperties;
 import com.pocketcombats.admin.core.AdminModelEntitiesListService;
 import com.pocketcombats.admin.core.UnknownModelException;
 import com.pocketcombats.admin.data.list.ModelRequest;
@@ -14,9 +15,11 @@ import java.util.Map;
 @Controller
 public class ModelListController {
 
+    private final JpaAdminProperties properties;
     private final AdminModelEntitiesListService adminModelEntitiesListService;
 
-    public ModelListController(AdminModelEntitiesListService adminModelEntitiesListService) {
+    public ModelListController(JpaAdminProperties properties, AdminModelEntitiesListService adminModelEntitiesListService) {
+        this.properties = properties;
         this.adminModelEntitiesListService = adminModelEntitiesListService;
     }
 
@@ -24,7 +27,7 @@ public class ModelListController {
     @Secured("ROLE_JPA_ADMIN")
     public ModelAndView list(@PathVariable String model, ModelRequest modelRequest) throws UnknownModelException {
         return new ModelAndView(
-                "admin/entities",
+                properties.getTemplates().getList(),
                 Map.of(
                         "entities", adminModelEntitiesListService.listEntities(model, modelRequest),
                         "query", modelRequest
