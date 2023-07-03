@@ -3,14 +3,15 @@ package com.pocketcombats.admin.conf;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminFieldOverride;
 import com.pocketcombats.admin.AdminModel;
-import com.pocketcombats.admin.ToStringValueFormatter;
-import com.pocketcombats.admin.ValueFormatter;
 import com.pocketcombats.admin.core.AdminModelField;
 import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.BooleanFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.DelegatingAdminFormFieldValueAccessorImpl;
 import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
+import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
+import com.pocketcombats.admin.core.formatter.ToStringValueFormatter;
+import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelDelegatingPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelDelegatingPropertyWriter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
@@ -97,10 +98,12 @@ public class FieldFactory {
 
     public AdminModelListField constructListField(String name) {
         String label = null;
+        String emptyValue = "—";
 
         AdminField fieldConfig = resolveFieldConfig(name);
         if (fieldConfig != null) {
             label = fieldConfig.label();
+            emptyValue = fieldConfig.emptyValue();
         }
 
         if (!StringUtils.hasText(label)) {
@@ -125,7 +128,7 @@ public class FieldFactory {
         }
 
         return new AdminModelListField(
-                name, label,
+                name, label, emptyValue,
                 reader, formatter,
                 sortExpressionFactory
         );
@@ -458,9 +461,15 @@ public class FieldFactory {
             if (fieldConfiguration == null) {
                 fieldValueFormatters.put(fieldName, new ToStringValueFormatter());
             } else {
+                ValueFormatter formatter;
+                if (fieldConfiguration.representation().equals("")) {
+                    formatter = new ToStringValueFormatter();
+                } else {
+                    formatter = new SpelExpressionFormatter(fieldConfiguration.representation());
+                }
                 fieldValueFormatters.put(
                         fieldName,
-                        beanFactory.createBean(fieldConfiguration.valueFormatter())
+                        formatter
                 );
             }
         }

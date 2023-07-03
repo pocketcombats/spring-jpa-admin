@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.core.field;
 
-import com.pocketcombats.admin.ValueFormatter;
+import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
 import com.pocketcombats.admin.widget.Option;

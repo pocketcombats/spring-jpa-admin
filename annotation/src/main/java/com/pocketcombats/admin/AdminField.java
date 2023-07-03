@@ -47,8 +47,9 @@ public @interface AdminField {
     String template() default "";
 
     /**
-     * Value formatter to for this field.
+     * Representation formatter to for this field in {@code SpEL} format.
      * Typically used by list view and relational form fields.
+     * Defaults to calling {@code toString()}.
      */
-    Class<? extends ValueFormatter> valueFormatter() default ToStringValueFormatter.class;
+    String representation() default "";
 }

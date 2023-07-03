@@ -12,6 +12,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.convert.ConversionService;
 
@@ -160,7 +161,12 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                     if (field.valueFormatter() == null) {
                         return value;
                     } else {
-                        return field.valueFormatter().format(value);
+                        value = field.valueFormatter().format(value);
+                    }
+                    if (ObjectUtils.isEmpty(value)) {
+                        return field.emptyValue();
+                    } else {
+                        return value;
                     }
                 })
                 .toList();

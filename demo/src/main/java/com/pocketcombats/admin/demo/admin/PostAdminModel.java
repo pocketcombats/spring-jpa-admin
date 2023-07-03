@@ -3,8 +3,6 @@ package com.pocketcombats.admin.demo.admin;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminFieldOverride;
 import com.pocketcombats.admin.AdminModel;
-import com.pocketcombats.admin.ValueFormatter;
-import com.pocketcombats.admin.demo.entity.DemoUser;
 import com.pocketcombats.admin.demo.entity.Post;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.convert.ConversionService;
@@ -29,7 +27,7 @@ import org.springframework.core.convert.ConversionService;
                         name = "author",
                         field = @AdminField(
                                 sortBy = "author.username",
-                                valueFormatter = PostAdminModel.UsernameValueFormatter.class
+                                representation = "username"
                         )
                 )
         }
@@ -45,13 +43,5 @@ public class PostAdminModel {
     @AdminField(label = "Text")
     public String getTextPreview(Post post) {
         return StringUtils.abbreviate(post.getText(), 30);
-    }
-
-    static class UsernameValueFormatter implements ValueFormatter {
-
-        @Override
-        public String format(Object user) {
-            return ((DemoUser) user).getUsername();
-        }
     }
 }
