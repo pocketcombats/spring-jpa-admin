@@ -19,13 +19,15 @@ import com.pocketcombats.admin.core.property.FieldPropertyReader;
 import com.pocketcombats.admin.core.property.FieldPropertyWriter;
 import com.pocketcombats.admin.core.property.MethodPropertyReader;
 import com.pocketcombats.admin.core.property.MethodPropertyWriter;
+import com.pocketcombats.admin.core.sort.PathSortExpressionFactory;
+import com.pocketcombats.admin.core.sort.SimpleSortExpressionFactory;
+import com.pocketcombats.admin.core.sort.SortExpressionFactory;
 import com.pocketcombats.admin.util.AdminStringUtils;
 import com.pocketcombats.admin.util.TypeUtils;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
-import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -112,10 +114,20 @@ public class FieldFactory {
         } else {
             formatter = createValueFormatter(name);
         }
+
+        SortExpressionFactory sortExpressionFactory = null;
+        if (fieldConfig != null) {
+            if (!fieldConfig.sortBy().equals("")) {
+                sortExpressionFactory = new PathSortExpressionFactory(fieldConfig.sortBy());
+            } else if (fieldConfig.sortable()) {
+                sortExpressionFactory = new SimpleSortExpressionFactory(name);
+            }
+        }
+
         return new AdminModelListField(
                 name, label,
-                ArrayUtils.contains(modelAnnotation.sortFields(), name),
-                reader, formatter
+                reader, formatter,
+                sortExpressionFactory
         );
     }
 

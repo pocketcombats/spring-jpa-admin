@@ -4,18 +4,20 @@ import com.pocketcombats.admin.data.list.AdminEntityListEntry;
 import com.pocketcombats.admin.data.list.AdminListColumn;
 import com.pocketcombats.admin.data.list.AdminModelEntitiesList;
 import com.pocketcombats.admin.data.list.ModelRequest;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.util.ClassUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesListService {
 
@@ -59,10 +61,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             CriteriaQuery<?> dataQuery = cb.createQuery(model.entityClass());
             Root<?> root = dataQuery.from(model.entityClass());
             applyModelRequest(model, dataQuery, root, query);
-            if (query.getSort() != null) {
-                // TODO: validate that this is existing field
-                dataQuery.orderBy(cb.asc(root.get(query.getSort())));
-            }
+            applySorting(query.getSort(), model, dataQuery, root, cb);
             resultList = em.createQuery(dataQuery)
                     .setFirstResult((page - 1) * pageSize)
                     .setMaxResults(pageSize)
@@ -77,7 +76,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                         listField.name(),
                         listField.label(),
                         listField.bool(),
-                        listField.sortable()
+                        listField.sortExpressionFactory() != null
                 ))
                 .toList();
         List<AdminEntityListEntry> entries = resultList.stream()
@@ -96,7 +95,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
     private void applyModelRequest(AdminRegisteredModel model, CriteriaQuery<?> q, Root<?> root, ModelRequest query) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        if (!StringUtils.isEmpty(query.getSearch())) {
+        if (!StringUtils.isEmpty(query.getSearch()) && model.searchPredicateFactory() != null) {
             q.where(
                     cb.and(
                             cb.or(model.searchPredicateFactory().build(cb, root, query.getSearch()).stream().toArray(Predicate[]::new))
@@ -104,6 +103,47 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                     )
             );
         }
+    }
+
+    private void applySorting(
+            @Nullable String sortString,
+            AdminRegisteredModel model,
+            CriteriaQuery<?> query,
+            Root<?> root,
+            CriteriaBuilder cb
+    ) {
+        if (!StringUtils.isEmpty(sortString)) {
+            String sortFieldName;
+            boolean asc;
+            if (sortString.startsWith("-")) {
+                sortFieldName = sortString.substring(1);
+                asc = false;
+            } else {
+                sortFieldName = sortString;
+                asc = true;
+            }
+
+            applySorting(model, query, root, cb, sortFieldName, asc);
+        }
+    }
+
+    private void applySorting(
+            AdminRegisteredModel model,
+            CriteriaQuery<?> query,
+            Root<?> root,
+            CriteriaBuilder cb,
+            String sortFieldName,
+            boolean asc
+    ) {
+        model.listFields().stream()
+                .filter(listField -> listField.name().equals(sortFieldName))
+                .findAny()
+                .flatMap(listField -> Optional.ofNullable(listField.sortExpressionFactory()))
+                .map(sortExpressionFactory -> {
+                    Expression<?> sortExpression = sortExpressionFactory.createExpression(root);
+                    return asc ? cb.asc(sortExpression) : cb.desc(sortExpression);
+                })
+                .ifPresent(query::orderBy);
     }
 
     private String resolveId(Object entity) {

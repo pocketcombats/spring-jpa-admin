@@ -21,8 +21,6 @@ public @interface AdminModel {
 
     String[] filterFields() default {};
 
-    String[] sortFields() default {};
-
     AdminFieldset[] fieldsets() default {};
 
     Action[] permittedActions() default {Action.EDIT, Action.CREATE, Action.DELETE};

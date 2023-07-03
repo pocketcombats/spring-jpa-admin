@@ -30,6 +30,18 @@ public @interface AdminField {
     boolean updatable() default true;
 
     /**
+     * Indicates that field is sortable.
+     * Only entity fields included in {@link AdminModel#listFields()} can be sortable.
+     */
+    boolean sortable() default false;
+
+    /**
+     * Optional custom path to sort this field by.
+     * Implicitly enables {@link #sortable()}.
+     */
+    String sortBy() default "";
+
+    /**
      * Custom template for this field.
      */
     String template() default "";

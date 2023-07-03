@@ -24,6 +24,39 @@
     <style>
         main th {
             text-transform: uppercase;
+            position: relative;
+        }
+
+        .sort-icon {
+            position: absolute;
+            left: 0.4rem;
+            top: calc(50% - 0.5rem);
+            opacity: 0;
+            transition: .5s;
+            transition-property: opacity;
+        }
+
+        main th.sortable {
+            padding: 0;
+        }
+
+        main th.sortable a {
+            padding: 1rem 1.4rem;
+            transition: .5s;
+            transition-property: background-color;
+            color: var(--mdb-table-color);
+        }
+
+        main th.sortable a:hover {
+            background-color: var(--mdb-table-hover-bg);
+        }
+
+        main th.sortable a:hover .sort-icon {
+            opacity: 0.7;
+        }
+
+        .sort-icon.active {
+            opacity: 1 !important;
         }
     </style>
 </head>
@@ -76,6 +109,9 @@
                  th:object="${modelRequest}"
                  class="mb-2">
                 <form id="search-form"
+                      method="get"
+                      action="index.html"
+                      th:action="@{/admin/{adminModel}/(adminModel=${entities.modelName})}"
                       class="row row-cols-sm-auto g-2 align-items-center pb-2">
                     <div class="col-12">
                         <label for="search-input" class="visually-hidden"
@@ -88,6 +124,7 @@
                                th:placeholder="#{spring-jpa-admin.search.prompt}"
                                th:field="*{search}"/>
                     </div>
+                    <input type="hidden" th:field="*{sort}"/>
                     <div class="col-12">
                         <input type="submit" class="btn btn-primary" th:value="#{spring-jpa-admin.search.submit}"/>
                     </div>
@@ -99,12 +136,31 @@
                     <table class="table table-striped">
                         <thead>
                         <tr>
-                            <th th:each="column: ${entities.columns}" th:text="${column.label}">Title</th>
-                            <th th:remove="all">Description</th>
+                            <th th:each="column: ${entities.columns}"
+                                th:class="${column.sortable() ? 'sortable' : ''}"
+                                class="sortable">
+                                <a th:if="${column.sortable}"
+                                   th:switch="${modelRequest.sort}"
+                                   href="list.html"
+                                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, sort=${(modelRequest.sort==column.name ? '-' : '') + column.name}, search=${modelRequest.search})}"
+                                   class="d-block">
+                                    <i th:case="${column.name}" th:class="'sort-icon active fas fa-arrow-up'"></i>
+                                    <i th:case="'-' + ${column.name}" class="sort-icon active fas fa-arrow-down"></i>
+                                    <i th:case="*" th:class="'sort-icon fas fa-arrow-up'"></i>
+                                    <th:block th:text="${column.label}">Title</th:block>
+                                </a>
+                                <th:block th:unless="${column.sortable}" th:text="${column.label}"/>
+                            </th>
+                            <th th:remove="all" class="sortable">
+                                <a href="list.html" class="d-block">
+                                    <i class="sort-icon fas fa-arrow-up"></i>
+                                    Description
+                                </a>
+                            </th>
                             <th th:remove="all">Enabled</th>
                         </tr>
                         </thead>
-                        <tbody th:unless="${entities.entities.empty}" class="table-group-divider table-divider-color">
+                        <tbody th:unless="${entities.entities.isEmpty()}" class="table-group-divider table-divider-color">
                         <tr th:each="entity: ${entities.entities}">
                             <td th:each="column, columnStat: ${entities.columns}">
                                 <a th:if="${columnStat.first}"

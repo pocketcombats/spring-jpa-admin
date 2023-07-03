@@ -2,14 +2,15 @@ package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
+import com.pocketcombats.admin.core.sort.SortExpressionFactory;
 import jakarta.annotation.Nullable;
 
 public record AdminModelListField(
         String name,
         String label,
-        boolean sortable,
         AdminModelPropertyReader valueAccessor,
-        @Nullable ValueFormatter valueFormatter
+        @Nullable ValueFormatter valueFormatter,
+        @Nullable SortExpressionFactory sortExpressionFactory
 ) {
 
     public boolean bool() {

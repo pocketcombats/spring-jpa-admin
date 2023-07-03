@@ -15,16 +15,22 @@ import org.springframework.core.convert.ConversionService;
 @AdminModel(
         model = Post.class,
         listFields = {"textPreview", "author", "postTime", "approved"},
-        sortFields = {"postTime", "author.username"},
         filterFields = "approved",
         fieldOverrides = {
+                @AdminFieldOverride(
+                        name = "postTime",
+                        field = @AdminField(sortable = true)
+                ),
                 @AdminFieldOverride(
                         name = "text",
                         field = @AdminField(template = "admin/widget/textarea")
                 ),
                 @AdminFieldOverride(
                         name = "author",
-                        field = @AdminField(valueFormatter = PostAdminModel.UsernameValueFormatter.class)
+                        field = @AdminField(
+                                sortBy = "author.username",
+                                valueFormatter = PostAdminModel.UsernameValueFormatter.class
+                        )
                 )
         }
 )
