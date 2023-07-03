@@ -1,5 +1,5 @@
 <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
-<span th:if="${field.readonly}" th:text="${field.value}"></span>
+<span th:if="${field.readonly}" th:text="${field.value}" class="form-control-readonly"></span>
 <input th:unless="${field.readonly}"
        th:id="${'model-field-' + field.name}"
        th:name="${'model-field-' + field.name}"

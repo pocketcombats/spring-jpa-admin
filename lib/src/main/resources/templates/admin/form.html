@@ -25,9 +25,12 @@
             margin-bottom: 0.75rem;
         }
 
-        .form-row div:has(input[type=checkbox]) {
+        .form-row div:has(input[type=checkbox]), .form-control-readonly {
             /* Same as .col-form-label */
             padding-top: calc(.375rem + 1px);
+        }
+        .form-control-readonly {
+            display: block;
         }
     </style>
 </head>
