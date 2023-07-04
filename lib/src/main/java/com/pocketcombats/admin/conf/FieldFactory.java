@@ -121,7 +121,7 @@ public class FieldFactory {
         SortExpressionFactory sortExpressionFactory = null;
         if (fieldConfig != null) {
             if (!fieldConfig.sortBy().equals("")) {
-                sortExpressionFactory = new PathSortExpressionFactory(fieldConfig.sortBy());
+                sortExpressionFactory = new PathSortExpressionFactory(name + "." + fieldConfig.sortBy());
             } else if (fieldConfig.sortable()) {
                 sortExpressionFactory = new SimpleSortExpressionFactory(name);
             }

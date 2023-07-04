@@ -26,7 +26,7 @@ import org.springframework.core.convert.ConversionService;
                 @AdminFieldOverride(
                         name = "author",
                         field = @AdminField(
-                                sortBy = "author.username",
+                                sortBy = "username",
                                 representation = "username"
                         )
                 )
