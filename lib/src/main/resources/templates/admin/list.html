@@ -141,7 +141,11 @@
                                th:field="*{search}"/>
                     </div>
                     <input type="hidden" th:field="*{sort}"/>
-                    <!-- TODO: filters -->
+                    <input type="hidden"
+                           th:each="paramName: ${param.keySet()}"
+                           th:if="${#strings.startsWith(paramName, 'filter:')}"
+                           th:name="${paramName}"
+                           th:value="${param.get(paramName)[0]}"/>
                     <div class="col-12">
                         <input type="submit" class="btn btn-primary" th:value="#{spring-jpa-admin.search.submit}"/>
                     </div>
