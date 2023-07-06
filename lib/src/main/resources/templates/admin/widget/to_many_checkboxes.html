@@ -1,0 +1,16 @@
+<!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+<div class="form-control overflow-auto" style="max-height: 10rem">
+    <!--/*@thymesVar id="option" type="com.pocketcombats.admin.widget.Option"*/-->
+    <div class="form-check"
+         th:each="option : ${field.templateData()['_options']}">
+        <input type="checkbox"
+               class="form-check-input"
+               th:id="${'model-field-' + field.name + '-' + option.id}"
+               th:name="${'model-field-' + field.name}"
+               th:value="${option.id}"
+               th:checked="${field.value.contains(option.id)}"/>
+        <label th:for="${'model-field-' + field.name + '-' + option.id}"
+               th:text="${option.label}"
+               class="form-check-label"></label>
+    </div>
+</div>
