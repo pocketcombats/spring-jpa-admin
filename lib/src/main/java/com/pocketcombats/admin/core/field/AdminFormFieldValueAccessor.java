@@ -23,7 +23,5 @@ public interface AdminFormFieldValueAccessor {
      */
     Object readValue(Object instance);
 
-    void setValue(Object instance, @Nullable String value, BindingResult bindingResult);
-
     Map<String, Object> getModelAttributes();
 }

@@ -8,28 +8,28 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.IdentifiableType;
-import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.persistence.metamodel.PluralAttribute;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
-        implements AdminFormFieldSingularValueAccessor {
+public class ToManyFormFieldAccessor extends AbstractFormFieldValueAccessor
+        implements AdminFormFieldPluralValueAccessor {
 
     private final EntityManager em;
     private final ConversionService conversionService;
     private final ValueFormatter valueFormatter;
 
-    private final SingularAttribute<?, ?> attribute;
-    private final Class<?> attributeIdType;
+    private final Class<?> attributeElementJavaType;
+    private final Class<?> attributeElementIdType;
 
-    public ToOneFormFieldAccessor(
+    public ToManyFormFieldAccessor(
             EntityManager em,
             ConversionService conversionService,
             Attribute<?, ?> attribute,
@@ -41,32 +41,49 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
 
         this.em = em;
         this.conversionService = conversionService;
-        this.attribute = (SingularAttribute<?, ?>) attribute;
         this.valueFormatter = valueFormatter;
 
-        this.attributeIdType = ((IdentifiableType<?>) this.attribute.getType()).getIdType().getJavaType();
+        IdentifiableType<?> elementType = (IdentifiableType<?>) ((PluralAttribute<?, ?, ?>) attribute).getElementType();
+        this.attributeElementJavaType = elementType.getJavaType();
+        this.attributeElementIdType = elementType.getIdType().getJavaType();
     }
 
     @Override
     public String getDefaultTemplate() {
-        return "admin/widget/to_one_choice";
+        return "admin/widget/to_many_choice";
     }
 
     @Override
-    public String readValue(Object instance) {
-        Object currentValue = getReader().getValue(instance);
-        return getEntityStringId(currentValue);
+    public List<String> readValue(Object instance) {
+        Collection<?> value = (Collection<?>) getReader().getValue(instance);
+        return value.stream()
+                .map(this::getEntityStringId)
+                .toList();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void setValues(Object instance, @Nullable List<String> values, BindingResult bindingResult) {
+        Collection<Object> attributeRef = (Collection<Object>) getReader().getValue(instance);
+        attributeRef.clear();
+        if (values != null) {
+            List<?> valueRefs = values.stream()
+                    .map(value -> em.getReference(
+                            attributeElementJavaType,
+                            conversionService.convert(value, attributeElementIdType))
+                    )
+                    .toList();
+            attributeRef.addAll(valueRefs);
+        }
     }
 
     @Override
     public Map<String, Object> getModelAttributes() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        Class<?> attributeJavaType = attribute.getJavaType();
-        CriteriaQuery<?> query = cb.createQuery(attributeJavaType);
-        Root<?> root = query.from(attributeJavaType);
-        Predicate[] restrictions = restrictions(em, cb, root);
-        query.where(restrictions);
+        CriteriaQuery<?> query = cb.createQuery(attributeElementJavaType);
+        Root<?> root = query.from(attributeElementJavaType);
         List<?> resultList = em.createQuery(query).getResultList();
+
         return Map.of(
                 "_options",
                 resultList.stream()
@@ -84,13 +101,4 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
         return valueFormatter.format(entity);
     }
 
-    private Predicate[] restrictions(EntityManager em, CriteriaBuilder cb, Root<?> root) {
-        return new Predicate[0];
-    }
-
-    @Override
-    public void setValue(Object instance, String value, BindingResult bindingResult) {
-        Object reference = em.getReference(attribute.getJavaType(), conversionService.convert(value, attributeIdType));
-        getWriter().setValue(instance, reference);
-    }
 }

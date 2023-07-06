@@ -1,17 +1,11 @@
 package com.pocketcombats.admin.demo.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "demo_post")
@@ -36,6 +30,14 @@ public class Post implements Serializable {
 
     @OneToMany(orphanRemoval = true)
     private List<Comment> comments;
+
+    @ManyToMany
+    @JoinTable(
+            name = "post_tags",
+            joinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false, updatable = false),
+            inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id", nullable = false, updatable = false)
+    )
+    private Set<Tag> tags;
 
     @OneToMany(orphanRemoval = true)
     private List<PostReaction> reactions;
@@ -86,6 +88,14 @@ public class Post implements Serializable {
 
     public void setComments(List<Comment> comments) {
         this.comments = comments;
+    }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
     }
 
     public List<PostReaction> getReactions() {

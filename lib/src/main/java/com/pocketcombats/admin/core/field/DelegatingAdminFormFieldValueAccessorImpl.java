@@ -9,7 +9,8 @@ import org.springframework.validation.BindingResult;
 import java.util.Collections;
 import java.util.Map;
 
-public class DelegatingAdminFormFieldValueAccessorImpl extends AbstractFormFieldValueAccessor {
+public class DelegatingAdminFormFieldValueAccessorImpl extends AbstractFormFieldValueAccessor
+        implements AdminFormFieldSingularValueAccessor {
 
     private final ConversionService conversionService;
 

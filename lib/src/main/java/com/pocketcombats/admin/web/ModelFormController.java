@@ -7,6 +7,7 @@ import com.pocketcombats.admin.core.UnknownModelException;
 import com.pocketcombats.admin.data.form.EntityDetails;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,7 +42,7 @@ public class ModelFormController {
     public ModelAndView update(
             @PathVariable String model,
             @PathVariable String id,
-            @RequestParam Map<String, String> data
+            @RequestParam MultiValueMap<String, String> data
     ) throws UnknownModelException {
         AdminModelEditingResult result = adminModelFormService.update(model, id, data);
         if (result.bindingResult().hasErrors()) {

@@ -1,5 +1,8 @@
 package com.pocketcombats.admin.core;
 
+import com.pocketcombats.admin.core.field.AdminFormFieldPluralValueAccessor;
+import com.pocketcombats.admin.core.field.AdminFormFieldSingularValueAccessor;
+import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.data.form.AdminFormField;
 import com.pocketcombats.admin.data.form.AdminFormFieldGroup;
 import com.pocketcombats.admin.data.form.EntityDetails;
@@ -9,7 +12,10 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 
@@ -17,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 public class AdminModelFormServiceImpl implements AdminModelFormService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AdminModelFormServiceImpl.class);
 
     private final AdminModelRegistry modelRegistry;
     private final EntityManager em;
@@ -102,7 +110,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     @Override
     @Transactional
-    public AdminModelEditingResult update(String modelName, String stringId, Map<String, String> rawData) throws UnknownModelException {
+    public AdminModelEditingResult update(
+            String modelName,
+            String stringId,
+            MultiValueMap<String, String> rawData
+    ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
         Object entity = findEntity(model, stringId);
 
@@ -113,7 +125,14 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
         BindingResult bindingResult = new BeanPropertyBindingResult(entity, modelName);
         for (AdminModelField field : writeableFields) {
-            field.valueAccessor().setValue(entity, rawData.get("model-field-" + field.name()), bindingResult);
+            AdminFormFieldValueAccessor accessor = field.valueAccessor();
+            if (accessor instanceof AdminFormFieldSingularValueAccessor singularValueAccessor) {
+                singularValueAccessor.setValue(entity, rawData.getFirst("model-field-" + field.name()), bindingResult);
+            } else if (accessor instanceof AdminFormFieldPluralValueAccessor pluralValueAccessor) {
+                pluralValueAccessor.setValues(entity, rawData.get("model-field-" + field.name()), bindingResult);
+            } else {
+                LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), modelName);
+            }
         }
 
         return new AdminModelEditingResult(

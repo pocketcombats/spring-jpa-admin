@@ -8,11 +8,14 @@ import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.BooleanFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.DelegatingAdminFormFieldValueAccessorImpl;
+import com.pocketcombats.admin.core.field.ToManyFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.filter.BasicFilterOptionsCollector;
 import com.pocketcombats.admin.core.filter.BasicFilterPredicateFactory;
 import com.pocketcombats.admin.core.filter.BooleanFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.ToManyFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.ToManyFilterPredicateFactory;
 import com.pocketcombats.admin.core.filter.ToOneFilterOptionsCollector;
 import com.pocketcombats.admin.core.filter.ToOneFilterPredicateFactory;
 import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
@@ -196,6 +199,15 @@ public class FieldFactory {
                             createValueFormatter(name)
                     )
             );
+            case ONE_TO_MANY, MANY_TO_MANY -> new AdminModelFilter(
+                    name, label,
+                    new ToManyFilterPredicateFactory(em, conversionService, attribute),
+                    new ToManyFilterOptionsCollector(
+                            em, conversionService,
+                            entity, attribute,
+                            createValueFormatter(name)
+                    )
+            );
             case BASIC -> new AdminModelFilter(
                     name, label,
                     new BasicFilterPredicateFactory(conversionService, attribute),
@@ -203,7 +215,9 @@ public class FieldFactory {
                             ? new BooleanFilterOptionsCollector(em, entity, attribute)
                             : new BasicFilterOptionsCollector(em, conversionService, entity, attribute)
             );
-            default -> throw new IllegalArgumentException("Unsupported filter attribute type: " + attributeType);
+            default -> throw new IllegalArgumentException(
+                    "Unsupported filter attribute type: " + attributeType + " (field " + name + " of model " + modelName + ")"
+            );
         };
     }
 
@@ -484,6 +498,10 @@ public class FieldFactory {
                                 em, conversionService,
                                 attribute, reader, writer, createValueFormatter(name)
                         );
+                case MANY_TO_MANY, ONE_TO_MANY -> new ToManyFormFieldAccessor(
+                        em, conversionService,
+                        attribute, reader, writer, createValueFormatter(name)
+                );
                 case BASIC -> selectBasicFormFieldAccessor(name, reader, writer);
                 default -> throw new IllegalStateException(
                         "Unsupported attribute type: " + persistentAttributeType +

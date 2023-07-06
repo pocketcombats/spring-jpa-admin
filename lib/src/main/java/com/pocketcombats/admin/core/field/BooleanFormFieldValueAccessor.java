@@ -8,7 +8,8 @@ import org.springframework.validation.BindingResult;
 import java.util.Collections;
 import java.util.Map;
 
-public class BooleanFormFieldValueAccessor extends AbstractFormFieldValueAccessor {
+public class BooleanFormFieldValueAccessor extends AbstractFormFieldValueAccessor
+        implements AdminFormFieldSingularValueAccessor {
 
     public BooleanFormFieldValueAccessor(
             String name,
