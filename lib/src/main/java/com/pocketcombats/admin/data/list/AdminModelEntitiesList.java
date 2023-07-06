@@ -9,6 +9,7 @@ public record AdminModelEntitiesList(
         boolean searchable,
         int page,
         int pagesCount,
+        List<ListFilter> filters,
         List<AdminListColumn> columns,
         List<AdminEntityListEntry> entities
 ) implements Serializable {

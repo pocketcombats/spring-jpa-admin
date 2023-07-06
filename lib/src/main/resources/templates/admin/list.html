@@ -85,26 +85,42 @@
 </header>
 <div class="container">
     <div class="row">
-        <nav class="col-12 order-1 order-lg-2 col-sm-5 col-md-4 col-lg-3 col-xl-2">
+        <nav th:if="${!entities.filters().isEmpty()}"
+             class="col-12 order-1 order-lg-2 col-sm-5 col-md-4 col-lg-3 col-xl-2">
             <h5 class="px-2 px-lg-0" th:text="#{spring-jpa-admin.section.filter}">Filters</h5>
-            <div class="list-group list-group-small mb-4" role="tablist">
-                <h6 class="bg-light list-group-item px-3 mb-0 border-top border-bottom">Enabled</h6>
+            <div class="list-group list-group-small mb-4" role="tablist"
+                 th:each="filter: ${entities.filters()}"
+                 th:with="filterParam=${'filter:' + filter.name()}">
+                <h6 class="bg-light list-group-item px-3 mb-0 border-top border-bottom" th:text="${filter.label()}">
+                    Enabled
+                </h6>
                 <a class="list-group-item list-group-item-action px-3"
-                   href="#">
+                   href="#"
+                   th:with="urlParams=${@adminUrlParamsHelper.join(param, filterParam, '')}"
+                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, __${urlParams}__)}"
+                   th:class="${'list-group-item list-group-item-action px-3' + (#strings.isEmpty(param.get(filterParam)?.get(0)) ? ' active' : '')}"
+                   th:text="#{spring-jpa-admin.filter.all}">
                     All
                 </a>
-                <a class="list-group-item list-group-item-action active px-3"
-                   href="#">
-                    Yes
+                <a th:each="filterOption: ${filter.options()}"
+                   class="list-group-item list-group-item-action px-3"
+                   href="#"
+                   th:with="urlParams=${@adminUrlParamsHelper.join(param, filterParam, filterOption.value())}"
+                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, __${urlParams}__)}"
+                   th:class="${'list-group-item list-group-item-action px-3' + ((param.get(filterParam)?.get(0) == filterOption.value()) ? ' active' : '')}">
+                    <th:block th:if="${filterOption.localize()}" th:text="#{${filterOption.label()}}">Yes</th:block>
+                    <th:block th:unless="${filterOption.localize()}" th:text="${filterOption.label()}"></th:block>
                 </a>
-                <a class="list-group-item list-group-item-action px-3"
+                <a th:remove="all"
+                   class="list-group-item list-group-item-action px-3 active"
                    href="#">
                     No
                 </a>
             </div>
         </nav>
 
-        <div class="col-12 order-2 order-lg-1 col-lg-9 col-xl-10">
+        <div class="col-12 order-2 order-lg-1 col-lg-9 col-xl-10"
+             th:class="${entities.filters().isEmpty() ? 'col-12' : 'col-12 order-2 order-lg-1 col-lg-9 col-xl-10'}">
             <div th:if="${entities.searchable}"
                  th:object="${modelRequest}"
                  class="mb-2">
@@ -125,6 +141,7 @@
                                th:field="*{search}"/>
                     </div>
                     <input type="hidden" th:field="*{sort}"/>
+                    <!-- TODO: filters -->
                     <div class="col-12">
                         <input type="submit" class="btn btn-primary" th:value="#{spring-jpa-admin.search.submit}"/>
                     </div>
@@ -142,7 +159,8 @@
                                 <a th:if="${column.sortable}"
                                    th:switch="${modelRequest.sort}"
                                    href="list.html"
-                                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, sort=${(modelRequest.sort==column.name ? '-' : '') + column.name}, search=${modelRequest.search})}"
+                                   th:with="urlParams=${@adminUrlParamsHelper.join(param, 'sort', (modelRequest.sort==column.name ? '-' : '') + column.name)}"
+                                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, __${urlParams}__)}"
                                    class="d-block">
                                     <i th:case="${column.name}" th:class="'sort-icon active fas fa-arrow-up'"></i>
                                     <i th:case="'-' + ${column.name}" class="sort-icon active fas fa-arrow-down"></i>
@@ -160,7 +178,8 @@
                             <th th:remove="all">Enabled</th>
                         </tr>
                         </thead>
-                        <tbody th:unless="${entities.entities.isEmpty()}" class="table-group-divider table-divider-color">
+                        <tbody th:unless="${entities.entities.isEmpty()}"
+                               class="table-group-divider table-divider-color">
                         <tr th:each="entity: ${entities.entities}">
                             <td th:each="column, columnStat: ${entities.columns}">
                                 <a th:if="${columnStat.first}"

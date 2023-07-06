@@ -13,7 +13,7 @@ import org.springframework.core.convert.ConversionService;
 @AdminModel(
         model = Post.class,
         listFields = {"textPreview", "author", "postTime", "approved"},
-        filterFields = "approved",
+        filterFields = {"approved", "author"},
         fieldOverrides = {
                 @AdminFieldOverride(
                         name = "postTime",

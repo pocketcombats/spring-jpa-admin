@@ -5,4 +5,5 @@ VALUES (1, 'Demo Admin', true, 1),
        (4, 'Demo Disabled', false, 1);
 
 INSERT INTO demo_post (id, post_time, author_id, text, approved)
-VALUES (1, NOW(), 2, 'Very first post', true);
+VALUES (1, NOW(), 2, 'Very first post', true),
+       (2, NOW(), 4, 'Post by disabled user', false);

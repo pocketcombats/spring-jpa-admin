@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core;
 
+import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import jakarta.annotation.Nullable;
 
@@ -12,6 +13,7 @@ public record AdminRegisteredModel(
         int pageSize,
         List<AdminModelListField> listFields,
         @Nullable SearchPredicateFactory searchPredicateFactory,
+        List<AdminModelFilter> filters,
         List<AdminModelFieldset> fieldsets
 ) {
 

@@ -6,6 +6,7 @@ import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.AdminModelRegistryImpl;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
+import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.search.CompositeSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
@@ -20,6 +21,7 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 
@@ -116,6 +118,8 @@ import java.util.Set;
                 modelName, modelAnnotation, targetClass, entity, adminModelClass, fieldFactory
         );
 
+        List<AdminModelFilter> filters = createModelFilters(modelAnnotation, entity, fieldFactory);
+
         return new AdminRegisteredModel(
                 modelName,
                 AdminStringUtils.toHumanReadableName(modelName),
@@ -123,6 +127,7 @@ import java.util.Set;
                 modelAnnotation.pageSize(),
                 listFields,
                 searchPredicateFactory,
+                filters,
                 fieldsets
         );
     }
@@ -298,6 +303,16 @@ import java.util.Set;
                         .map(field -> fieldFactory.constructFormField(field))
                         .toList()
         );
+    }
+
+    private List<AdminModelFilter> createModelFilters(AdminModel modelAnnotation, EntityType<?> entityType, FieldFactory fieldFactory) {
+        List<AdminModelFilter> filters = new ArrayList<>(modelAnnotation.filterFields().length);
+
+        List<AdminModelFilter> fieldFilters = Arrays.stream(modelAnnotation.filterFields())
+                .map(fieldFactory::constructFieldFilter)
+                .toList();
+        filters.addAll(fieldFilters);
+        return filters;
     }
 
     public AdminModelRegistry build() {

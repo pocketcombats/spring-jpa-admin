@@ -9,6 +9,12 @@ import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.BooleanFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.DelegatingAdminFormFieldValueAccessorImpl;
 import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
+import com.pocketcombats.admin.core.filter.AdminModelFilter;
+import com.pocketcombats.admin.core.filter.BasicFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.BasicFilterPredicateFactory;
+import com.pocketcombats.admin.core.filter.BooleanFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.ToOneFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.ToOneFilterPredicateFactory;
 import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
 import com.pocketcombats.admin.core.formatter.ToStringValueFormatter;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
@@ -166,6 +172,39 @@ public class FieldFactory {
                 updatable,
                 formFieldAccessor
         );
+    }
+
+    public AdminModelFilter constructFieldFilter(String name) {
+        String label = null;
+        AdminField fieldConfig = resolveFieldConfig(name);
+        if (fieldConfig != null) {
+            label = fieldConfig.label();
+        }
+        if (!StringUtils.hasText(label)) {
+            label = AdminStringUtils.toHumanReadableName(name);
+        }
+
+        Attribute<?, ?> attribute = entity.getAttribute(name);
+        Attribute.PersistentAttributeType attributeType = attribute.getPersistentAttributeType();
+        return switch (attributeType) {
+            case ONE_TO_ONE, MANY_TO_ONE -> new AdminModelFilter(
+                    name, label,
+                    new ToOneFilterPredicateFactory(em, conversionService, attribute),
+                    new ToOneFilterOptionsCollector(
+                            em, conversionService,
+                            entity, attribute,
+                            createValueFormatter(name)
+                    )
+            );
+            case BASIC -> new AdminModelFilter(
+                    name, label,
+                    new BasicFilterPredicateFactory(conversionService, attribute),
+                    TypeUtils.isBoolean(attribute.getJavaType())
+                            ? new BooleanFilterOptionsCollector(em, entity, attribute)
+                            : new BasicFilterOptionsCollector(em, conversionService, entity, attribute)
+            );
+            default -> throw new IllegalArgumentException("Unsupported filter attribute type: " + attributeType);
+        };
     }
 
     @Nullable
@@ -482,7 +521,7 @@ public class FieldFactory {
             AdminModelPropertyWriter writer
     ) {
         Class<?> type = reader.getJavaType();
-        if (Boolean.TYPE.equals(type) || Boolean.class.equals(type)) {
+        if (TypeUtils.isBoolean(type)) {
             return new BooleanFormFieldValueAccessor(name, reader, writer);
         }
         return new DelegatingAdminFormFieldValueAccessorImpl(name, conversionService, reader, writer);

@@ -3,6 +3,8 @@ package com.pocketcombats.admin.core;
 import com.pocketcombats.admin.data.list.AdminEntityListEntry;
 import com.pocketcombats.admin.data.list.AdminListColumn;
 import com.pocketcombats.admin.data.list.AdminModelEntitiesList;
+import com.pocketcombats.admin.data.list.ListFilter;
+import com.pocketcombats.admin.data.list.ListFilterOption;
 import com.pocketcombats.admin.data.list.ModelRequest;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
@@ -14,13 +16,18 @@ import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesListService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AdminModelEntitiesListServiceImpl.class);
 
     private final AdminModelRegistry modelRegistry;
     private final EntityManager em;
@@ -38,7 +45,11 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
     @Override
     @Transactional
-    public AdminModelEntitiesList listEntities(String modelName, ModelRequest query) throws UnknownModelException {
+    public AdminModelEntitiesList listEntities(
+            String modelName,
+            ModelRequest query,
+            Map<String, String> filters
+    ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -47,6 +58,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
         Root<?> paginationRoot = paginationQuery.from(model.entityClass());
         paginationQuery.select(cb.count(paginationRoot));
         applyModelRequest(model, paginationQuery, paginationRoot, query);
+        applyFilters(model, paginationQuery, paginationRoot, filters);
         long totalCount = em.createQuery(paginationQuery).getSingleResult();
 
         int pageSize = model.pageSize();
@@ -62,6 +74,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             CriteriaQuery<?> dataQuery = cb.createQuery(model.entityClass());
             Root<?> root = dataQuery.from(model.entityClass());
             applyModelRequest(model, dataQuery, root, query);
+            applyFilters(model, dataQuery, root, filters);
             applySorting(query.getSort(), model, dataQuery, root, cb);
             resultList = em.createQuery(dataQuery)
                     .setFirstResult((page - 1) * pageSize)
@@ -89,6 +102,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 model.searchPredicateFactory() != null,
                 page,
                 pagesCount,
+                collectListFilters(model),
                 columns,
                 entries
         );
@@ -103,6 +117,28 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                             // TODO: additional predicates from config
                     )
             );
+        }
+    }
+
+    private void applyFilters(
+            AdminRegisteredModel model,
+            CriteriaQuery<?> q,
+            Root<?> root,
+            Map<String, String> filters
+    ) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        Predicate[] filterPredicates = model.filters().stream()
+                .filter(modelFilter -> filters.containsKey(modelFilter.getName()))
+                .map(modelFilter -> modelFilter.createPredicate(cb, root, filters.get(modelFilter.getName())))
+                .toArray(Predicate[]::new);
+        if (filterPredicates.length > 0) {
+            LOG.debug("Applying {} filter(s)", filterPredicates.length);
+            Predicate combinedFiltersPredicate = cb.and(filterPredicates);
+            if (q.getRestriction() != null) {
+                q.where(cb.and(q.getRestriction(), combinedFiltersPredicate));
+            } else {
+                q.where(combinedFiltersPredicate);
+            }
         }
     }
 
@@ -172,5 +208,23 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 .toList();
 
         return new AdminEntityListEntry(id, attributes);
+    }
+
+    private static List<ListFilter> collectListFilters(AdminRegisteredModel model) {
+        return model.filters().stream()
+                .map(modelFilter -> new ListFilter(
+                        modelFilter.getName(),
+                        modelFilter.getLabel(),
+                        modelFilter.collectOptions().stream()
+                                .map(filterOption -> new ListFilterOption(
+                                        filterOption.label(),
+                                        filterOption.value(),
+                                        filterOption.localize()
+                                ))
+                                .toList()
+                ))
+                // Remove meaningless filters
+                .filter(filterOption -> filterOption.options().size() > 1)
+                .toList();
     }
 }

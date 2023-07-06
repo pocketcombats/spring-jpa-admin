@@ -2,13 +2,14 @@ package com.pocketcombats.admin.core.formatter;
 
 import jakarta.annotation.Nullable;
 import org.springframework.expression.Expression;
+import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 public class SpelExpressionFormatter implements ValueFormatter {
 
     private final Expression expression;
 
-    public SpelExpressionFormatter(String spelExpression) {
+    public SpelExpressionFormatter(String spelExpression) throws ParseException {
         this.expression = new SpelExpressionParser().parseExpression(spelExpression);
     }
 
