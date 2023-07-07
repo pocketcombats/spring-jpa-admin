@@ -30,6 +30,11 @@ public @interface AdminField {
     boolean updatable() default true;
 
     /**
+     * Set to {@code false} to force model field to be not null.
+     */
+    boolean nullable() default true;
+
+    /**
      * Indicates that field is sortable.
      * Only entity fields included in {@link AdminModel#listFields()} can be sortable.
      */

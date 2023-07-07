@@ -2,9 +2,15 @@
 <select th:id="${'model-field-' + field.name}"
         th:name="${'model-field-' + field.name}"
         class="form-select w-auto">
-    <!--/*@thymesVar id="option" type="com.pocketcombats.admin.widget.Option"*/-->
-    <option th:each="option : ${field.templateData()['_options']}"
-            th:value="${option.id}"
-            th:text="${option.label}"
-            th:selected="${field.value == option.id}"></option>
+    <th:block th:each="option : ${field.templateData()['_options']}">
+        <!--/*@thymesVar id="option" type="com.pocketcombats.admin.widget.Option"*/-->
+        <option th:if="${option.localize}"
+                th:value="${option.id}"
+                th:text="#{${option.label}}"
+                th:selected="${field.value == option.id}"></option>
+        <option th:unless="${option.localize}"
+                th:value="${option.id}"
+                th:text="${option.label}"
+                th:selected="${field.value == option.id}"></option>
+    </th:block>
 </select>

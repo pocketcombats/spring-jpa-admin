@@ -39,6 +39,7 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -162,7 +163,7 @@ public class FieldFactory {
             label = AdminStringUtils.toHumanReadableName(name);
         }
 
-        AdminFormFieldValueAccessor formFieldAccessor = resolveFormFieldAccessor(name);
+        AdminFormFieldValueAccessor formFieldAccessor = resolveFormFieldAccessor(fieldConfig, name);
 
         if (!StringUtils.hasText(template)) {
             template = formFieldAccessor.getDefaultTemplate();
@@ -427,7 +428,7 @@ public class FieldFactory {
         return method;
     }
 
-    private AdminFormFieldValueAccessor resolveFormFieldAccessor(String name) {
+    private AdminFormFieldValueAccessor resolveFormFieldAccessor(@Nullable AdminField fieldConfig, String name) {
         // Contrary to list field readers, form field readers and writers are intended to try entity attributes first
         // We could opt to work with Attribute#javaMember directly, but this would break e.g. hibernate enhancer
         Attribute<?, ?> attribute = null;
@@ -450,7 +451,7 @@ public class FieldFactory {
 
         AdminModelPropertyWriter writer = resolveFormFieldWriter(name);
 
-        return constructFormFieldValueAccessor(name, attribute, reader, writer);
+        return constructFormFieldValueAccessor(name, fieldConfig, attribute, reader, writer);
     }
 
     private AdminModelPropertyReader resolveFormFieldReader(String name) {
@@ -486,6 +487,7 @@ public class FieldFactory {
 
     private AdminFormFieldValueAccessor constructFormFieldValueAccessor(
             String name,
+            @Nullable AdminField fieldConfig,
             @Nullable Attribute<?, ?> attribute,
             AdminModelPropertyReader reader,
             @Nullable AdminModelPropertyWriter writer
@@ -503,14 +505,20 @@ public class FieldFactory {
                         em, conversionService,
                         attribute, reader, writer, createValueFormatter(name)
                 );
-                case BASIC -> selectBasicFormFieldAccessor(name, reader, writer);
+                case BASIC -> selectBasicFormFieldAccessor(name, isOptional(fieldConfig, attribute), reader, writer);
                 default -> throw new IllegalStateException(
                         "Unsupported attribute type: " + persistentAttributeType +
                                 " (field " + name + " of model " + modelName + ")"
                 );
             };
         }
-        return selectBasicFormFieldAccessor(name, reader, writer);
+        boolean optional;
+        if (fieldConfig != null) {
+            optional = fieldConfig.nullable();
+        } else {
+            optional = true;
+        }
+        return selectBasicFormFieldAccessor(name, optional, reader, writer);
     }
 
     private ValueFormatter createValueFormatter(String fieldName) {
@@ -534,9 +542,17 @@ public class FieldFactory {
         return fieldValueFormatters.get(fieldName);
     }
 
+    private static boolean isOptional(@Nullable AdminField fieldConfig, Attribute<?, ?> attribute) {
+        if (fieldConfig != null && !fieldConfig.nullable()) {
+            return false;
+        }
+        return ((SingularAttribute<?, ?>) attribute).isOptional();
+    }
+
     @SuppressWarnings("unchecked")
     private AdminFormFieldValueAccessor selectBasicFormFieldAccessor(
             String name,
+            boolean optional,
             AdminModelPropertyReader reader,
             AdminModelPropertyWriter writer
     ) {
@@ -547,6 +563,7 @@ public class FieldFactory {
             return new EnumFormFieldValueAccessor(
                     name,
                     (Class<? extends Enum<?>>) type,
+                    optional,
                     reader, writer,
                     createValueFormatter(name)
             );

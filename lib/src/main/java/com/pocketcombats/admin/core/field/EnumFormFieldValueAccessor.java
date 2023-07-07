@@ -7,7 +7,9 @@ import com.pocketcombats.admin.widget.Option;
 import jakarta.annotation.Nullable;
 import org.springframework.validation.BindingResult;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
     public EnumFormFieldValueAccessor(
             String name,
             Class<? extends Enum<?>> type,
+            boolean optional,
             AdminModelPropertyReader reader,
             @Nullable AdminModelPropertyWriter writer,
             ValueFormatter valueFormatter
@@ -30,12 +33,24 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
         super(name, reader, writer);
 
         this.universe = type.getEnumConstants();
-        this.options = Arrays.stream(this.universe)
+        this.options = constructOptions(this.universe, optional, valueFormatter);
+    }
+
+    private static List<Option> constructOptions(Enum<?>[] values, boolean optional, ValueFormatter valueFormatter) {
+        List<Option> valueOptions = Arrays.stream(values)
                 .map(enumValue -> new Option(
                         String.valueOf(enumValue.ordinal()),
                         valueFormatter.format(enumValue)
                 ))
                 .toList();
+        if (optional) {
+            List<Option> completeOptions = new ArrayList<>(valueOptions.size() + 1);
+            completeOptions.add(new Option("-1", "spring-jpa-admin.choice.empty", true));
+            completeOptions.addAll(valueOptions);
+            return Collections.unmodifiableList(completeOptions);
+        } else {
+            return valueOptions;
+        }
     }
 
     @Override
@@ -46,14 +61,22 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
     @Override
     public String readValue(Object instance) {
         Enum<?> value = (Enum<?>) getReader().getValue(instance);
-        return String.valueOf(value.ordinal());
+        if (value == null) {
+            return "-1";
+        } else {
+            return String.valueOf(value.ordinal());
+        }
     }
 
     @Override
     public void setValue(Object instance, @Nullable String value, BindingResult bindingResult) {
-        int index = Integer.parseInt(value);
-        Enum<?> resolvedValue = universe[index];
-        getWriter().setValue(instance, resolvedValue);
+        if (value == null || "-1".equals(value)) {
+            getWriter().setValue(instance, null);
+        } else {
+            int index = Integer.parseInt(value);
+            Enum<?> resolvedValue = universe[index];
+            getWriter().setValue(instance, resolvedValue);
+        }
     }
 
     @Override
