@@ -25,6 +25,10 @@ public class Post implements Serializable {
     @Column(name = "text", nullable = false)
     private String text;
 
+    @Column(name = "category")
+    @Enumerated(EnumType.STRING)
+    private Category category;
+
     @Column(name = "approved", nullable = false)
     private boolean approved;
 
@@ -72,6 +76,14 @@ public class Post implements Serializable {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 
     public boolean isApproved() {

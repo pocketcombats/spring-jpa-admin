@@ -8,6 +8,7 @@ import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.BooleanFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.DelegatingAdminFormFieldValueAccessorImpl;
+import com.pocketcombats.admin.core.field.EnumFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.ToManyFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
@@ -533,6 +534,7 @@ public class FieldFactory {
         return fieldValueFormatters.get(fieldName);
     }
 
+    @SuppressWarnings("unchecked")
     private AdminFormFieldValueAccessor selectBasicFormFieldAccessor(
             String name,
             AdminModelPropertyReader reader,
@@ -541,6 +543,13 @@ public class FieldFactory {
         Class<?> type = reader.getJavaType();
         if (TypeUtils.isBoolean(type)) {
             return new BooleanFormFieldValueAccessor(name, reader, writer);
+        } else if (Enum.class.isAssignableFrom(type)) {
+            return new EnumFormFieldValueAccessor(
+                    name,
+                    (Class<? extends Enum<?>>) type,
+                    reader, writer,
+                    createValueFormatter(name)
+            );
         }
         return new DelegatingAdminFormFieldValueAccessorImpl(name, conversionService, reader, writer);
     }
