@@ -1,0 +1,12 @@
+<!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+<select th:id="${'model-field-' + field.name}"
+        th:name="${'model-field-' + field.name}"
+        class="form-select w-auto">
+    <!--/*@thymesVar id="option" type="com.pocketcombats.admin.widget.Option"*/-->
+    <option th:each="option : ${field.templateData['_options']}"
+            th:value="${option.id}"
+            th:selected="${field.value == option.id}">
+        <th:block th:if="${option.localize}" th:text="#{${option.label}}"/>
+        <th:block th:unless="${option.localize}" th:text="${option.label}"/>
+    </option>
+</select>

@@ -55,7 +55,7 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
 
     @Override
     public String getDefaultTemplate() {
-        return "admin/widget/to_one_choice";
+        return "admin/widget/select";
     }
 
     @Override

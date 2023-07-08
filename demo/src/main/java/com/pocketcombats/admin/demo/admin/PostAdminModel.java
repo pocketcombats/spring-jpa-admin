@@ -33,7 +33,7 @@ import org.springframework.core.convert.ConversionService;
                 @AdminFieldOverride(
                         name = "tags",
                         field = @AdminField(
-                                template = "admin/widget/to_many_checkboxes",
+                                template = "admin/widget/multiselect_checkboxes",
                                 representation = "text"
                         )
                 )

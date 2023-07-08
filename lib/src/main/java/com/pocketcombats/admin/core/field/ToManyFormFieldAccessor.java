@@ -50,7 +50,7 @@ public class ToManyFormFieldAccessor extends AbstractFormFieldValueAccessor
 
     @Override
     public String getDefaultTemplate() {
-        return "admin/widget/to_many_choice";
+        return "admin/widget/multiselect";
     }
 
     @Override
