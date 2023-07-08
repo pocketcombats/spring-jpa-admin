@@ -45,7 +45,7 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
                 .toList();
         if (optional) {
             List<Option> completeOptions = new ArrayList<>(valueOptions.size() + 1);
-            completeOptions.add(new Option("-1", "spring-jpa-admin.choice.empty", true));
+            completeOptions.add(Option.EMPTY);
             completeOptions.addAll(valueOptions);
             return Collections.unmodifiableList(completeOptions);
         } else {
@@ -62,15 +62,15 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
     public String readValue(Object instance) {
         Enum<?> value = (Enum<?>) getReader().getValue(instance);
         if (value == null) {
-            return "-1";
+            return Option.EMPTY.id();
         } else {
             return String.valueOf(value.ordinal());
         }
     }
 
     @Override
-    public void setValue(Object instance, @Nullable String value, BindingResult bindingResult) {
-        if (value == null || "-1".equals(value)) {
+    public void setValue(Object instance, String value, BindingResult bindingResult) {
+        if (Option.EMPTY.id().equals(value)) {
             getWriter().setValue(instance, null);
         } else {
             int index = Integer.parseInt(value);

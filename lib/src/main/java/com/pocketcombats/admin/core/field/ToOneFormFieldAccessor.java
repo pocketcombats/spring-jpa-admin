@@ -16,14 +16,18 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
         implements AdminFormFieldSingularValueAccessor {
 
+    private static final String ID_PREFIX = "id";
+
     private final EntityManager em;
     private final ConversionService conversionService;
+    private final boolean optional;
     private final ValueFormatter valueFormatter;
 
     private final SingularAttribute<?, ?> attribute;
@@ -33,6 +37,7 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
             EntityManager em,
             ConversionService conversionService,
             Attribute<?, ?> attribute,
+            boolean optional,
             AdminModelPropertyReader reader,
             @Nullable AdminModelPropertyWriter writer,
             ValueFormatter valueFormatter
@@ -42,6 +47,7 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
         this.em = em;
         this.conversionService = conversionService;
         this.attribute = (SingularAttribute<?, ?>) attribute;
+        this.optional = optional;
         this.valueFormatter = valueFormatter;
 
         this.attributeIdType = ((IdentifiableType<?>) this.attribute.getType()).getIdType().getJavaType();
@@ -60,6 +66,19 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
 
     @Override
     public Map<String, Object> getModelAttributes() {
+        List<Option> valueOptions = collectValueOptions();
+        List<Option> options;
+        if (optional) {
+            options = new ArrayList<>(valueOptions.size() + 1);
+            options.add(Option.EMPTY);
+            options.addAll(valueOptions);
+        } else {
+            options = valueOptions;
+        }
+        return Map.of("_options", options);
+    }
+
+    private List<Option> collectValueOptions() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         Class<?> attributeJavaType = attribute.getJavaType();
         CriteriaQuery<?> query = cb.createQuery(attributeJavaType);
@@ -67,17 +86,18 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
         Predicate[] restrictions = restrictions(em, cb, root);
         query.where(restrictions);
         List<?> resultList = em.createQuery(query).getResultList();
-        return Map.of(
-                "_options",
-                resultList.stream()
-                        .map(entity -> new Option(getEntityStringId(entity), getEntityStringValue(entity)))
-                        .toList()
-        );
+        return resultList.stream()
+                .map(entity -> new Option(getEntityStringId(entity), getEntityStringValue(entity)))
+                .toList();
     }
 
     protected String getEntityStringId(Object entity) {
-        Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(id, String.class);
+        if (entity == null) {
+            return Option.EMPTY.id();
+        } else {
+            Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
+            return ID_PREFIX + conversionService.convert(id, String.class);
+        }
     }
 
     protected String getEntityStringValue(Object entity) {
@@ -90,7 +110,12 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
 
     @Override
     public void setValue(Object instance, String value, BindingResult bindingResult) {
-        Object reference = em.getReference(attribute.getJavaType(), conversionService.convert(value, attributeIdType));
-        getWriter().setValue(instance, reference);
+        if (Option.EMPTY.id().equals(value)) {
+            getWriter().setValue(instance, null);
+        } else {
+            Object referenceId = conversionService.convert(value.substring(ID_PREFIX.length()), attributeIdType);
+            Object reference = em.getReference(attribute.getJavaType(), referenceId);
+            getWriter().setValue(instance, reference);
+        }
     }
 }

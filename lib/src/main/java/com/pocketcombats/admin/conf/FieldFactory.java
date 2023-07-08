@@ -499,11 +499,13 @@ public class FieldFactory {
                     // TODO: raw id field configuration
                         new ToOneFormFieldAccessor(
                                 em, conversionService,
-                                attribute, reader, writer, createValueFormatter(name)
+                                attribute,
+                                isOptional(fieldConfig, attribute),
+                                reader, writer, createValueFormatter(name)
                         );
                 case MANY_TO_MANY, ONE_TO_MANY -> new ToManyFormFieldAccessor(
                         em, conversionService,
-                        attribute, reader, writer, createValueFormatter(name)
+                        attribute,reader, writer, createValueFormatter(name)
                 );
                 case BASIC -> selectBasicFormFieldAccessor(name, isOptional(fieldConfig, attribute), reader, writer);
                 default -> throw new IllegalStateException(
