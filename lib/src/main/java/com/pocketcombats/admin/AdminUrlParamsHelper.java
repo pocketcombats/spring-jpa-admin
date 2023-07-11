@@ -15,12 +15,13 @@ public class AdminUrlParamsHelper {
 
     public String join(Map<String, Object> param, String name, String value) {
         Map<String, String> urlParams = new HashMap<>();
-        for (String paramKey : param.keySet()) {
+        for (var entry : param.entrySet()) {
+            String paramKey = entry.getKey();
             if (paramKey.startsWith("filter:") || EXPECTED_PARAMS.contains(paramKey)) {
                 if (name.equals(paramKey)) {
                     urlParams.put(name, value);
                 } else {
-                    var paramValues = (WebEngineContext.RequestParameterValues) param.get(paramKey);
+                    var paramValues = (WebEngineContext.RequestParameterValues) entry.getValue();
                     if (!paramValues.isEmpty()) {
                         urlParams.put(paramKey, paramValues.get(0));
                     }
