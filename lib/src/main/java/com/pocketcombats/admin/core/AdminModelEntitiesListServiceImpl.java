@@ -31,16 +31,16 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
     private final AdminModelRegistry modelRegistry;
     private final EntityManager em;
-    private final ConversionService conversionService;
+    private final AdminModelListEntityMapper mapper;
 
     public AdminModelEntitiesListServiceImpl(
             AdminModelRegistry modelRegistry,
             EntityManager em,
-            ConversionService conversionService
+            AdminModelListEntityMapper mapper
     ) {
         this.modelRegistry = modelRegistry;
         this.em = em;
-        this.conversionService = conversionService;
+        this.mapper = mapper;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 ))
                 .toList();
         List<AdminEntityListEntry> entries = resultList.stream()
-                .map(entity -> mapEntry(entity, model.listFields()))
+                .map(entity -> mapper.mapEntry(entity, model.listFields()))
                 .toList();
         return new AdminModelEntitiesList(
                 model.label(),
@@ -181,33 +181,6 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                     return asc ? cb.asc(sortExpression) : cb.desc(sortExpression);
                 })
                 .ifPresent(query::orderBy);
-    }
-
-    private String resolveId(Object entity) {
-        Object identifier = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(identifier, String.class);
-    }
-
-    private AdminEntityListEntry mapEntry(Object entity, List<AdminModelListField> fields) {
-        String id = resolveId(entity);
-
-        List<Object> attributes = fields.stream()
-                .map(field -> {
-                    Object value = field.valueAccessor().getValue(entity);
-                    if (field.valueFormatter() == null) {
-                        return value;
-                    } else {
-                        value = field.valueFormatter().format(value);
-                    }
-                    if (ObjectUtils.isEmpty(value)) {
-                        return field.emptyValue();
-                    } else {
-                        return value;
-                    }
-                })
-                .toList();
-
-        return new AdminEntityListEntry(id, attributes);
     }
 
     private static List<ListFilter> collectListFilters(AdminRegisteredModel model) {

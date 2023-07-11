@@ -5,6 +5,7 @@ import com.pocketcombats.admin.core.AdminModelEntitiesListService;
 import com.pocketcombats.admin.core.AdminModelEntitiesListServiceImpl;
 import com.pocketcombats.admin.core.AdminModelFormService;
 import com.pocketcombats.admin.core.AdminModelFormServiceImpl;
+import com.pocketcombats.admin.core.AdminModelListEntityMapper;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
@@ -65,14 +66,14 @@ public class JpaAdminAutoConfiguration implements Ordered {
     public AdminModelEntitiesListService adminModelEntitiesListService(
             AdminModelRegistry modelRegistry,
             EntityManager em,
-            ConversionService conversionService
+            AdminModelListEntityMapper mapper
     ) {
         LOG.debug("Registering default AdminModelEntitiesListService");
 
         return new AdminModelEntitiesListServiceImpl(
                 modelRegistry,
                 em,
-                conversionService
+                mapper
         );
     }
 
