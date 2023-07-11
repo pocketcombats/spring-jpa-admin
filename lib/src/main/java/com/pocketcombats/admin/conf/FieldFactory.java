@@ -43,7 +43,6 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.util.StringUtils;
@@ -64,16 +63,14 @@ public class FieldFactory {
 
     private final EntityManager em;
     private final ConversionService conversionService;
-    private final AutowireCapableBeanFactory beanFactory;
 
     private final String modelName;
-    private final AdminModel modelAnnotation;
     private final EntityType<?> entity;
+    private final Class<?> targetClass;
     @Nullable
     private final Class<?> modelAdminClass;
     @Nullable
     private final Object adminModelBean;
-    private final Class<?> targetClass;
 
     private final Map<String, AdminField> fieldOverrides;
     private final Map<String, AdminField> resolvedFieldsConfigurations = new HashMap<>();
@@ -82,23 +79,21 @@ public class FieldFactory {
     public FieldFactory(
             EntityManager em,
             ConversionService conversionService,
-            AutowireCapableBeanFactory beanFactory,
             String modelName,
             AdminModel modelAnnotation,
+            Class<?> targetClass,
             EntityType<?> entity,
             @Nullable Class<?> modelAdminClass,
-            Class<?> targetClass
+            @Nullable Object adminModelBean
     ) {
         this.em = em;
         this.conversionService = conversionService;
-        this.beanFactory = beanFactory;
 
         this.modelName = modelName;
-        this.modelAnnotation = modelAnnotation;
         this.entity = entity;
-        this.modelAdminClass = modelAdminClass;
-        this.adminModelBean = modelAdminClass != null ? beanFactory.createBean(modelAdminClass) : null;
         this.targetClass = targetClass;
+        this.modelAdminClass = modelAdminClass;
+        this.adminModelBean = adminModelBean;
 
         this.fieldOverrides = Arrays.stream(modelAnnotation.fieldOverrides())
                 .collect(Collectors.toMap(

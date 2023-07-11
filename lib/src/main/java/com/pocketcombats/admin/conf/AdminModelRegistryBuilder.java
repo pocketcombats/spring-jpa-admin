@@ -21,7 +21,6 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.context.MessageSource;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 
@@ -99,6 +98,7 @@ import java.util.Set;
     ) {
         EntityType<?> entity = em.getEntityManagerFactory().getMetamodel().entity(targetClass);
         Class<?> adminModelClass = annotatedClass != targetClass ? annotatedClass : null;
+        Object adminModelBean = adminModelClass != null ? beanFactory.createBean(adminModelClass) : null;
 
         SearchPredicateFactory searchPredicateFactory = createModelSearchPredicateFactory(
                 modelName,
@@ -107,13 +107,12 @@ import java.util.Set;
         );
 
         FieldFactory fieldFactory = new FieldFactory(
-                em, conversionService, beanFactory,
-                modelName, modelAnnotation, entity, adminModelClass, targetClass
+                em, conversionService,
+                modelName, modelAnnotation, targetClass, entity, adminModelClass, adminModelBean
         );
         List<AdminModelListField> listFields = createListFields(
                 modelName, modelAnnotation, targetClass, entity, adminModelClass, fieldFactory
         );
-
         List<AdminModelFieldset> fieldsets = createFormFieldsets(
                 modelName, modelAnnotation, targetClass, entity, adminModelClass, fieldFactory
         );
