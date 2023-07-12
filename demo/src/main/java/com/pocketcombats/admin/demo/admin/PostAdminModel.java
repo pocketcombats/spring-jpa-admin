@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.demo.admin;
 
+import com.pocketcombats.admin.AdminAction;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminFieldOverride;
 import com.pocketcombats.admin.AdminModel;
@@ -50,5 +51,12 @@ public class PostAdminModel {
     @AdminField(label = "Text")
     public String getTextPreview(Post post) {
         return StringUtils.abbreviate(post.getText(), 30);
+    }
+
+    @AdminAction
+    public void approve(Iterable<Post> posts) {
+        for (Post post : posts) {
+            post.setApproved(true);
+        }
     }
 }

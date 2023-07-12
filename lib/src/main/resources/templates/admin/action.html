@@ -5,7 +5,13 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
     <meta http-equiv="x-ua-compatible" content="ie=edge"/>
-    <title th:text="${prompt.description}">Confirm delete</title>
+    <title th:if="${#strings.isEmpty(prompt.description)}" th:text="#{spring-jpa-admin.action.generic.confirmation}">
+        Confirm the deletion of the following entities
+    </title>
+    <th:block th:unless="${#strings.isEmpty(prompt.description)}">
+        <title th:if="${prompt.localize}" th:text="#{${prompt.description}}"></title>
+        <title th:unless="${prompt.localize}" th:text="${prompt.description}"></title>
+    </th:block>
     <!-- Font Awesome -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
@@ -45,10 +51,14 @@
     <div class="container">
         <div class="row">
             <div class="col-12">
-                <h5 th:if="${prompt.localize}" th:text="#{${prompt.description}}" class="d-none" th:class="''"></h5>
-                <h5 th:unless="${prompt.localize}" th:text="${prompt.description}">
+                <h5 th:if="${#strings.isEmpty(prompt.description)}"
+                    th:text="#{spring-jpa-admin.action.generic.confirmation}">
                     Confirm the deletion of the following entities
                 </h5>
+                <th:block th:unless="${#strings.isEmpty(prompt.description)}" class="d-none">
+                    <h5 th:if="${prompt.localize}" th:text="#{${prompt.description}}"></h5>
+                    <h5 th:unless="${prompt.localize}" th:text="${prompt.description}"></h5>
+                </th:block>
                 <main>
                     <div class="table-responsive">
                         <table class="table table-striped">
@@ -117,14 +127,13 @@
                         <input type="hidden"
                                name="id"
                                th:each="entity: ${prompt.entities}"
-                               th:value="${entity.id}" />
-                        <input th:if="${prompt.localize}"
-                               type="submit"
-                               name="save"
-                               class="d-none"
-                               th:class="'btn btn-primary'"
-                               value="Delete"
-                               th:value="#{${prompt.label}}"/>
+                               th:value="${entity.id}"/>
+                        <th:block th:if="${prompt.localize}" class="d-none">
+                            <input type="submit"
+                                   name="save"
+                                   class="btn btn-primary"
+                                   th:value="#{${prompt.label}}"/>
+                        </th:block>
                         <input th:unless="${prompt.localize}"
                                type="submit"
                                name="save"

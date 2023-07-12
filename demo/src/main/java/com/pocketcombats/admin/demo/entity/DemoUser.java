@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.demo.entity;
 
 import com.pocketcombats.admin.Action;
+import com.pocketcombats.admin.AdminAction;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminModel;
 import jakarta.persistence.Column;
@@ -44,6 +45,20 @@ public class DemoUser implements Serializable {
     @Version
     @Column(name = "version")
     private Integer version;
+
+    @AdminAction
+    public static void enable(List<DemoUser> users) {
+        for (DemoUser user : users) {
+            user.setEnabled(true);
+        }
+    }
+
+    @AdminAction
+    public static void disable(List<DemoUser> users) {
+        for (DemoUser user : users) {
+            user.setEnabled(false);
+        }
+    }
 
     public Integer getId() {
         return id;

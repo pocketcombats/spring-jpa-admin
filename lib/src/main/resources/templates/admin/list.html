@@ -55,6 +55,14 @@
             opacity: 0.7;
         }
 
+        main th.select-all {
+            width: 1px;
+        }
+
+        .table-striped > tbody > tr.table-active > * {
+            --mdb-table-accent-bg: var(--mdb-table-active-bg);
+        }
+
         .sort-icon.active {
             opacity: 1 !important;
         }
@@ -64,6 +72,50 @@
             padding: var(--mdb-pagination-padding-y) 0.25rem;
         }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let selectAllContainer = document.querySelector('main th.select-all');
+            let rows = document.querySelectorAll('main .table-hover tr:has(td)');
+
+            function toggleSelected(row, selected) {
+                if (selected) {
+                    row.classList.add('table-active');
+                } else {
+                    row.classList.remove('table-active');
+
+                    if (selectAllContainer !== null) {
+                        selectAllContainer.querySelector('input').checked = false;
+                    }
+                }
+            }
+
+            if (selectAllContainer !== null) {
+                let selectAllCheckbox = document.createElement('input');
+                selectAllCheckbox.type = 'checkbox';
+                selectAllCheckbox.className = 'form-check-input';
+                selectAllCheckbox.addEventListener('change', function (event) {
+                    for (const row of rows) {
+                        toggleSelected(row, event.target.checked);
+                        row.querySelector('input[type=checkbox]').checked = event.target.checked;
+                    }
+                }, false);
+                selectAllContainer.appendChild(selectAllCheckbox);
+            }
+
+            for (const row of rows) {
+                row.querySelector('input[type=checkbox]').addEventListener('change', function (event) {
+                    toggleSelected(row, event.target.checked);
+                }, false);
+                row.addEventListener('click', function (event) {
+                    if (!event.target.matches('input[type=checkbox]')) {
+                        let checkbox = row.querySelector('input[type=checkbox]');
+                        checkbox.checked = !checkbox.checked;
+                        toggleSelected(row, checkbox.checked);
+                    }
+                }, false);
+            }
+        }, false);
+    </script>
 </head>
 <body>
 <header class="bg-light shadow-4 pt-4 pb-3 mb-4">
@@ -158,10 +210,14 @@
             </div>
 
             <main>
-                <div class="table-responsive">
-                    <table class="table table-striped">
+                <form class="table-responsive"
+                      method="post"
+                      th:action="@{/admin/{adminModel}/action/(adminModel=${entities.modelName})}">
+                    <table class="table table-striped table-hover"
+                           th:class="${'table table-striped' + (!entities.actions.isEmpty() ? ' table-hover' : '')}">
                         <thead>
                         <tr>
+                            <th th:if="${!entities.actions.isEmpty()}" class="select-all"></th>
                             <th th:each="column: ${entities.columns}"
                                 th:class="${column.sortable() ? 'sortable' : ''}"
                                 class="sortable">
@@ -190,6 +246,9 @@
                         <tbody th:unless="${entities.entities.isEmpty()}"
                                class="table-group-divider table-divider-color">
                         <tr th:each="entity: ${entities.entities}">
+                            <td th:if="${!entities.actions.isEmpty()}">
+                                <input type="checkbox" name="id" class="form-check-input" th:value="${entity.id}"/>
+                            </td>
                             <td th:each="column, columnStat: ${entities.columns}">
                                 <a th:if="${columnStat.first}"
                                    th:href="@{/admin/{adminModel}/edit/{id}/(adminModel=${entities.modelName}, id=${entity.id})}"
@@ -219,17 +278,44 @@
                             </td>
                         </tr>
                         <tr th:remove="all">
+                            <td>
+                                <input type="checkbox" name="id" class="form-check-input"/>
+                            </td>
                             <td><a href="form.html">Another Entity</a></td>
                             <td>Description</td>
                             <td><i class="fa-solid fa-circle-xmark text-danger"></i><span class="d-none">-</span></td>
                         </tr>
                         </tbody>
                     </table>
-                </div>
+                    <div th:if="${!entities.actions.isEmpty()}"
+                         class="row row-cols-auto align-items-center g-2">
+                        <div class="col">
+                            <label for="action" th:text="#{spring-jpa-admin.action.selected}">With selected:</label>
+                        </div>
+                        <div class="col">
+                            <select id="action" name="action" class="form-select w-auto d-inline-block">
+                                <option disabled selected>&mdash;</option>
+                                <th:block th:each="action: ${entities.actions}">
+                                    <option th:if="${action.localize}"
+                                            th:value="${action.id}"
+                                            th:text="#{${action.label}}">Delete</option>
+                                    <option th:unless="${action.localize}"
+                                            th:value="${action.id}"
+                                            th:text="${action.label}">Enable</option>
+                                </th:block>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <input type="submit" class="btn btn-secondary"
+                                   th:value="#{spring-jpa-admin.action.selected.apply}"
+                                   value="Go"/>
+                        </div>
+                    </div>
+                </form>
             </main>
 
             <nav role="doc-pagelist">
-                <ul class="pagination">
+                <ul class="pagination mt-4">
                     <li class="page-item disabled" th:class="${'page-item' + (entities.page < 2 ? ' disabled' : '')}">
                         <a th:if="${entities.page > 1}"
                            class="page-link d-none"
@@ -286,7 +372,8 @@
                            th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, __${urlParams}__)}"
                            th:text="${entities.pagesCount}">99</a>
                     </li>
-                    <li class="page-item" th:class="${'page-item' + (entities.page < entities.pagesCount ? '' : ' disabled')}">
+                    <li class="page-item"
+                        th:class="${'page-item' + (entities.page < entities.pagesCount ? '' : ' disabled')}">
                         <a th:if="${entities.page < entities.pagesCount}"
                            class="page-link"
                            href="#"

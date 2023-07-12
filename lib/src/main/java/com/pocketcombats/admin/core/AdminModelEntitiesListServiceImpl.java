@@ -3,6 +3,7 @@ package com.pocketcombats.admin.core;
 import com.pocketcombats.admin.data.list.AdminEntityListEntry;
 import com.pocketcombats.admin.data.list.AdminListColumn;
 import com.pocketcombats.admin.data.list.AdminModelEntitiesList;
+import com.pocketcombats.admin.data.list.ListAction;
 import com.pocketcombats.admin.data.list.ListFilter;
 import com.pocketcombats.admin.data.list.ListFilterOption;
 import com.pocketcombats.admin.data.list.ModelRequest;
@@ -103,6 +104,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 pagesCount,
                 collectListFilters(model),
                 columns,
+                collectActions(model),
                 entries
         );
     }
@@ -197,6 +199,12 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 ))
                 // Remove meaningless filters
                 .filter(filterOption -> filterOption.options().size() > 1)
+                .toList();
+    }
+
+    private static List<ListAction> collectActions(AdminRegisteredModel model) {
+        return model.actions().values().stream()
+                .map(action -> new ListAction(action.getId(), action.getLabel(), action.isLocalized()))
                 .toList();
     }
 }

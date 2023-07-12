@@ -11,6 +11,7 @@ public record AdminModelEntitiesList(
         int pagesCount,
         List<ListFilter> filters,
         List<AdminListColumn> columns,
+        List<ListAction> actions,
         List<AdminEntityListEntry> entities
 ) implements Serializable {
 
