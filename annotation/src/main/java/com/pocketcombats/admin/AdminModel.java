@@ -23,7 +23,11 @@ public @interface AdminModel {
 
     AdminFieldset[] fieldsets() default {};
 
-    Action[] permittedActions() default {Action.EDIT, Action.CREATE, Action.DELETE};
+    boolean insertable() default true;
+
+    boolean updatable() default true;
+
+    String[] disableActions() default {};
 
     AdminFieldOverride[] fieldOverrides() default {};
 }

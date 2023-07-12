@@ -1,6 +1,5 @@
 package com.pocketcombats.admin.demo.entity;
 
-import com.pocketcombats.admin.Action;
 import com.pocketcombats.admin.AdminAction;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminModel;
@@ -23,7 +22,8 @@ import java.util.List;
         searchFields = {"id", "username"},
         filterFields = "enabled",
         // Prohibit direct demo users creation or deletion
-        permittedActions = {Action.EDIT}
+        insertable = false,
+        disableActions = "delete"
 )
 public class DemoUser implements Serializable {
 

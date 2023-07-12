@@ -137,6 +137,8 @@ import java.util.Set;
                 modelName,
                 AdminStringUtils.toHumanReadableName(modelName),
                 entityDetails,
+                modelAnnotation.insertable(),
+                modelAnnotation.updatable(),
                 modelAnnotation.pageSize(),
                 listFields,
                 searchPredicateFactory,

@@ -100,8 +100,8 @@
         <div class="container">
             <div class="row row-cols-auto justify-content-between">
                 <div class="col">
-                    <!-- TODO: check permissions -->
-                    <input type="submit"
+                    <input th:if="${entity.deletable}"
+                           type="submit"
                            name="delete"
                            class="btn btn-danger"
                            value="Delete"

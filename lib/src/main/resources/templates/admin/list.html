@@ -128,8 +128,7 @@
                        th:text="${entities.label}"
                        class="text-body">Model One</a></h4>
             </div>
-            <!-- TODO: check permissions -->
-            <div class="col col-lg-3 col-xl-2">
+            <div th:if="${entities.insertable}" class="col col-lg-3 col-xl-2">
                 <form action="form.html">
                     <button type="submit" class="btn btn-outline-secondary">
                         <i class="fa fa-plus me-2"></i>
@@ -288,7 +287,7 @@
                         </tbody>
                     </table>
                     <div th:if="${!entities.actions.isEmpty()}"
-                         class="row row-cols-auto align-items-center g-2">
+                         class="row row-cols-auto align-items-center g-2 mb-4">
                         <div class="col">
                             <label for="action" th:text="#{spring-jpa-admin.action.selected}">With selected:</label>
                         </div>
@@ -315,7 +314,7 @@
             </main>
 
             <nav role="doc-pagelist">
-                <ul class="pagination mt-4">
+                <ul class="pagination mt-2">
                     <li class="page-item disabled" th:class="${'page-item' + (entities.page < 2 ? ' disabled' : '')}">
                         <a th:if="${entities.page > 1}"
                            class="page-link d-none"

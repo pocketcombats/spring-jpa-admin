@@ -12,6 +12,8 @@ public record AdminRegisteredModel(
         String modelName,
         String label,
         RegisteredEntityDetails entityDetails,
+        boolean insertable,
+        boolean updatable,
         int pageSize,
         List<AdminModelListField> listFields,
         @Nullable SearchPredicateFactory searchPredicateFactory,

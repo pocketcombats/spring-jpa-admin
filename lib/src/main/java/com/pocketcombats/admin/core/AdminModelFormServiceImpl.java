@@ -54,8 +54,14 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     }
 
     private EntityDetails getEntityDetails(AdminRegisteredModel model, Object entity) {
-        List<AdminFormFieldGroup> formFieldGroups = mapFieldGroups(model.fieldsets(), FormAction.UPDATE, entity);
-        return new EntityDetails(model.modelName(), resolveId(entity), model.label(), formFieldGroups);
+        List<AdminFormFieldGroup> formFieldGroups = mapFieldGroups(model, FormAction.UPDATE, entity);
+        return new EntityDetails(
+                model.modelName(),
+                resolveId(entity),
+                model.label(),
+                formFieldGroups,
+                model.actions().containsKey("delete")
+        );
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -77,11 +83,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     @Deprecated
     private List<AdminFormFieldGroup> mapFieldGroups(
-            List<AdminModelFieldset> fieldsets,
+            AdminRegisteredModel model,
             FormAction action,
             Object entity
     ) {
-        return fieldsets.stream()
+        return model.fieldsets().stream()
                 .map(fieldset -> new AdminFormFieldGroup(
                         fieldset.label(),
                         null,
@@ -89,7 +95,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                                 .map(field -> new AdminFormField(
                                         field.name(),
                                         field.label(),
-                                        !isEditable(field, action),
+                                        !isEditable(model, field, action),
                                         field.template(),
                                         field.valueAccessor().readValue(entity),
                                         field.valueAccessor().getModelAttributes()
@@ -99,9 +105,9 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 .toList();
     }
 
-    private static boolean isEditable(AdminModelField field, FormAction action) {
+    private static boolean isEditable(AdminRegisteredModel model, AdminModelField field, FormAction action) {
         return switch (action) {
-            case UPDATE -> field.updatable();
+            case UPDATE -> model.updatable() && field.updatable();
             case CREATE -> field.insertable();
         };
     }

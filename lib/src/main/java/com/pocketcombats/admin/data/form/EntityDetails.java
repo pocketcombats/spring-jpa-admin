@@ -7,7 +7,8 @@ public record EntityDetails(
         String modelName,
         String id,
         String label,
-        List<AdminFormFieldGroup> fieldGroups
+        List<AdminFormFieldGroup> fieldGroups,
+        boolean deletable
 ) implements Serializable {
 
 }

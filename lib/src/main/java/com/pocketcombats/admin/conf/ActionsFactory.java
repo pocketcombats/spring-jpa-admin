@@ -61,6 +61,9 @@ public class ActionsFactory {
                 );
             }
         }
+        for (String disableAction : modelAnnotation.disableActions()) {
+            actions.remove(disableAction);
+        }
         return actions;
     }
 

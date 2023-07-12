@@ -100,6 +100,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 model.label(),
                 model.modelName(),
                 model.searchPredicateFactory() != null,
+                model.insertable(),
                 page,
                 pagesCount,
                 collectListFilters(model),

@@ -7,6 +7,7 @@ public record AdminModelEntitiesList(
         String label,
         String modelName,
         boolean searchable,
+        boolean insertable,
         int page,
         int pagesCount,
         List<ListFilter> filters,
