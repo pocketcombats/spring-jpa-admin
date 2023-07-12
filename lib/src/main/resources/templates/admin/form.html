@@ -54,7 +54,7 @@
 
 <form method="post"
       class="pt-4"
-      th:action="@{/admin/{adminModel}/{id}/(adminModel=${entity.modelName}, id=${entity.id})}">
+      th:action="@{/admin/{adminModel}/edit/{id}/(adminModel=${entity.modelName}, id=${entity.id})}">
     <div class="container">
 
         <div th:each="fieldGroup: ${entity.fieldGroups}">

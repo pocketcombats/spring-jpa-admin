@@ -30,6 +30,7 @@ public class JpaAdminProperties {
         private String index = "admin/index";
         private String list = "admin/list";
         private String form = "admin/form";
+        private String actionPrompt = "admin/action";
 
         public String getIndex() {
             return index;
@@ -53,6 +54,14 @@ public class JpaAdminProperties {
 
         public void setForm(String form) {
             this.form = form;
+        }
+
+        public String getActionPrompt() {
+            return actionPrompt;
+        }
+
+        public void setActionPrompt(String actionPrompt) {
+            this.actionPrompt = actionPrompt;
         }
     }
 }

@@ -7,6 +7,8 @@ import com.pocketcombats.admin.core.AdminModelFormService;
 import com.pocketcombats.admin.core.AdminModelFormServiceImpl;
 import com.pocketcombats.admin.core.AdminModelListEntityMapper;
 import com.pocketcombats.admin.core.AdminModelRegistry;
+import com.pocketcombats.admin.core.action.AdminModelActionService;
+import com.pocketcombats.admin.core.action.AdminModelActionServiceImpl;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +47,8 @@ public class JpaAdminAutoConfiguration implements Ordered {
     public AdminModelRegistry adminModelRegistry(
             ApplicationContext context,
             EntityManager em,
-            ConversionService conversionService
+            ConversionService conversionService,
+            ActionsFactory actionsFactory
     ) throws Exception {
         LOG.debug("Registering default AdminModelRegistry");
 
@@ -53,7 +56,8 @@ public class JpaAdminAutoConfiguration implements Ordered {
         AdminModelRegistryBuilder registryBuilder = new AdminModelRegistryBuilder(
                 em,
                 context.getAutowireCapableBeanFactory(),
-                conversionService
+                conversionService,
+                actionsFactory
         );
         for (Class<?> annotatedModel : annotatedModels) {
             registryBuilder.addModel(annotatedModel);
@@ -91,5 +95,18 @@ public class JpaAdminAutoConfiguration implements Ordered {
                 em,
                 conversionService
         );
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public AdminModelActionService adminModelActionService(
+            AdminModelRegistry modelRegistry,
+            AdminModelListEntityMapper mapper,
+            EntityManager em,
+            ConversionService conversionService
+    ) {
+        LOG.debug("Registering default AdminModelActionService");
+
+        return new AdminModelActionServiceImpl(modelRegistry, mapper, em, conversionService);
     }
 }

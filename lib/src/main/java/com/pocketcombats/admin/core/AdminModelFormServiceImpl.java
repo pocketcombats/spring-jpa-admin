@@ -10,7 +10,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,6 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 
 import java.util.List;
-import java.util.Map;
 
 public class AdminModelFormServiceImpl implements AdminModelFormService {
 
@@ -59,16 +58,15 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         return new EntityDetails(model.modelName(), resolveId(entity), model.label(), formFieldGroups);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private Object findEntity(AdminRegisteredModel model, String stringId) {
-        EntityType<?> entityTypeDescriptor = em.getEntityManagerFactory().getMetamodel().entity(model.entityClass());
-        Class<?> idType = entityTypeDescriptor.getIdType().getJavaType();// This should be cached probably?
-
-        Object id = conversionService.convert(stringId, idType);
+        RegisteredEntityDetails entityDetails = model.entityDetails();
+        Object id = conversionService.convert(stringId, entityDetails.idAttribute().getJavaType());
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<?> q = cb.createQuery(model.entityClass());
-        Root<?> root = q.from(model.entityClass());
+        CriteriaQuery<?> q = cb.createQuery(entityDetails.entityClass());
+        Root<?> root = q.from(entityDetails.entityClass());
         q.where(
-                cb.equal(root.get(entityTypeDescriptor.getId(idType).getName()), id)
+                cb.equal(root.get((SingularAttribute) entityDetails.idAttribute()), id)
                 // TODO: support additional predicates from config
         );
         List<?> resultList = em.createQuery(q).setMaxResults(2).getResultList();

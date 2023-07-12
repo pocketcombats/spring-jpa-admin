@@ -6,6 +6,8 @@ import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.AdminModelRegistryImpl;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
+import com.pocketcombats.admin.core.RegisteredEntityDetails;
+import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.search.CompositeSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
@@ -41,15 +43,18 @@ import java.util.Set;
     private final EntityManager em;
     private final AutowireCapableBeanFactory beanFactory;
     private final ConversionService conversionService;
+    private final ActionsFactory actionsFactory;
 
     public AdminModelRegistryBuilder(
             EntityManager em,
             AutowireCapableBeanFactory beanFactory,
-            ConversionService conversionService
+            ConversionService conversionService,
+            ActionsFactory actionsFactory
     ) {
         this.em = em;
         this.beanFactory = beanFactory;
         this.conversionService = conversionService;
+        this.actionsFactory = actionsFactory;
     }
 
     public AdminModelRegistryBuilder addModel(Class<?> annotatedClass) {
@@ -119,15 +124,25 @@ import java.util.Set;
 
         List<AdminModelFilter> filters = createModelFilters(modelAnnotation, entity, fieldFactory);
 
+        Map<String, AdminModelAction> actions = createActions(
+                modelName, modelAnnotation, targetClass, adminModelClass, adminModelBean
+        );
+
+        RegisteredEntityDetails entityDetails = new RegisteredEntityDetails(
+                targetClass,
+                entity,
+                entity.getId(entity.getIdType().getJavaType())
+        );
         return new AdminRegisteredModel(
                 modelName,
                 AdminStringUtils.toHumanReadableName(modelName),
-                targetClass,
+                entityDetails,
                 modelAnnotation.pageSize(),
                 listFields,
                 searchPredicateFactory,
                 filters,
-                fieldsets
+                fieldsets,
+                actions
         );
     }
 
@@ -312,6 +327,24 @@ import java.util.Set;
                 .toList();
         filters.addAll(fieldFilters);
         return filters;
+    }
+
+    private Map<String, AdminModelAction> createActions(
+            String modelName,
+            AdminModel modelAnnotation,
+            Class<?> targetClass,
+            @Nullable Class<?> adminModelClass,
+            @Nullable Object adminModelBean
+    ) {
+        Map<String, AdminModelAction> actions = actionsFactory.createActions(
+                modelAnnotation,
+                targetClass,
+                adminModelClass, adminModelBean
+        );
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("Model {} has actions of {}", modelName, actions.keySet());
+        }
+        return actions;
     }
 
     public AdminModelRegistry build() {

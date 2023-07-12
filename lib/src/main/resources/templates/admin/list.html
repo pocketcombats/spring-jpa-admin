@@ -192,7 +192,7 @@
                         <tr th:each="entity: ${entities.entities}">
                             <td th:each="column, columnStat: ${entities.columns}">
                                 <a th:if="${columnStat.first}"
-                                   th:href="@{/admin/{adminModel}/{id}/(adminModel=${entities.modelName}, id=${entity.id})}"
+                                   th:href="@{/admin/{adminModel}/edit/{id}/(adminModel=${entities.modelName}, id=${entity.id})}"
                                    th:text="${entity.getAttributeByIndex(columnStat.index)}"
                                    href="form.html">
                                     Demo Entity

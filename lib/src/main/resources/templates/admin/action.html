@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--/*@thymesVar id="prompt" type="com.pocketcombats.admin.data.action.ActionPrompt"*/-->
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <title th:text="${prompt.description}">Confirm delete</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <!-- Google Fonts Roboto -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
+    <!-- MDB -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
+          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
+    <script type="text/javascript"
+            th:src="@{/webjars/mdb-ui-kit/js/mdb.min.js}"
+            src="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/js/mdb.min.js"></script>
+    <!-- Custom styles -->
+    <style>
+        main th {
+            text-transform: uppercase;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+<header class="bg-light shadow-4 pt-4 pb-3 mb-4">
+    <div class="container">
+        <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
+        <div class="row row-cols-auto align-items-center mt-4">
+            <div class="col">
+                <h4><a href="list.html"
+                       th:href="@{/admin/{adminModel}/(adminModel=${prompt.modelName})}"
+                       th:text="${prompt.modelLabel}"
+                       class="text-body">Model One</a></h4>
+            </div>
+        </div>
+    </div>
+</header>
+<div>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h5 th:if="${prompt.localize}" th:text="#{${prompt.description}}" class="d-none" th:class="''"></h5>
+                <h5 th:unless="${prompt.localize}" th:text="${prompt.description}">
+                    Confirm the deletion of the following entities
+                </h5>
+                <main>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th th:each="column: ${prompt.columns}" th:text="${column.label}">
+                                    Name
+                                </th>
+                                <th th:remove="all">Description</th>
+                                <th th:remove="all">Enabled</th>
+                            </tr>
+                            </thead>
+                            <tbody th:unless="${prompt.entities.isEmpty()}"
+                                   class="table-group-divider table-divider-color">
+                            <tr th:each="entity: ${prompt.entities}">
+                                <td th:each="column, columnStat: ${prompt.columns}">
+                                    <th:block th:if="${column.bool}" class="d-none">
+                                        <th:block th:if="${entity.getAttributeByIndex(columnStat.index)}">
+                                            <i class="fa-solid fa-circle-check text-success"></i>
+                                            <span class="d-none">+</span>
+                                        </th:block>
+                                        <th:block th:unless="${entity.getAttributeByIndex(columnStat.index)}">
+                                            <i class="fa-solid fa-circle-xmark text-danger"></i>
+                                            <span class="d-none">-</span>
+                                        </th:block>
+                                    </th:block>
+                                    <span th:unless="${column.bool}"
+                                          th:text="${entity.getAttributeByIndex(columnStat.index)}">
+                                    Demo Entity
+                                </span>
+                                </td>
+                                <td th:remove="all">Long description of the first entity.<br/>Multiline as well.</td>
+                                <td th:remove="all">
+                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <span class="d-none">+</span>
+                                </td>
+                            </tr>
+                            <tr th:remove="all">
+                                <td>Another Entity</td>
+                                <td>Description</td>
+                                <td><i class="fa-solid fa-circle-xmark text-danger"></i><span class="d-none">-</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    <div class="bg-light pt-4 pb-4 mt-4">
+        <div class="container">
+            <div class="row justify-content-end">
+                <div class="col-auto">
+                    <a type="button"
+                       class="btn btn-secondary me-2"
+                       href="list.html"
+                       th:href="@{/admin/{adminModel}/(adminModel=${prompt.modelName})}"
+                       th:text="#{spring-jpa-admin.action.cancel}">Cancel</a>
+                    <form class="d-inline-block"
+                          method="post"
+                          th:action="@{/admin/{adminModel}/action/confirm/(adminModel=${prompt.modelName})}">
+                        <input type="hidden"
+                               name="action"
+                               th:value="${prompt.action}"/>
+                        <input type="hidden"
+                               name="id"
+                               th:each="entity: ${prompt.entities}"
+                               th:value="${entity.id}" />
+                        <input th:if="${prompt.localize}"
+                               type="submit"
+                               name="save"
+                               class="d-none"
+                               th:class="'btn btn-primary'"
+                               value="Delete"
+                               th:value="#{${prompt.label}}"/>
+                        <input th:unless="${prompt.localize}"
+                               type="submit"
+                               name="save"
+                               class="btn btn-primary"
+                               value="Delete"
+                               th:value="${prompt.label}"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

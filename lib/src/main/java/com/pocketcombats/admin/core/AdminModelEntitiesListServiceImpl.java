@@ -14,11 +14,9 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.transaction.Transactional;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.convert.ConversionService;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,11 +49,12 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             Map<String, String> filters
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+        Class<?> entityClass = model.entityDetails().entityClass();
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
 
         CriteriaQuery<Long> paginationQuery = cb.createQuery(Long.class);
-        Root<?> paginationRoot = paginationQuery.from(model.entityClass());
+        Root<?> paginationRoot = paginationQuery.from(entityClass);
         paginationQuery.select(cb.count(paginationRoot));
         applyModelRequest(model, paginationQuery, paginationRoot, query);
         applyFilters(model, paginationQuery, paginationRoot, filters);
@@ -71,8 +70,8 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
         List<?> resultList;
         if (totalCount > 0) {
-            CriteriaQuery<?> dataQuery = cb.createQuery(model.entityClass());
-            Root<?> root = dataQuery.from(model.entityClass());
+            CriteriaQuery<?> dataQuery = cb.createQuery(entityClass);
+            Root<?> root = dataQuery.from(entityClass);
             applyModelRequest(model, dataQuery, root, query);
             applyFilters(model, dataQuery, root, filters);
             applySorting(query.getSort(), model, dataQuery, root, cb);
