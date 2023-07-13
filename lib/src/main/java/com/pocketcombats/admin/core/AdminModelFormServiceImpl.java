@@ -11,10 +11,12 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.SingularAttribute;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
@@ -45,7 +47,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public EntityDetails details(String modelName, String stringId) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
         Object entity = findEntity(model, stringId);
@@ -81,7 +83,6 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         return entity;
     }
 
-    @Deprecated
     private List<AdminFormFieldGroup> mapFieldGroups(
             AdminRegisteredModel model,
             FormAction action,
@@ -113,7 +114,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public AdminModelEditingResult update(
             String modelName,
             String stringId,

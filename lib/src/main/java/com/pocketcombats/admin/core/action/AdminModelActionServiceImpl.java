@@ -13,10 +13,11 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.SingularAttribute;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class AdminModelActionServiceImpl implements AdminModelActionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ActionPrompt prompt(String modelName, String actionName, List<String> stringIds)
             throws UnknownModelException, UnknownActionException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
@@ -99,7 +100,7 @@ public class AdminModelActionServiceImpl implements AdminModelActionService {
     }
 
     @Override
-    @Transactional(rollbackOn = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
     public void perform(String modelName, String actionName, List<String> stringIds)
             throws UnknownModelException, UnknownActionException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);

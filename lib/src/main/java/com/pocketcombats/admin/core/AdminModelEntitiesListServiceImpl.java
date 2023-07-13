@@ -14,10 +14,10 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +43,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public AdminModelEntitiesList listEntities(
             String modelName,
             ModelRequest query,

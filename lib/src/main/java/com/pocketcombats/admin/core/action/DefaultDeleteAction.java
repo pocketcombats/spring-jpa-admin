@@ -6,11 +6,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.Root;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class DefaultDeleteAction implements AdminModelAction {
     }
 
     @Override
-    @Transactional(value = Transactional.TxType.MANDATORY, rollbackOn = Exception.class)
+    @Transactional(propagation = Propagation.MANDATORY, rollbackFor = Exception.class)
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void run(EntityManager em, AdminRegisteredModel model, List<?> entities) {
         if (LOG.isDebugEnabled()) {
