@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.demo.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -13,6 +14,7 @@ public class Post implements Serializable {
 
     @Id
     @Column(name = "id", updatable = false)
+    @GeneratedValue
     private Long id;
 
     @Column(name = "post_time", nullable = false)
@@ -23,6 +25,7 @@ public class Post implements Serializable {
     private DemoUser author;
 
     @Column(name = "text", nullable = false)
+    @NotBlank
     private String text;
 
     @Column(name = "category")

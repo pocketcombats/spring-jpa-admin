@@ -12,4 +12,8 @@ public interface AdminModelFormService {
             String id,
             MultiValueMap<String, String> data
     ) throws UnknownModelException;
+
+    EntityDetails create(String modelName) throws UnknownModelException;
+
+    AdminModelEditingResult create(String modelName, MultiValueMap<String, String> data) throws UnknownModelException;
 }

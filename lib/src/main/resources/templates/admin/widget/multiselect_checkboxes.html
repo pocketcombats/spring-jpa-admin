@@ -1,8 +1,11 @@
 <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
-<div class="form-control overflow-auto" style="max-height: 10rem">
-    <!--/*@thymesVar id="option" type="com.pocketcombats.admin.widget.Option"*/-->
+<!--/*@thymesVar id="hasErrors" type="boolean"*/-->
+<div class="form-control overflow-auto"
+     th:classappend="${hasErrors ? 'is-invalid' : ''}"
+     style="max-height: 10rem">
     <div class="form-check"
          th:each="option : ${field.templateData()['_options']}">
+        <!--/*@thymesVar id="option" type="com.pocketcombats.admin.widget.Option"*/-->
         <input type="checkbox"
                class="form-check-input"
                th:id="${'model-field-' + field.name + '-' + option.id}"

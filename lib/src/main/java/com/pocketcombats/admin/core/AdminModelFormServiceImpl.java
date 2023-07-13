@@ -13,6 +13,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
 
 import java.util.List;
 
@@ -29,15 +31,18 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     private final AdminModelRegistry modelRegistry;
     private final EntityManager em;
+    private final Validator validator;
     private final ConversionService conversionService;
 
     public AdminModelFormServiceImpl(
             AdminModelRegistry modelRegistry,
             EntityManager em,
+            Validator validator,
             ConversionService conversionService
     ) {
         this.modelRegistry = modelRegistry;
         this.em = em;
+        this.validator = validator;
         this.conversionService = conversionService;
     }
 
@@ -52,11 +57,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
         Object entity = findEntity(model, stringId);
 
-        return getEntityDetails(model, entity);
+        return getEntityDetails(model, entity, FormAction.UPDATE);
     }
 
-    private EntityDetails getEntityDetails(AdminRegisteredModel model, Object entity) {
-        List<AdminFormFieldGroup> formFieldGroups = mapFieldGroups(model, FormAction.UPDATE, entity);
+    private EntityDetails getEntityDetails(AdminRegisteredModel model, Object entity, FormAction action) {
+        List<AdminFormFieldGroup> formFieldGroups = mapFieldGroups(model, entity, action);
         return new EntityDetails(
                 model.modelName(),
                 resolveId(entity),
@@ -85,8 +90,8 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     private List<AdminFormFieldGroup> mapFieldGroups(
             AdminRegisteredModel model,
-            FormAction action,
-            Object entity
+            Object entity,
+            FormAction action
     ) {
         return model.fieldsets().stream()
                 .map(fieldset -> new AdminFormFieldGroup(
@@ -123,12 +128,29 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
         Object entity = findEntity(model, stringId);
 
+        BindingResult bindingResult = bind(model, entity, FormAction.UPDATE, rawData);
+        if (bindingResult.hasErrors()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
+
+        return new AdminModelEditingResult(
+                getEntityDetails(model, entity, FormAction.UPDATE),
+                bindingResult
+        );
+    }
+
+    private BindingResult bind(
+            AdminRegisteredModel model,
+            Object entity,
+            FormAction action,
+            MultiValueMap<String, String> rawData
+    ) {
         List<AdminModelField> writeableFields = model.fieldsets().stream()
                 .flatMap(fieldset -> fieldset.fields().stream())
-                .filter(AdminModelField::updatable)
+                .filter(field -> isEditable(model, field, action))
                 .toList();
 
-        BindingResult bindingResult = new BeanPropertyBindingResult(entity, modelName);
+        BindingResult bindingResult = new BeanPropertyBindingResult(entity, model.modelName());
         for (AdminModelField field : writeableFields) {
             AdminFormFieldValueAccessor accessor = field.valueAccessor();
             if (accessor instanceof AdminFormFieldSingularValueAccessor singularValueAccessor) {
@@ -136,12 +158,40 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             } else if (accessor instanceof AdminFormFieldPluralValueAccessor pluralValueAccessor) {
                 pluralValueAccessor.setValues(entity, rawData.get("model-field-" + field.name()), bindingResult);
             } else {
-                LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), modelName);
+                LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), model.modelName());
             }
+        }
+        validator.validate(entity, bindingResult);
+        return bindingResult;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EntityDetails create(String modelName) throws UnknownModelException {
+        AdminRegisteredModel model = modelRegistry.resolve(modelName);
+        Object entity = BeanUtils.instantiateClass(model.entityDetails().entityClass());
+
+        return getEntityDetails(model, entity, FormAction.CREATE);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public AdminModelEditingResult create(
+            String modelName,
+            MultiValueMap<String, String> rawData
+    ) throws UnknownModelException {
+        AdminRegisteredModel model = modelRegistry.resolve(modelName);
+        Object entity = BeanUtils.instantiateClass(model.entityDetails().entityClass());
+
+        BindingResult bindingResult = bind(model, entity, FormAction.CREATE, rawData);
+        if (!bindingResult.hasErrors()) {
+            em.persist(entity);
+        } else {
+            LOG.debug("Binding result has errors, can't save new {}", model.modelName());
         }
 
         return new AdminModelEditingResult(
-                getEntityDetails(model, entity),
+                getEntityDetails(model, entity, FormAction.CREATE),
                 bindingResult
         );
     }

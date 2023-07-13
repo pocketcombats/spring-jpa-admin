@@ -12,10 +12,12 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.IdentifiableType;
 import jakarta.persistence.metamodel.PluralAttribute;
+import org.springframework.core.CollectionFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +58,9 @@ public class ToManyFormFieldAccessor extends AbstractFormFieldValueAccessor
     @Override
     public List<String> readValue(Object instance) {
         Collection<?> value = (Collection<?>) getReader().getValue(instance);
+        if (value == null) {
+            return Collections.emptyList();
+        }
         return value.stream()
                 .map(this::getEntityStringId)
                 .toList();
@@ -65,7 +70,15 @@ public class ToManyFormFieldAccessor extends AbstractFormFieldValueAccessor
     @SuppressWarnings("unchecked")
     public void setValues(Object instance, @Nullable List<String> values, BindingResult bindingResult) {
         Collection<Object> attributeRef = (Collection<Object>) getReader().getValue(instance);
-        attributeRef.clear();
+        if (attributeRef == null) {
+            attributeRef = CollectionFactory.createCollection(
+                    getReader().getJavaType(),
+                    values == null ? 0 : values.size()
+            );
+            getWriter().setValue(instance, attributeRef);
+        } else {
+            attributeRef.clear();
+        }
         if (values != null) {
             List<?> valueRefs = values.stream()
                     .map(value -> em.getReference(

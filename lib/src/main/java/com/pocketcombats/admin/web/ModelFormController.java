@@ -27,6 +27,40 @@ public class ModelFormController {
         this.adminModelFormService = adminModelFormService;
     }
 
+    @GetMapping("/admin/{modelName}/create/")
+    @Secured("ROLE_JPA_ADMIN")
+    public ModelAndView create(@PathVariable String modelName) throws UnknownModelException {
+        EntityDetails entity = adminModelFormService.create(modelName);
+        return new ModelAndView(
+                properties.getTemplates().getForm(),
+                Map.of("entity", entity)
+        );
+    }
+
+    @PostMapping("/admin/{model}/create/")
+    @Secured("ROLE_JPA_ADMIN")
+    public ModelAndView create(
+            @PathVariable String model,
+            @RequestParam MultiValueMap<String, String> data
+    ) throws UnknownModelException {
+        AdminModelEditingResult result = adminModelFormService.create(model, data);
+        if (result.bindingResult().hasErrors()) {
+            return new ModelAndView(
+                    properties.getTemplates().getForm(),
+                    Map.of(
+                            "entity", result.entityDetails(),
+                            "errors", result.bindingResult()
+                    )
+            );
+        } else {
+            if (data.containsKey("save-continue")) {
+                return new ModelAndView("redirect:/admin/" + model + "/edit/" + result.entityDetails().id());
+            } else {
+                return new ModelAndView("redirect:/admin/" + model + "/");
+            }
+        }
+    }
+
     @GetMapping("/admin/{modelName}/edit/{id}/")
     @Secured("ROLE_JPA_ADMIN")
     public ModelAndView view(@PathVariable String modelName, @PathVariable String id) throws UnknownModelException {

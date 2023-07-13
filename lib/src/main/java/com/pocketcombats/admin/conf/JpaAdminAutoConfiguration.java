@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.Ordered;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.validation.Validator;
 
 import java.util.Set;
 
@@ -86,6 +87,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
     public AdminModelFormService adminModelFormService(
             AdminModelRegistry modelRegistry,
             EntityManager em,
+            Validator validator,
             ConversionService conversionService
     ) {
         LOG.debug("Registering default AdminModelFormService");
@@ -93,6 +95,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
         return new AdminModelFormServiceImpl(
                 modelRegistry,
                 em,
+                validator,
                 conversionService
         );
     }

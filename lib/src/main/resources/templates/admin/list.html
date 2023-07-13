@@ -129,12 +129,12 @@
                        class="text-body">Model One</a></h4>
             </div>
             <div th:if="${entities.insertable}" class="col col-lg-3 col-xl-2">
-                <form action="form.html">
-                    <button type="submit" class="btn btn-outline-secondary">
+                    <a class="btn btn-outline-secondary"
+                       href="form.html"
+                       th:href="@{/admin/{adminModel}/create/(adminModel=${entities.modelName})}">
                         <i class="fa fa-plus me-2"></i>
                         <span th:text="#{spring-jpa-admin.action.add(${entities.label})}">Add Model One</span>
-                    </button>
-                </form>
+                    </a>
             </div>
         </div>
     </div>
