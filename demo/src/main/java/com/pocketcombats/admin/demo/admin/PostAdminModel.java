@@ -12,7 +12,7 @@ import org.springframework.core.convert.ConversionService;
  * Demonstrates JPA Admin annotations applied indirectly.
  */
 @AdminModel(
-        model = Post.class,
+        entity = Post.class,
         listFields = {"textPreview", "author", "postTime", "approved"},
         filterFields = {"approved", "author", "tags"},
         fieldOverrides = {

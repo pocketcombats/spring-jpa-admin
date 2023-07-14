@@ -11,7 +11,12 @@ import java.lang.annotation.Target;
 @Documented
 public @interface AdminModel {
 
-    Class<?> model() default Void.class;
+    /**
+     * Target entity.
+     * Has no effect if {@code @AdminModel} is put directly on entity.
+     * Otherwise, a valid entity class must be provided.
+     */
+    Class<?> entity() default Void.class;
 
     String[] listFields() default {};
 

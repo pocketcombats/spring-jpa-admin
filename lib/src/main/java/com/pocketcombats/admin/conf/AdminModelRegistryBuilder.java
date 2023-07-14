@@ -63,8 +63,8 @@ import java.util.Set;
         AdminModel modelAnnotation = AnnotationUtils.getAnnotation(annotatedClass, AdminModel.class);
         assert modelAnnotation != null;
         Class<?> targetClass;
-        if (modelAnnotation.model() != Void.class) {
-            targetClass = modelAnnotation.model();
+        if (modelAnnotation.entity() != Void.class) {
+            targetClass = modelAnnotation.entity();
         } else {
             targetClass = annotatedClass;
         }
