@@ -20,7 +20,8 @@ public class JpaAdminSecurityConfiguration {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public SecurityFilterChain permitWebjars(HttpSecurity http) throws Exception {
-        http.securityMatcher("/webjars/**").authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
+        http.securityMatcher("/webjars/**")
+                .authorizeHttpRequests(authorize -> authorize.requestMatchers("/webjars/**").permitAll());
         return http.build();
     }
 }
