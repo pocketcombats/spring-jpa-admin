@@ -9,7 +9,6 @@ public record ActionPrompt(
         String action,
         String label,
         String description,
-        boolean localize,
         String modelName,
         String modelLabel,
         List<ActionColumn> columns,

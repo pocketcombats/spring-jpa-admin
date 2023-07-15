@@ -14,7 +14,6 @@ public abstract class DelegatingAction implements AdminModelAction {
     private final AdminHistoryWriter historyWriter;
 
     private final Method method;
-    private final AdminAction actionConfig;
     private final String action;
 
     private final String label;
@@ -23,9 +22,9 @@ public abstract class DelegatingAction implements AdminModelAction {
     public DelegatingAction(AdminHistoryWriter historyWriter, Method method) {
         this.historyWriter = historyWriter;
         this.method = method;
-        this.actionConfig = method.getAnnotation(AdminAction.class);
         this.action = method.getName();
 
+        AdminAction actionConfig = method.getAnnotation(AdminAction.class);
         if (!"".equals(actionConfig.label())) {
             this.label = actionConfig.label();
         } else {
@@ -47,11 +46,6 @@ public abstract class DelegatingAction implements AdminModelAction {
     @Override
     public String getDescription() {
         return description;
-    }
-
-    @Override
-    public boolean isLocalized() {
-        return actionConfig.localize();
     }
 
     @Override

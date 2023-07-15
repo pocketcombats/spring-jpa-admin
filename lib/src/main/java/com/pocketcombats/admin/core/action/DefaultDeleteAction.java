@@ -44,11 +44,6 @@ public class DefaultDeleteAction implements AdminModelAction {
     }
 
     @Override
-    public boolean isLocalized() {
-        return true;
-    }
-
-    @Override
     @Transactional(propagation = Propagation.MANDATORY, rollbackFor = Exception.class)
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void run(EntityManager em, AdminRegisteredModel model, List<?> entities) {

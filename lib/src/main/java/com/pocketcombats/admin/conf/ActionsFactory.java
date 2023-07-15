@@ -80,11 +80,6 @@ public class ActionsFactory {
                                 "Violating method: " + targetClass.getName() + "#" + method.getName()
                 );
             }
-            AdminAction annotation = method.getAnnotation(AdminAction.class);
-            if (annotation.localize() && "".equals(annotation.label())) {
-                throw new IllegalStateException("AdminAction is marked for localization but has no explicit label." +
-                        "Violating method: " + targetClass.getName() + "#" + method.getName());
-            }
         }
         return methods;
     }

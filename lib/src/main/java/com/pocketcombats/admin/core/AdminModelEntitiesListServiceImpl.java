@@ -193,8 +193,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                         modelFilter.collectOptions().stream()
                                 .map(filterOption -> new ListFilterOption(
                                         filterOption.label(),
-                                        filterOption.value(),
-                                        filterOption.localize()
+                                        filterOption.value()
                                 ))
                                 .toList()
                 ))
@@ -205,7 +204,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
     private static List<ListAction> collectActions(AdminRegisteredModel model) {
         return model.actions().values().stream()
-                .map(action -> new ListAction(action.getId(), action.getLabel(), action.isLocalized()))
+                .map(action -> new ListAction(action.getId(), action.getLabel()))
                 .toList();
     }
 }

@@ -1,11 +1,10 @@
 package com.pocketcombats.admin.core.filter;
 
+import java.io.Serializable;
+
 public record ModelFilterOption(
         String label,
-        String value,
-        boolean localize
-) {
-    public ModelFilterOption(String label, String value) {
-        this(label, value, false);
-    }
+        String value
+) implements Serializable {
+
 }

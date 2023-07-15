@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 public record ListFilterOption(
         String label,
-        String value,
-        boolean localize
+        String value
 ) implements Serializable {
 }

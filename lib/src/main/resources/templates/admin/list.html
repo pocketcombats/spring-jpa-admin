@@ -164,8 +164,7 @@
                    th:with="urlParams=${@adminUrlParamsHelper.join(param, filterParam, filterOption.value())}"
                    th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, __${urlParams}__)}"
                    th:class="${'list-group-item list-group-item-action px-3' + ((param.get(filterParam)?.get(0) == filterOption.value()) ? ' active' : '')}">
-                    <th:block th:if="${filterOption.localize()}" th:text="#{${filterOption.label()}}">Yes</th:block>
-                    <th:block th:unless="${filterOption.localize()}" th:text="${filterOption.label()}"></th:block>
+                    <th:block th:text="${#messages.msgOrNull(filterOption.label) ?: filterOption.label}">Yes</th:block>
                 </a>
                 <a th:remove="all"
                    class="list-group-item list-group-item-action px-3 active"
@@ -294,14 +293,12 @@
                         <div class="col">
                             <select id="action" name="action" class="form-select w-auto d-inline-block">
                                 <option disabled selected>&mdash;</option>
-                                <th:block th:each="action: ${entities.actions}">
-                                    <option th:if="${action.localize}"
-                                            th:value="${action.id}"
-                                            th:text="#{${action.label}}">Delete</option>
-                                    <option th:unless="${action.localize}"
-                                            th:value="${action.id}"
-                                            th:text="${action.label}">Enable</option>
-                                </th:block>
+                                <option th:each="action: ${entities.actions}"
+                                th:value="${action.id}"
+                                th:text="${#messages.msgOrNull(action.label) ?: action.label}">
+                                    Delete
+                                </option>
+                                <option th:remove="all">Enable</option>
                             </select>
                         </div>
                         <div class="col">

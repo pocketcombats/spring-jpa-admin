@@ -4,8 +4,7 @@ import java.io.Serializable;
 
 public record ListAction(
         String id,
-        String label,
-        boolean localize
+        String label
 ) implements Serializable {
 
 }

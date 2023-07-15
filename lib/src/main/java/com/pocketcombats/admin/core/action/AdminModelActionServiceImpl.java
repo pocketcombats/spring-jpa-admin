@@ -56,7 +56,7 @@ public class AdminModelActionServiceImpl implements AdminModelActionService {
                 .toList();
         return new ActionPrompt(
                 action.getId(),
-                action.getLabel(), action.getDescription(), action.isLocalized(),
+                action.getLabel(), action.getDescription(),
                 modelName, model.label(),
                 columns, entries
         );

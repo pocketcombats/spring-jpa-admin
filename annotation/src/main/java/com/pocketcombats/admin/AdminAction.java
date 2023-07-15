@@ -18,19 +18,11 @@ public @interface AdminAction {
 
     /**
      * Custom action name. Defaults to annotated method name.
-     * Will be localized if {@link #localize()} is set to true.
      */
     String label() default "";
 
     /**
      * Custom confirmation message.
-     * Will be localized if {@link #localize()} is set to true.
      */
     String description() default "";
-
-    /**
-     * Set to {@code true} if {@link #label()} and {@link #description()} should be localized.
-     * In this case they must have explicit values set.
-     */
-    boolean localize() default false;
 }

@@ -21,8 +21,8 @@ public class BooleanFilterOptionsCollector extends AbstractAttributeFilterOption
     protected List<ModelFilterOption> mapResults(List<?> resultList) {
         if (resultList.size() > 1) {
             return List.of(
-                    new ModelFilterOption("spring-jpa-admin.filter.boolean.true", "true", true),
-                    new ModelFilterOption("spring-jpa-admin.filter.boolean.false", "false", true)
+                    new ModelFilterOption("spring-jpa-admin.filter.boolean.true", "true"),
+                    new ModelFilterOption("spring-jpa-admin.filter.boolean.false", "false")
             );
         } else {
             return Collections.emptyList();

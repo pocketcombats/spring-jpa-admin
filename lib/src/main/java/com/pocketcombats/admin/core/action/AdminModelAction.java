@@ -13,7 +13,5 @@ public interface AdminModelAction {
 
     String getDescription();
 
-    boolean isLocalized();
-
     void run(EntityManager em, AdminRegisteredModel model, List<?> entities);
 }
