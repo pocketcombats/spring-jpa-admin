@@ -13,6 +13,7 @@ import org.springframework.core.convert.ConversionService;
  */
 @AdminModel(
         entity = Post.class,
+        label = "demo.entity.post.label",
         listFields = {"textPreview", "author", "postTime", "approved"},
         filterFields = {"approved", "author", "tags"},
         fieldOverrides = {

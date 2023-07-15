@@ -104,6 +104,9 @@ import java.util.Set;
         EntityType<?> entity = em.getEntityManagerFactory().getMetamodel().entity(targetClass);
         Class<?> adminModelClass = annotatedClass != targetClass ? annotatedClass : null;
         Object adminModelBean = adminModelClass != null ? beanFactory.createBean(adminModelClass) : null;
+        String label = "".equals(modelAnnotation.label())
+                ? AdminStringUtils.toHumanReadableName(modelName)
+                : modelAnnotation.label();
 
         SearchPredicateFactory searchPredicateFactory = createModelSearchPredicateFactory(
                 modelName,
@@ -135,7 +138,7 @@ import java.util.Set;
         );
         return new AdminRegisteredModel(
                 modelName,
-                AdminStringUtils.toHumanReadableName(modelName),
+                label,
                 entityDetails,
                 modelAnnotation.insertable(),
                 modelAnnotation.updatable(),

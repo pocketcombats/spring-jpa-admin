@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      th:with="entityLabel=${#messages.msgOrNull(entity.label) ?: entity.label}">
 <!--/*@thymesVar id="entity" type="com.pocketcombats.admin.data.form.EntityDetails"*/-->
 <!--/*@thymesVar id="errors" type="org.springframework.validation.Errors"*/-->
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
     <meta http-equiv="x-ua-compatible" content="ie=edge"/>
-    <title th:text="#{spring-jpa-admin.action.edit(${entity.label})}">Edit Model One</title>
+    <title th:text="#{spring-jpa-admin.action.edit(${entityLabel})}">Edit Model One</title>
     <!-- Font Awesome -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
@@ -46,7 +47,7 @@
             <div class="col col-lg-9 col-xl-10">
                 <h4><a href="list.html"
                        th:href="@{/admin/{adminModel}/(adminModel=${entity.modelName})}"
-                       th:text="${entity.label}"
+                       th:text="${entityLabel}"
                        class="text-body">Model One</a></h4>
             </div>
         </div>
@@ -66,7 +67,7 @@
             <div th:each="field: ${fieldGroup.fields}" class="row form-row">
                 <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
                 <label th:for="${'model-field-' + field.name}"
-                       th:text="${field.label}"
+                       th:text="${#messages.msgOrNull(field.label) ?: field.label}"
                        class="col-sm-2 col-form-label"></label>
                 <div class="col-sm-10"
                      th:with="hasErrors=${errors != null && errors.hasFieldErrors(field.name)}">

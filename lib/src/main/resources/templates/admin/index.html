@@ -57,7 +57,7 @@
                             <td>
                                 <a href="list.html"
                                    th:href="@{/admin/{adminModel}/(adminModel=${model.modelName})}"
-                                   th:text="${model.label}">Post</a>
+                                   th:text="${#messages.msgOrNull(model.label) ?: model.label}">Post</a>
                             </td>
                         </tr>
                         <tr th:remove="all">
@@ -106,7 +106,7 @@
                     <span th:case="*"
                           class="badge badge-secondary"
                           th:text="${badgeText}"></span>
-                    <b th:text="${historyEntry.modelLabel}">Post</b>
+                    <b th:text="${#messages.msgOrNull(historyEntry.modelLabel) ?: historyEntry.modelLabel}">Post</b>
                     <span th:if="${historyEntry.action == 'delete'}"
                           class="link-secondary"
                           disabled="disabled"

@@ -18,6 +18,8 @@ public @interface AdminModel {
      */
     Class<?> entity() default Void.class;
 
+    String label() default "";
+
     String[] listFields() default {};
 
     int pageSize() default 20;

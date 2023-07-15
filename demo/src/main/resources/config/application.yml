@@ -22,5 +22,8 @@ spring.jpa:
       generate_statistics: true
       #format_sql: true
 
+spring.messages:
+  basename: messages,spring-jpa-admin-messages
+
 logging.level.org.hibernate.tool.hbm2ddl: DEBUG
 logging.level.com.pocketcombats.admin: TRACE

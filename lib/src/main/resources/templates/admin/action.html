@@ -60,7 +60,7 @@
                         <table class="table table-striped">
                             <thead>
                             <tr>
-                                <th th:each="column: ${prompt.columns}" th:text="${column.label}">
+                                <th th:each="column: ${prompt.columns}" th:text="${#messages.msgOrNull(column.label) ?: column.label}">
                                     Name
                                 </th>
                                 <th th:remove="all">Description</th>

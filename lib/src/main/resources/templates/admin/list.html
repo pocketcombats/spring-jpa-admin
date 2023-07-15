@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"
+      th:with="entitiesLabel=${#messages.msgOrNull(entities.label) ?: entities.label}">
 <!--/*@thymesVar id="entities" type="com.pocketcombats.admin.data.list.AdminModelEntitiesList"*/-->
 <!--/*@thymesVar id="modelRequest" type="com.pocketcombats.admin.data.list.ModelRequest"*/-->
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
     <meta http-equiv="x-ua-compatible" content="ie=edge"/>
-    <title th:text="${entities.label}">Model One</title>
+    <title th:text="${entitiesLabel}">Model One</title>
     <!-- Font Awesome -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
@@ -125,7 +126,7 @@
             <div class="col col-lg-9 col-xl-10">
                 <h4><a href="list.html"
                        th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName})}"
-                       th:text="${entities.label}"
+                       th:text="${entitiesLabel}"
                        class="text-body">Model One</a></h4>
             </div>
             <div th:if="${entities.insertable}" class="col col-lg-3 col-xl-2">
@@ -133,7 +134,7 @@
                        href="form.html"
                        th:href="@{/admin/{adminModel}/create/(adminModel=${entities.modelName})}">
                         <i class="fa fa-plus me-2"></i>
-                        <span th:text="#{spring-jpa-admin.action.add(${entities.label})}">Add Model One</span>
+                        <span th:text="#{spring-jpa-admin.action.add(${entitiesLabel})}">Add Model One</span>
                     </a>
             </div>
         </div>
@@ -147,7 +148,8 @@
             <div class="list-group list-group-small mb-4" role="tablist"
                  th:each="filter: ${entities.filters()}"
                  th:with="filterParam=${'filter:' + filter.name()}">
-                <h6 class="bg-light list-group-item px-3 mb-0 border-top border-bottom" th:text="${filter.label()}">
+                <h6 class="bg-light list-group-item px-3 mb-0 border-top border-bottom"
+                    th:text="${#messages.msgOrNull(filter.label) ?: filter.label}">
                     Enabled
                 </h6>
                 <a class="list-group-item list-group-item-action px-3"
@@ -218,6 +220,7 @@
                             <th th:if="${!entities.actions.isEmpty()}" class="select-all"></th>
                             <th th:each="column: ${entities.columns}"
                                 th:class="${column.sortable() ? 'sortable' : ''}"
+                                th:with="columnLabel=${#messages.msgOrNull(column.label) ?: column.label}"
                                 class="sortable">
                                 <a th:if="${column.sortable}"
                                    th:switch="${modelRequest.sort}"
@@ -228,9 +231,9 @@
                                     <i th:case="${column.name}" th:class="'sort-icon active fas fa-arrow-up'"></i>
                                     <i th:case="'-' + ${column.name}" class="sort-icon active fas fa-arrow-down"></i>
                                     <i th:case="*" th:class="'sort-icon fas fa-arrow-up'"></i>
-                                    <th:block th:text="${column.label}">Title</th:block>
+                                    <th:block th:text="${columnLabel}">Title</th:block>
                                 </a>
-                                <th:block th:unless="${column.sortable}" th:text="${column.label}"/>
+                                <th:block th:unless="${column.sortable}" th:text="${columnLabel}"/>
                             </th>
                             <th th:remove="all" class="sortable">
                                 <a href="list.html" class="d-block">
