@@ -2,6 +2,7 @@ package com.pocketcombats.admin.core.action;
 
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.core.RegisteredEntityDetails;
+import com.pocketcombats.admin.history.AdminHistoryWriter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
@@ -20,6 +21,12 @@ import java.util.List;
 public class DefaultDeleteAction implements AdminModelAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDeleteAction.class);
+
+    private final AdminHistoryWriter historyWriter;
+
+    public DefaultDeleteAction(AdminHistoryWriter historyWriter) {
+        this.historyWriter = historyWriter;
+    }
 
     @Override
     public String getId() {
@@ -48,6 +55,8 @@ public class DefaultDeleteAction implements AdminModelAction {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Performing delete action for {} entities", entities.size());
         }
+        recordHistory(model, entities);
+
         // Perform batch delete rather than deleting entities one-by-one
         RegisteredEntityDetails entityDetails = model.entityDetails();
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -55,6 +64,9 @@ public class DefaultDeleteAction implements AdminModelAction {
         Root<?> root = query.from(entityDetails.entityClass());
         query.where(root.in(entities));
         em.createQuery(query).executeUpdate();
-        // TODO: audit
+    }
+
+    protected void recordHistory(AdminRegisteredModel model, List<?> entities) {
+        historyWriter.record(model, "delete", entities);
     }
 }

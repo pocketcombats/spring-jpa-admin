@@ -6,6 +6,7 @@ import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.data.form.AdminFormField;
 import com.pocketcombats.admin.data.form.AdminFormFieldGroup;
 import com.pocketcombats.admin.data.form.EntityDetails;
+import com.pocketcombats.admin.history.AdminHistoryWriter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -30,17 +31,20 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     private static final Logger LOG = LoggerFactory.getLogger(AdminModelFormServiceImpl.class);
 
     private final AdminModelRegistry modelRegistry;
+    private final AdminHistoryWriter historyWriter;
     private final EntityManager em;
     private final Validator validator;
     private final ConversionService conversionService;
 
     public AdminModelFormServiceImpl(
             AdminModelRegistry modelRegistry,
+            AdminHistoryWriter historyWriter,
             EntityManager em,
             Validator validator,
             ConversionService conversionService
     ) {
         this.modelRegistry = modelRegistry;
+        this.historyWriter = historyWriter;
         this.em = em;
         this.validator = validator;
         this.conversionService = conversionService;
@@ -127,6 +131,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
         Object entity = findEntity(model, stringId);
+        historyWriter.record(model, "edit", entity);
 
         BindingResult bindingResult = bind(model, entity, FormAction.UPDATE, rawData);
         if (bindingResult.hasErrors()) {
@@ -186,6 +191,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         BindingResult bindingResult = bind(model, entity, FormAction.CREATE, rawData);
         if (!bindingResult.hasErrors()) {
             em.persist(entity);
+            historyWriter.record(model, "create", entity);
         } else {
             LOG.debug("Binding result has errors, can't save new {}", model.modelName());
         }

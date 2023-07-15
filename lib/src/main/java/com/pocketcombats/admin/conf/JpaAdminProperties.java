@@ -7,6 +7,8 @@ import org.springframework.core.Ordered;
 public class JpaAdminProperties {
 
     private int autoConfigurationOrder = Ordered.LOWEST_PRECEDENCE;
+    private boolean disableHistory;
+    private int historySize = 10;
     private Templates templates = new Templates();
 
     public int getAutoConfigurationOrder() {
@@ -15,6 +17,22 @@ public class JpaAdminProperties {
 
     public void setAutoConfigurationOrder(int autoConfigurationOrder) {
         this.autoConfigurationOrder = autoConfigurationOrder;
+    }
+
+    public boolean isDisableHistory() {
+        return disableHistory;
+    }
+
+    public void setDisableHistory(boolean disableHistory) {
+        this.disableHistory = disableHistory;
+    }
+
+    public int getHistorySize() {
+        return historySize;
+    }
+
+    public void setHistorySize(int historySize) {
+        this.historySize = historySize;
     }
 
     public Templates getTemplates() {

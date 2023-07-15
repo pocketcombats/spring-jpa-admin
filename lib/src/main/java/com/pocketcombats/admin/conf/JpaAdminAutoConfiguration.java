@@ -9,6 +9,12 @@ import com.pocketcombats.admin.core.AdminModelListEntityMapper;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.action.AdminModelActionService;
 import com.pocketcombats.admin.core.action.AdminModelActionServiceImpl;
+import com.pocketcombats.admin.history.AdminHistoryCompiler;
+import com.pocketcombats.admin.history.AdminHistoryCompilerImpl;
+import com.pocketcombats.admin.history.AdminHistoryWriter;
+import com.pocketcombats.admin.history.AdminHistoryWriterImpl;
+import com.pocketcombats.admin.history.NoOpAdminHistoryCompiler;
+import com.pocketcombats.admin.history.NoOpAdminHistoryWriter;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +92,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
     @ConditionalOnMissingBean
     public AdminModelFormService adminModelFormService(
             AdminModelRegistry modelRegistry,
+            AdminHistoryWriter historyWriter,
             EntityManager em,
             Validator validator,
             ConversionService conversionService
@@ -94,6 +101,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
 
         return new AdminModelFormServiceImpl(
                 modelRegistry,
+                historyWriter,
                 em,
                 validator,
                 conversionService
@@ -111,5 +119,36 @@ public class JpaAdminAutoConfiguration implements Ordered {
         LOG.debug("Registering default AdminModelActionService");
 
         return new AdminModelActionServiceImpl(modelRegistry, mapper, em, conversionService);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public AdminHistoryWriter adminHistoryWriter(
+            AdminModelListEntityMapper mapper,
+            EntityManager em,
+            ConversionService conversionService
+    ) {
+        if (properties.isDisableHistory()) {
+            return new NoOpAdminHistoryWriter();
+        } else {
+            LOG.debug("Registering default AdminHistoryWriter");
+
+            return new AdminHistoryWriterImpl(mapper, em, conversionService);
+        }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public AdminHistoryCompiler historyCompiler(
+            AdminModelRegistry registry,
+            EntityManager em
+    ) {
+        if (properties.isDisableHistory()) {
+            return new NoOpAdminHistoryCompiler();
+        } else {
+            LOG.debug("Registering default AdminHistoryCompiler");
+
+            return new AdminHistoryCompilerImpl(registry, em);
+        }
     }
 }

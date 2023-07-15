@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <!--/*@thymesVar id="models" type="java.util.List<com.pocketcombats.admin.data.AdminModelInfo>"*/-->
+<!--/*@thymesVar id="historyEnabled" type="boolean"*/-->
+<!--/*@thymesVar id="history" type="java.util.List<com.pocketcombats.admin.data.history.HistoryEntry>"*/-->
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
@@ -16,6 +18,23 @@
     <link rel="stylesheet"
           th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
           href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
+    <style>
+        .history .list-group-item {
+            font-size: 0.9rem;
+            padding: 0.25rem 0.5rem 0.4rem 0.6rem;
+        }
+        .history .list-group-item:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        .history .list-group-item .badge {
+            margin-left: -0.1rem;
+        }
+        .history .list-group-item p {
+            margin: 0 0 0 0.35rem;
+            font-size: 0.875em;
+            color: #757575;
+        }
+    </style>
 </head>
 <body>
 <header class="bg-light shadow-4 pt-4 pb-4 mb-4">
@@ -23,25 +42,26 @@
         <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
     </div>
 </header>
-<div class="container mt-2 mb-5">
+<div class="container mb-5">
     <div class="row">
-        <div class="col-12 col-lg-9 col-xl-10">
+        <div class="col-12 col-lg-9 col-xl-10"
+             th:class="${historyEnabled ? 'col-12 col-lg-9 col-xl-10' : 'col'}">
             <nav>
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
-                        <th class="h5">Some Module</th>
+                        <th class="h5">Blog</th>
                         </thead>
                         <tbody class="table-group-divider table-divider-color">
                         <tr th:each="model: ${models}">
                             <td>
                                 <a href="list.html"
                                    th:href="@{/admin/{adminModel}/(adminModel=${model.modelName})}"
-                                   th:text="${model.label}">Model One</a>
+                                   th:text="${model.label}">Post</a>
                             </td>
                         </tr>
                         <tr th:remove="all">
-                            <td><a href="list.html">Model Two</a></td>
+                            <td><a href="list.html">Comment</a></td>
                         </tr>
                         </tbody>
                     </table>
@@ -50,19 +70,65 @@
                 <div class="table-responsive" th:remove="all">
                     <table class="table table-striped">
                         <thead>
-                        <th class="h5">Another Module</th>
+                        <th class="h5">Users</th>
                         </thead>
                         <tbody class="table-group-divider table-divider-color">
                         <tr>
-                            <td><a href="list.html">Model Three</a></td>
+                            <td><a href="list.html">User</a></td>
                         </tr>
                         </tbody>
                     </table>
                 </div>
             </nav>
         </div>
-        <div class="col-12 order-1 order-lg-2 col-sm-4 col-lg-3 col-xl-2">
-            <h5 class="px-4 mt-4 px-lg-0 mt-lg-0" th:text="#{spring-jpa-admin.section.audit}">Audit</h5>
+        <div th:if="${historyEnabled}"
+             class="history col-12 order-1 order-lg-2 col-sm-4 col-lg-3 col-xl-2">
+            <h5 class="px-4 mt-4 px-lg-0 mt-lg-0" th:text="#{spring-jpa-admin.section.history}">History</h5>
+            <p th:if="${history.isEmpty()}"
+               class="d-none"
+               th:class="''"
+               th:text="#{spring-jpa-admin.history.empty}"></p>
+            <div th:unless="${history.isEmpty()}"
+                 class="list-group list-group-small">
+                <div th:each="historyEntry: ${history}"
+                     class="list-group-item"
+                     th:switch="${historyEntry.action}"
+                     th:with="badgeText=${#messages.msgOrNull('spring-jpa-admin.history.action.' + historyEntry.action) ?: historyEntry.action}">
+                    <span th:case="'delete'"
+                          class="badge badge-danger"
+                          th:text="${badgeText}">delete</span>
+                    <span th:case="'create'"
+                          class="badge badge-success"
+                          th:text="${badgeText}"></span>
+                    <span th:case="'edit'"
+                          class="badge badge-info"
+                          th:text="${badgeText}"></span>
+                    <span th:case="*"
+                          class="badge badge-secondary"
+                          th:text="${badgeText}"></span>
+                    <b th:text="${historyEntry.modelLabel}">Post</b>
+                    <span th:if="${historyEntry.action == 'delete'}"
+                          class="link-secondary"
+                          disabled="disabled"
+                          th:text="${historyEntry.representation}">Edited post with long representation</span>
+                    <a th:unless="${historyEntry.action == 'delete'}"
+                       th:href="@{/admin/{adminModel}/edit/{id}/(adminModel=${historyEntry.model}, id=${historyEntry.id})}"
+                       th:text="${historyEntry.representation}"></a>
+                    <p class="d-block">by <b th:text="${historyEntry.username}">admin</b></p>
+                </div>
+                <div class="list-group-item" th:remove="all">
+                    <span class="badge badge-secondary">approve</span> <b>Post</b> <a href="form.html">Edited post with long representation</a>
+                    <p class="d-block">by <b>moderator</b></p>
+                </div>
+                <div class="list-group-item" th:remove="all">
+                    <span class="badge badge-info">edit</span> <b>Post</b> <a href="form.html">Very first post</a>
+                    <p class="d-block">by <b>community</b></p>
+                </div>
+                <div class="list-group-item" th:remove="all">
+                    <span class="badge badge-success">create</span> <b>Post</b> <a href="form.html">Very first post</a>
+                    <p class="d-block">by <b>community</b></p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -5,6 +5,7 @@ import com.pocketcombats.admin.AdminModel;
 import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.action.AdminModelDelegatingAction;
 import com.pocketcombats.admin.core.action.StaticMethodDelegatingAction;
+import com.pocketcombats.admin.history.AdminHistoryWriter;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.springframework.stereotype.Component;
@@ -20,9 +21,11 @@ import java.util.Map;
 @Component
 public class ActionsFactory {
 
+    private final AdminHistoryWriter historyWriter;
     private final List<AdminModelAction> defaultActions;
 
-    public ActionsFactory(List<AdminModelAction> defaultActions) {
+    public ActionsFactory(AdminHistoryWriter historyWriter, List<AdminModelAction> defaultActions) {
+        this.historyWriter = historyWriter;
         this.defaultActions = new ArrayList<>(defaultActions);
         // Default actions may have duplicate ids.
         // Actions with lower @Order will override those with higher order.
@@ -47,7 +50,7 @@ public class ActionsFactory {
                                 "Violating method: " + targetClass.getName() + "#" + actionMethod.getName()
                 );
             }
-            actions.put(actionMethod.getName(), new StaticMethodDelegatingAction(actionMethod));
+            actions.put(actionMethod.getName(), new StaticMethodDelegatingAction(historyWriter, actionMethod));
         }
         if (adminModelClass != null) {
             // @AdminActions defined on admin model level have the highest precedence
@@ -55,6 +58,7 @@ public class ActionsFactory {
                 actions.put(
                         actionMethod.getName(),
                         new AdminModelDelegatingAction(
+                                historyWriter,
                                 adminModelBean,
                                 actionMethod
                         )
