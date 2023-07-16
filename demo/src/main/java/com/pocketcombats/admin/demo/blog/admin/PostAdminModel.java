@@ -1,10 +1,10 @@
-package com.pocketcombats.admin.demo.admin;
+package com.pocketcombats.admin.demo.blog.admin;
 
 import com.pocketcombats.admin.AdminAction;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminFieldOverride;
 import com.pocketcombats.admin.AdminModel;
-import com.pocketcombats.admin.demo.entity.Post;
+import com.pocketcombats.admin.demo.blog.entity.Post;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.convert.ConversionService;
 

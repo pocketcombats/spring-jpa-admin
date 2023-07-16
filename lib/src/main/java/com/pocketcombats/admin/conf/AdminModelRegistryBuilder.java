@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.conf;
 
 import com.pocketcombats.admin.AdminModel;
+import com.pocketcombats.admin.AdminPackage;
 import com.pocketcombats.admin.core.AdminModelFieldset;
 import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminModelRegistry;
@@ -14,7 +15,9 @@ import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import com.pocketcombats.admin.core.search.TextSearchPredicateFactory;
 import com.pocketcombats.admin.util.AdminStringUtils;
+import com.pocketcombats.admin.util.PackageAnnotationFinder;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.Priority;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
@@ -25,20 +28,26 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.util.MultiValueMap;
+import org.springframework.util.MultiValueMapAdapter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /* package */ class AdminModelRegistryBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminModelRegistryBuilder.class);
 
     private final Map<String, AdminRegisteredModel> models = new HashMap<>();
+    private final MultiValueMap<PackageInfo, AdminRegisteredModel> categorizedModels = new MultiValueMapAdapter<>(new TreeMap<>());
 
     private final EntityManager em;
     private final AutowireCapableBeanFactory beanFactory;
@@ -80,6 +89,8 @@ import java.util.Set;
         }
         AdminRegisteredModel model = constructAdminModel(modelName, modelAnnotation, annotatedClass, targetClass);
         models.put(modelName, model);
+        PackageInfo packageInfo = resolvePackageInfo(annotatedClass, targetClass);
+        categorizedModels.add(packageInfo, model);
 
         if (LOG.isTraceEnabled()) {
             LOG.trace(
@@ -93,6 +104,31 @@ import java.util.Set;
 
     private String resolveModelName(AdminModel modelAnnotation, Class<?> targetClass) {
         return targetClass.getSimpleName();
+    }
+
+    private PackageInfo resolvePackageInfo(Class<?> annotatedClass, Class<?> targetClass) {
+        PackageInfo packageInfo = resolvePackageInfo(annotatedClass);
+        if (packageInfo == null && annotatedClass != targetClass) {
+            packageInfo = resolvePackageInfo(targetClass);
+        }
+        if (packageInfo == null) {
+            packageInfo = PackageInfo.DEFAULT;
+        }
+        return packageInfo;
+    }
+
+    @Nullable
+    private PackageInfo resolvePackageInfo(Class<?> aClass) {
+        String packageName = aClass.getPackageName();
+        ClassLoader classLoader = aClass.getClassLoader();
+        Package annotatedPackage = PackageAnnotationFinder.findAnnotatedPackage(classLoader, AdminPackage.class, packageName);
+        if (annotatedPackage == null) {
+            return null;
+        }
+        AdminPackage adminPackageAnnotation = annotatedPackage.getAnnotation(AdminPackage.class);
+        Priority priorityAnnotation = annotatedPackage.getAnnotation(Priority.class);
+        int priority = priorityAnnotation == null ? 0 : priorityAnnotation.value();
+        return new PackageInfo(packageName, priority, adminPackageAnnotation);
     }
 
     private AdminRegisteredModel constructAdminModel(
@@ -353,9 +389,43 @@ import java.util.Set;
     }
 
     public AdminModelRegistry build() {
-        return new AdminModelRegistryImpl(models.values());
+        Map<String, List<AdminRegisteredModel>> models = categorizedModels.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey().label(),
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+        return new AdminModelRegistryImpl(models);
     }
 
     private record FieldsetTemplate(@Nullable String label, List<String> fields) {
+    }
+
+    private record PackageInfo(
+            String packageName,
+            int priority,
+            @Nullable AdminPackage packageConfig
+    ) implements Comparable<PackageInfo> {
+
+        private static final PackageInfo DEFAULT = new PackageInfo("", Integer.MAX_VALUE, null);
+
+        private PackageInfo(String packageName, int priority, AdminPackage packageConfig) {
+            this.packageName = packageName;
+            this.priority = priority;
+            this.packageConfig = packageConfig;
+        }
+
+        @Override
+        public int compareTo(PackageInfo o) {
+            if (o.priority != priority) {
+                return o.priority - priority;
+            }
+            return packageName.compareTo(o.packageName);
+        }
+
+        public String label() {
+            return packageConfig == null ? "" : packageConfig.label();
+        }
     }
 }

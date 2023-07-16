@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--/*@thymesVar id="models" type="java.util.List<com.pocketcombats.admin.data.AdminModelInfo>"*/-->
+<!--/*@thymesVar id="modelGroups" type="java.util.List<com.pocketcombats.admin.data.AdminModelsGroup>"*/-->
 <!--/*@thymesVar id="historyEnabled" type="boolean"*/-->
 <!--/*@thymesVar id="history" type="java.util.List<com.pocketcombats.admin.data.history.HistoryEntry>"*/-->
 <head>
@@ -47,13 +47,14 @@
         <div class="col-12 col-lg-9 col-xl-10"
              th:class="${historyEnabled ? 'col-12 col-lg-9 col-xl-10' : 'col'}">
             <nav>
-                <div class="table-responsive">
+                <div class="table-responsive"
+                th:each="modelGroup: ${modelGroups}">
                     <table class="table table-striped">
-                        <thead>
-                        <th class="h5">Blog</th>
+                        <thead th:if="${!#strings.isEmpty(modelGroup.label)}">
+                        <th class="h5" th:text="${#messages.msgOrNull(modelGroup.label) ?: modelGroup.label}">Blog</th>
                         </thead>
                         <tbody class="table-group-divider table-divider-color">
-                        <tr th:each="model: ${models}">
+                        <tr th:each="model: ${modelGroup.models}">
                             <td>
                                 <a href="list.html"
                                    th:href="@{/admin/{adminModel}/(adminModel=${model.modelName})}"

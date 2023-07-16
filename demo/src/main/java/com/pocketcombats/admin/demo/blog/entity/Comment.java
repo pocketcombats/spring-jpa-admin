@@ -1,8 +1,11 @@
-package com.pocketcombats.admin.demo.entity;
+package com.pocketcombats.admin.demo.blog.entity;
 
+import com.pocketcombats.admin.AdminModel;
+import com.pocketcombats.admin.demo.user.entity.DemoUser;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -13,9 +16,12 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "demo_comment")
+@AdminModel
 public class Comment implements Serializable {
 
     @Id
+    @Column(name = "id", updatable = false)
+    @GeneratedValue
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

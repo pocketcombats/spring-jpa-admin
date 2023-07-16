@@ -1,5 +1,6 @@
-package com.pocketcombats.admin.demo.entity;
+package com.pocketcombats.admin.demo.blog.entity;
 
+import com.pocketcombats.admin.demo.user.entity.DemoUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 

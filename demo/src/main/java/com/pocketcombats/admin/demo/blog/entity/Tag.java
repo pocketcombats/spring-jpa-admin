@@ -1,4 +1,4 @@
-package com.pocketcombats.admin.demo.entity;
+package com.pocketcombats.admin.demo.blog.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

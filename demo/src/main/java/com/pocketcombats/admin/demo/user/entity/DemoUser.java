@@ -1,8 +1,9 @@
-package com.pocketcombats.admin.demo.entity;
+package com.pocketcombats.admin.demo.user.entity;
 
 import com.pocketcombats.admin.AdminAction;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminModel;
+import com.pocketcombats.admin.demo.blog.entity.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

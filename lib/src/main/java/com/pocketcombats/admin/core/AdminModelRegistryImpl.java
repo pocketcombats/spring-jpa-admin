@@ -1,8 +1,8 @@
 package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.data.AdminModelInfo;
+import com.pocketcombats.admin.data.AdminModelsGroup;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -10,12 +10,23 @@ import java.util.stream.Collectors;
 
 public class AdminModelRegistryImpl implements AdminModelRegistry {
 
-    private final Map<String, AdminRegisteredModel> models;
+    private final List<AdminModelsGroup> modelGroups;
+    private final Map<String, AdminRegisteredModel> modelsByName;
 
     public AdminModelRegistryImpl(
-            Collection<AdminRegisteredModel> models
+            // Category -> [Model]
+            Map<String, List<AdminRegisteredModel>> models
     ) {
-        this.models = models.stream()
+        this.modelGroups = models.entrySet().stream()
+                .map(entry -> new AdminModelsGroup(
+                        entry.getKey(),
+                        entry.getValue().stream()
+                                .map(model -> new AdminModelInfo(model.label(), model.modelName()))
+                                .toList()
+                ))
+                .toList();
+        this.modelsByName = models.values().stream()
+                .flatMap(List::stream)
                 .collect(Collectors.toMap(
                         AdminRegisteredModel::modelName,
                         Function.identity()
@@ -23,17 +34,15 @@ public class AdminModelRegistryImpl implements AdminModelRegistry {
     }
 
     @Override
-    public List<AdminModelInfo> listModels() {
-        return models.values().stream()
-                .map(model -> new AdminModelInfo(model.label(), model.modelName()))
-                .toList();
+    public List<AdminModelsGroup> getModelGroups() {
+        return modelGroups;
     }
 
     @Override
     public AdminRegisteredModel resolve(String modelName) throws UnknownModelException {
-        if (!models.containsKey(modelName)) {
+        if (!modelsByName.containsKey(modelName)) {
             throw new UnknownModelException();
         }
-        return models.get(modelName);
+        return modelsByName.get(modelName);
     }
 }

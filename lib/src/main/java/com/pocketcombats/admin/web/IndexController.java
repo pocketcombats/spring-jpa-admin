@@ -33,7 +33,7 @@ public class IndexController {
         return new ModelAndView(
                 properties.getTemplates().getIndex(),
                 Map.of(
-                        "models", entityRegistry.listModels(),
+                        "modelGroups", entityRegistry.getModelGroups(),
                         "historyEnabled", !properties.isDisableHistory(),
                         "history", historyCompiler.compileLog(properties.getHistorySize())
                 )

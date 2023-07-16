@@ -1,4 +1,4 @@
-package com.pocketcombats.admin.demo.entity;
+package com.pocketcombats.admin.demo.blog.entity;
 
 public enum Category {
 
