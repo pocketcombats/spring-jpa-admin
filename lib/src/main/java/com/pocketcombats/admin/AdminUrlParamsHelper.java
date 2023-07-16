@@ -3,6 +3,7 @@ package com.pocketcombats.admin;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.WebEngineContext;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -21,9 +22,14 @@ public class AdminUrlParamsHelper {
                 if (name.equals(paramKey)) {
                     urlParams.put(name, value);
                 } else {
-                    var paramValues = (WebEngineContext.RequestParameterValues) entry.getValue();
-                    if (!paramValues.isEmpty()) {
+                    if (entry.getValue() instanceof WebEngineContext.RequestParameterValues paramValues) {
                         urlParams.put(paramKey, paramValues.get(0));
+                    } else if (entry.getValue() instanceof String[] values) {
+                        urlParams.put(paramKey, values[0]);
+                    } else if (entry.getValue() instanceof Collection<?> collection) {
+                        if (!collection.isEmpty()) {
+                            urlParams.put(paramKey, collection.iterator().next().toString());
+                        }
                     }
                 }
             }

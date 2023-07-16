@@ -130,12 +130,12 @@
                        class="text-body">Model One</a></h4>
             </div>
             <div th:if="${entities.insertable}" class="col col-lg-3 col-xl-2">
-                    <a class="btn btn-outline-secondary"
-                       href="form.html"
-                       th:href="@{/admin/{adminModel}/create/(adminModel=${entities.modelName})}">
-                        <i class="fa fa-plus me-2"></i>
-                        <span th:text="#{spring-jpa-admin.action.add(${entitiesLabel})}">Add Model One</span>
-                    </a>
+                <a class="btn btn-outline-secondary"
+                   href="form.html"
+                   th:href="@{/admin/{adminModel}/create/(adminModel=${entities.modelName})}">
+                    <i class="fa fa-plus me-2"></i>
+                    <span th:text="#{spring-jpa-admin.action.add(${entitiesLabel})}">Add Model One</span>
+                </a>
             </div>
         </div>
     </div>
@@ -217,7 +217,8 @@
                            th:class="${'table table-striped' + (!entities.actions.isEmpty() ? ' table-hover' : '')}">
                         <thead>
                         <tr>
-                            <th th:if="${!entities.actions.isEmpty()}" class="select-all"></th>
+                            <th th:if="${!entities.entities.isEmpty() && !entities.actions.isEmpty()}"
+                                class="select-all"></th>
                             <th th:each="column: ${entities.columns}"
                                 th:class="${column.sortable() ? 'sortable' : ''}"
                                 th:with="columnLabel=${#messages.msgOrNull(column.label) ?: column.label}"
@@ -244,8 +245,13 @@
                             <th th:remove="all">Enabled</th>
                         </tr>
                         </thead>
-                        <tbody th:unless="${entities.entities.isEmpty()}"
-                               class="table-group-divider table-divider-color">
+                        <tbody class="table-group-divider table-divider-color">
+                        <tr th:if="${entities.entities.isEmpty()}"
+                            class="d-none"
+                            th:class="''">
+                            <td th:colspan="${entities.columns.size()}"
+                                th:text="#{${#strings.isEmpty(modelRequest.search) && entities.filters().isEmpty() ? 'spring-jpa-admin.model.list.empty' : 'spring-jpa-admin.model.list.no-matching-records'}}"></td>
+                        </tr>
                         <tr th:each="entity: ${entities.entities}">
                             <td th:if="${!entities.actions.isEmpty()}">
                                 <input type="checkbox" name="id" class="form-check-input" th:value="${entity.id}"/>
@@ -288,7 +294,7 @@
                         </tr>
                         </tbody>
                     </table>
-                    <div th:if="${!entities.actions.isEmpty()}"
+                    <div th:if="${!entities.entities.isEmpty() && !entities.actions.isEmpty()}"
                          class="row row-cols-auto align-items-center g-2 mb-4">
                         <div class="col">
                             <label for="action" th:text="#{spring-jpa-admin.action.selected}">With selected:</label>
@@ -297,8 +303,8 @@
                             <select id="action" name="action" class="form-select w-auto d-inline-block">
                                 <option disabled selected>&mdash;</option>
                                 <option th:each="action: ${entities.actions}"
-                                th:value="${action.id}"
-                                th:text="${#messages.msgOrNull(action.label) ?: action.label}">
+                                        th:value="${action.id}"
+                                        th:text="${#messages.msgOrNull(action.label) ?: action.label}">
                                     Delete
                                 </option>
                                 <option th:remove="all">Enable</option>
