@@ -23,7 +23,7 @@ spring.jpa:
       #format_sql: true
 
 spring.messages:
-  basename: messages,spring-jpa-admin-messages
+  basename: messages,spring-jpa-admin-messages,org/hibernate/validator/ValidationMessages
 
 logging.level.org.hibernate.tool.hbm2ddl: DEBUG
 logging.level.com.pocketcombats.admin: TRACE

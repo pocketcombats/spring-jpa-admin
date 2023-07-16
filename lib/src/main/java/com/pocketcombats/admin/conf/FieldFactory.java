@@ -9,6 +9,7 @@ import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.BooleanFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.DelegatingAdminFormFieldValueAccessorImpl;
 import com.pocketcombats.admin.core.field.EnumFormFieldValueAccessor;
+import com.pocketcombats.admin.core.field.RawIdFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToManyFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
@@ -490,17 +491,14 @@ public class FieldFactory {
         if (attribute != null) {
             Attribute.PersistentAttributeType persistentAttributeType = attribute.getPersistentAttributeType();
             return switch (persistentAttributeType) {
-                case MANY_TO_ONE, ONE_TO_ONE ->
-                    // TODO: raw id field configuration
-                        new ToOneFormFieldAccessor(
-                                em, conversionService,
-                                attribute,
-                                isOptional(fieldConfig, attribute),
-                                reader, writer, createValueFormatter(name)
-                        );
+                case MANY_TO_ONE, ONE_TO_ONE -> createToOneFormFieldAccessor(
+                        name,
+                        fieldConfig,
+                        attribute, reader, writer
+                );
                 case MANY_TO_MANY, ONE_TO_MANY -> new ToManyFormFieldAccessor(
                         em, conversionService,
-                        attribute,reader, writer, createValueFormatter(name)
+                        attribute, reader, writer, createValueFormatter(name)
                 );
                 case BASIC -> selectBasicFormFieldAccessor(name, isOptional(fieldConfig, attribute), reader, writer);
                 default -> throw new IllegalStateException(
@@ -516,6 +514,30 @@ public class FieldFactory {
             optional = true;
         }
         return selectBasicFormFieldAccessor(name, optional, reader, writer);
+    }
+
+    private AdminFormFieldValueAccessor createToOneFormFieldAccessor(
+            String name,
+            @Nullable AdminField fieldConfig,
+            Attribute<?, ?> attribute,
+            AdminModelPropertyReader reader,
+            @Nullable AdminModelPropertyWriter writer
+    ) {
+        if (isRawId(fieldConfig)) {
+            return new RawIdFormFieldAccessor(
+                    em, conversionService,
+                    attribute,
+                    isOptional(fieldConfig, attribute),
+                    reader, writer
+            );
+        } else {
+            return new ToOneFormFieldAccessor(
+                    em, conversionService,
+                    attribute,
+                    isOptional(fieldConfig, attribute),
+                    reader, writer, createValueFormatter(name)
+            );
+        }
     }
 
     private ValueFormatter createValueFormatter(String fieldName) {
@@ -537,6 +559,13 @@ public class FieldFactory {
             }
         }
         return fieldValueFormatters.get(fieldName);
+    }
+
+    private static boolean isRawId(@Nullable AdminField fieldConfig) {
+        if (fieldConfig == null) {
+            return false;
+        }
+        return fieldConfig.rawId();
     }
 
     private static boolean isOptional(@Nullable AdminField fieldConfig, Attribute<?, ?> attribute) {

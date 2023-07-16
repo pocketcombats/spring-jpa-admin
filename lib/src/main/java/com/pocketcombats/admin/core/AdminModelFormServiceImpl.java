@@ -194,6 +194,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             historyWriter.record(model, "create", entity);
         } else {
             LOG.debug("Binding result has errors, can't save new {}", model.modelName());
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
         }
 
         return new AdminModelEditingResult(

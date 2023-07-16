@@ -35,6 +35,11 @@ public @interface AdminField {
     boolean nullable() default true;
 
     /**
+     * If field should be a raw id input instead of select.
+     */
+    boolean rawId() default false;
+
+    /**
      * Indicates that field is sortable.
      * Only entity fields included in {@link AdminModel#listFields()} can be sortable.
      */
