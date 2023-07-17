@@ -20,6 +20,7 @@ import com.pocketcombats.admin.core.filter.ToManyFilterOptionsCollector;
 import com.pocketcombats.admin.core.filter.ToManyFilterPredicateFactory;
 import com.pocketcombats.admin.core.filter.ToOneFilterOptionsCollector;
 import com.pocketcombats.admin.core.filter.ToOneFilterPredicateFactory;
+import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
 import com.pocketcombats.admin.core.formatter.ToStringValueFormatter;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
@@ -68,6 +69,7 @@ public class FieldFactory {
 
     private final EntityManager em;
     private final ConversionService conversionService;
+    private final SpelExpressionContextFactory spelExpressionContextFactory;
 
     private final String modelName;
     private final EntityType<?> entity;
@@ -84,6 +86,7 @@ public class FieldFactory {
     public FieldFactory(
             EntityManager em,
             ConversionService conversionService,
+            SpelExpressionContextFactory spelExpressionContextFactory,
             String modelName,
             AdminModel modelAnnotation,
             Class<?> targetClass,
@@ -93,6 +96,7 @@ public class FieldFactory {
     ) {
         this.em = em;
         this.conversionService = conversionService;
+        this.spelExpressionContextFactory = spelExpressionContextFactory;
 
         this.modelName = modelName;
         this.entity = entity;
@@ -560,7 +564,10 @@ public class FieldFactory {
                 if (fieldConfiguration.representation().equals("")) {
                     formatter = new ToStringValueFormatter();
                 } else {
-                    formatter = new SpelExpressionFormatter(fieldConfiguration.representation());
+                    formatter = new SpelExpressionFormatter(
+                            spelExpressionContextFactory,
+                            fieldConfiguration.representation()
+                    );
                 }
                 fieldValueFormatters.put(
                         fieldName,

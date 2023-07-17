@@ -9,6 +9,7 @@ import com.pocketcombats.admin.core.AdminModelListEntityMapper;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.action.AdminModelActionService;
 import com.pocketcombats.admin.core.action.AdminModelActionServiceImpl;
+import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.history.AdminHistoryCompiler;
 import com.pocketcombats.admin.history.AdminHistoryCompilerImpl;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
@@ -55,6 +56,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
             ApplicationContext context,
             EntityManager em,
             ConversionService conversionService,
+            SpelExpressionContextFactory spelExpressionContextFactory,
             ActionsFactory actionsFactory
     ) throws Exception {
         LOG.debug("Registering default AdminModelRegistry");
@@ -64,6 +66,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
                 em,
                 context.getAutowireCapableBeanFactory(),
                 conversionService,
+                spelExpressionContextFactory,
                 actionsFactory
         );
         for (Class<?> annotatedModel : annotatedModels) {
@@ -150,5 +153,13 @@ public class JpaAdminAutoConfiguration implements Ordered {
 
             return new AdminHistoryCompilerImpl(registry, em);
         }
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public SpelExpressionContextFactory spelExpressionContextFactory() {
+        LOG.debug("Registering default SpelExpressionContextFactory");
+
+        return new SpelExpressionContextFactory();
     }
 }

@@ -28,7 +28,7 @@ public class Comment implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", nullable = false, updatable = false)
-    @AdminField(rawId = true, sortBy = "postTime")
+    @AdminField(rawId = true, sortBy = "postTime", representation = "#abbreviate(text, 20)")
     private Post post;
 
     @Column(name = "post_time", nullable = false, updatable = false)

@@ -10,6 +10,7 @@ import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.core.RegisteredEntityDetails;
 import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
+import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.core.search.CompositeSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
@@ -52,17 +53,20 @@ import java.util.stream.Collectors;
     private final EntityManager em;
     private final AutowireCapableBeanFactory beanFactory;
     private final ConversionService conversionService;
+    private final SpelExpressionContextFactory spelExpressionContextFactory;
     private final ActionsFactory actionsFactory;
 
     public AdminModelRegistryBuilder(
             EntityManager em,
             AutowireCapableBeanFactory beanFactory,
             ConversionService conversionService,
+            SpelExpressionContextFactory spelExpressionContextFactory,
             ActionsFactory actionsFactory
     ) {
         this.em = em;
         this.beanFactory = beanFactory;
         this.conversionService = conversionService;
+        this.spelExpressionContextFactory = spelExpressionContextFactory;
         this.actionsFactory = actionsFactory;
     }
 
@@ -151,7 +155,7 @@ import java.util.stream.Collectors;
         );
 
         FieldFactory fieldFactory = new FieldFactory(
-                em, conversionService,
+                em, conversionService, spelExpressionContextFactory,
                 modelName, modelAnnotation, targetClass, entity, adminModelClass, adminModelBean
         );
         List<AdminModelListField> listFields = createListFields(

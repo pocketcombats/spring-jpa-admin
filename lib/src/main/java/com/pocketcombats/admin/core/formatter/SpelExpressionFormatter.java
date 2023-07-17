@@ -7,16 +7,21 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 public class SpelExpressionFormatter implements ValueFormatter {
 
+    private final SpelExpressionContextFactory contextFactory;
     private final Expression expression;
 
-    public SpelExpressionFormatter(String spelExpression) throws ParseException {
+    public SpelExpressionFormatter(
+            SpelExpressionContextFactory contextFactory,
+            String spelExpression
+    ) throws ParseException {
+        this.contextFactory = contextFactory;
         this.expression = new SpelExpressionParser().parseExpression(spelExpression);
     }
 
     @Override
     @Nullable
     public String format(@Nullable Object entity) {
-        Object value = expression.getValue(entity);
+        Object value = expression.getValue(contextFactory.createContext(), entity);
         if (value == null) {
             return null;
         } else {
