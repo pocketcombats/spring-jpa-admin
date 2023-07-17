@@ -81,14 +81,14 @@ For example, let's add a custom field to display the number of posts for each De
         return posts.size();
     }
 ```
+<sup>*Please note that while this approach is convenient for quick implementation, it can be inefficient and should not be used in real applications.*</sup>  
 Update the `@AdminModel` annotation to include this custom field in the `listFields` attribute:
 ```java
 @AdminModel(
         listFields = {"username", "postCount", "enabled"},
         filterFields = "enabled"
 )
-```
-*Please note that while this approach is convenient for quick implementation, it can be inefficient and should not be used in real applications.*  
+``` 
 Let's see what we got as a result:
 ![Demo User list view with custom field](media/listview-004.png)
 
@@ -157,7 +157,7 @@ Methods for custom actions must be static (except for the case when they are def
 #### Site-Wide Custom Action
 If you need to create a site-wide list view custom action that applies to all entities, you can implement the `AdminModelAction` interface and register it as a Spring bean.
 The default "delete" action is implemented using this approach.
-
+  
 Here's a complete example for the `DemoUser` entity with custom column ordering, enabled filtering, sorting, searching, custom actions, and disabled "delete" action:
 ```java
 @Entity
@@ -207,6 +207,34 @@ public class DemoUser implements Serializable {
     ...
 }
 ```
+![Demo User list view final result](media/listview-008.png)
+
+#### Field Representation
+Custom field representation is used for both the list view and the form view.
+Let's focus on the list view for now. Also, we'll switch to the `Post` entity.  
+Remember the `author` field where we added a custom `sortBy` attribute? By default, it looks like this:
+![Post list view with default author representation](media/listview-009.png)
+This default representation is simply the result of calling `.toString()`, which isn't very useful for most complex types.
+The values for the `Author` filter also don't provide much help.  
+Let's adjust the annotation to include a custom `representation`:
+```java
+@AdminField(sortBy = "username", representation = "username")
+```
+The result is much more helpful:
+![Post list view with custom author representation](media/listview-010.png)
+The `representation` is an expression in [SpEL](https://docs.spring.io/spring-framework/docs/3.0.x/reference/expressions.html) format, with the root object set to the entity being displayed.
+In most cases, you simply want to reference a field, like `username` in our case, or call a method of an entity.
+  
+Next, let's do something with the `Text` field.  
+We don't want to set a custom `representation` to avoid affecting the form view, so we'll provide a custom `listField` instead:
+```java
+    @AdminField(label = "Text")
+    public String getTextPreview() {
+        return StringUtils.abbreviate(getText(), 30);
+    }
+```
+By setting the `label`, we can display the column title as "Text" instead of "Text Preview":
+![Post list view with text preview](media/listview-011.png)
 
 ### Forms
 

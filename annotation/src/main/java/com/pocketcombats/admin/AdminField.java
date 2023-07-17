@@ -11,6 +11,10 @@ import java.lang.annotation.Target;
 @Documented
 public @interface AdminField {
 
+    /**
+     * Custom label for this field.
+     * Can be a localization key or plain text.
+     */
     String label() default "";
 
     /**
@@ -60,6 +64,8 @@ public @interface AdminField {
      * Representation formatter to for this field in {@code SpEL} format.
      * Typically used by list view and relational form fields.
      * Defaults to calling {@code toString()}.
+     *
+     * @see <a href="https://docs.spring.io/spring-framework/docs/3.0.x/reference/expressions.html">SpEL documentation</a>
      */
     String representation() default "";
 }
