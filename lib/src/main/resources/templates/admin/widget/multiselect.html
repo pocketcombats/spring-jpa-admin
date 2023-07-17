@@ -4,7 +4,8 @@
         th:name="${'model-field-' + field.name}"
         multiple
         class="form-select w-auto"
-        th:classappend="${hasErrors ? 'is-invalid' : ''}">
+        th:classappend="${hasErrors ? 'is-invalid' : ''}"
+        th:disabled="${field.readonly}">
     <!--/*@thymesVar id="option" type="com.pocketcombats.admin.widget.Option"*/-->
     <option th:each="option : ${field.templateData()['_options']}"
             th:value="${option.id}"

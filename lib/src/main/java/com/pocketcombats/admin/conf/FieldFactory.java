@@ -37,18 +37,22 @@ import com.pocketcombats.admin.core.sort.SortExpressionFactory;
 import com.pocketcombats.admin.util.AdminStringUtils;
 import com.pocketcombats.admin.util.TypeUtils;
 import jakarta.annotation.Nullable;
+import jakarta.persistence.Column;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.util.StringUtils;
 
 import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -153,6 +157,12 @@ public class FieldFactory {
             template = fieldConfig.template();
             insertable = fieldConfig.insertable();
             updatable = fieldConfig.updatable();
+        }
+        Annotation columnAnnotation = resolveColumnAnnotation(name);
+        if (columnAnnotation != null) {
+            Map<String, Object> annotationAttributes = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
+            insertable = insertable && (Boolean) annotationAttributes.get("insertable");
+            updatable = updatable && (Boolean) annotationAttributes.get("updatable");
         }
 
         if (!StringUtils.hasText(label)) {
@@ -595,5 +605,26 @@ public class FieldFactory {
             );
         }
         return new DelegatingAdminFormFieldValueAccessorImpl(name, conversionService, reader, writer);
+    }
+
+    @Nullable
+    private Annotation resolveColumnAnnotation(String fieldName) {
+        Attribute<?, ?> attribute;
+        try {
+            attribute = entity.getAttribute(fieldName);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        return resolveColumnAnnotation(attribute);
+    }
+
+    @Nullable
+    private static Annotation resolveColumnAnnotation(Attribute<?, ?> attribute) {
+        AnnotatedElement javaMember = (AnnotatedElement) attribute.getJavaMember();
+        Column columnAnnotation = AnnotationUtils.getAnnotation(javaMember, Column.class);
+        if (columnAnnotation != null) {
+            return columnAnnotation;
+        }
+        return AnnotationUtils.getAnnotation(javaMember, JoinColumn.class);
     }
 }

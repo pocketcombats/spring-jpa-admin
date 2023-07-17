@@ -11,7 +11,8 @@
                th:id="${'model-field-' + field.name + '-' + option.id}"
                th:name="${'model-field-' + field.name}"
                th:value="${option.id}"
-               th:checked="${field.value.contains(option.id)}"/>
+               th:checked="${field.value.contains(option.id)}"
+               th:disabled="${field.readonly}"/>
         <label th:for="${'model-field-' + field.name + '-' + option.id}"
                th:text="${option.label}"
                class="form-check-label"></label>

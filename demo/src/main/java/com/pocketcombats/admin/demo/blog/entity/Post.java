@@ -22,7 +22,7 @@ public class Post implements Serializable {
     private Instant postTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id", nullable = false)
+    @JoinColumn(name = "author_id", nullable = false, updatable = false)
     private DemoUser author;
 
     @Column(name = "text", nullable = false)
