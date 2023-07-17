@@ -348,10 +348,6 @@ import java.util.stream.Collectors;
         if (attribute instanceof SingularAttribute<?, ?> singularAttribute) {
             return !singularAttribute.isId() && !singularAttribute.isVersion();
         }
-        if (attribute.getPersistentAttributeType() == Attribute.PersistentAttributeType.ONE_TO_MANY) {
-            // TODO: support *ToMany attributes
-            return false;
-        }
         return true;
     }
 
@@ -359,7 +355,7 @@ import java.util.stream.Collectors;
         return new AdminModelFieldset(
                 fieldsetTemplate.label(),
                 fieldsetTemplate.fields.stream()
-                        .map(field -> fieldFactory.constructFormField(field))
+                        .map(fieldFactory::constructFormField)
                         .toList()
         );
     }
