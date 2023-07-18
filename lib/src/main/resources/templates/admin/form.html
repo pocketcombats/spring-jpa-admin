@@ -60,7 +60,12 @@
                actionParams=${entity.id == null ? 'adminModel=${entity.modelName}' : 'adminModel=${entity.modelName}, id=${entity.id}'}"
       th:action="@{${actionUrl}(__${actionParams}__)}">
     <div class="container">
-
+        <!--/*@thymesVar id="thymeleafRequestContext" type="org.springframework.web.servlet.support.RequestContext"*/-->
+        <ul th:if="${errors?.hasGlobalErrors()}"
+            class="text-danger list-unstyled">
+            <li th:each="globalError: ${errors.globalErrors}"
+                th:text="${thymeleafRequestContext.getMessage(globalError, false)}"></li>
+        </ul>
         <div th:each="fieldGroup: ${entity.fieldGroups}">
             <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->
             <h5 th:unless="${#strings.isEmpty(fieldGroup.label)}" th:text="${fieldGroup.label}"></h5>
@@ -74,9 +79,8 @@
                     <div th:replace="~{${field.template} (hasErrors=${hasErrors})}"></div>
                     <ul th:if="${hasErrors}"
                         class="invalid-feedback list-unstyled">
-                        <!--/*@thymesVar id="thymeleafRequestContext" type="org.springframework.web.servlet.support.RequestContext"*/-->
                          <li th:each="fieldError: ${errors.getFieldErrors(field.name)}"
-                               th:text="${thymeleafRequestContext.getMessage(fieldError, false)}">Please correct errors.</li>
+                             th:text="${thymeleafRequestContext.getMessage(fieldError, false)}">Please correct errors.</li>
                     </ul>
                 </div>
             </div>

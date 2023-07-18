@@ -307,6 +307,16 @@ To customize their appearance, we can provide them with `template` settings, in 
 Field templates are simple [Thymeleaf fragments](https://www.thymeleaf.org/doc/articles/layouts.html), and you can further customize the appearance of the edit form by creating your own custom field templates.
 
 #### Validation
+Spring JPA Admin utilizes [Jakarta Validation](https://beanvalidation.org/) to validate entities before saving them.  
+Let's try it out and annotate the `text` field with `@NotBlank`:
+```java
+    @Column(name = "text", nullable = false)
+    @AdminField(template = "admin/widget/textarea")
+    @NotBlank
+    private String text;
+```
+Now, if we try to save a Post with an empty text, a validation error will be displayed:
+![Edit Form validation error](media/form-004.png)
 
 ### Externalized Configuration
 
