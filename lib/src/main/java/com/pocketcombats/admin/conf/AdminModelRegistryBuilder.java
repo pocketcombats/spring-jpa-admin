@@ -316,8 +316,12 @@ import java.util.stream.Collectors;
     ) {
         List<FieldsetTemplate> fieldsetTemplates;
         if (modelAnnotation.fieldsets().length > 0) {
-            // TODO:
-            fieldsetTemplates = Collections.emptyList();
+            fieldsetTemplates = Arrays.stream(modelAnnotation.fieldsets())
+                    .map(adminFieldset -> new FieldsetTemplate(
+                            adminFieldset.label(),
+                            Arrays.asList(adminFieldset.fields())
+                    ))
+                    .toList();
         } else {
             fieldsetTemplates = Collections.singletonList(
                     new FieldsetTemplate(null, resolveDefaultFormFields(entity, adminModelClass, targetClass))

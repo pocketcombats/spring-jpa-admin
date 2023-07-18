@@ -63,7 +63,7 @@
 
         <div th:each="fieldGroup: ${entity.fieldGroups}">
             <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->
-            <h2 th:unless="${#strings.isEmpty(fieldGroup.label)}" th:text="${fieldGroup.label}"></h2>
+            <h5 th:unless="${#strings.isEmpty(fieldGroup.label)}" th:text="${fieldGroup.label}"></h5>
             <div th:each="field: ${fieldGroup.fields}" class="row form-row">
                 <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
                 <label th:for="${'model-field-' + field.name}"

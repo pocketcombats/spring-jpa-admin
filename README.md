@@ -237,8 +237,74 @@ By setting the `label`, we can display the column title as "Text" instead of "Te
 ![Post list view with text preview](media/listview-011.png)
 
 ### Forms
+Let's continue with our `Post` entity and move on to the Edit Form.
+
+#### Fieldsets
+The default form includes all possible entity fields, including `comments` and `reactions`, which we don't want to edit.
+To override the fieldset and include only the fields we are interested in editing, we can specify the desired fields in the `fieldsets` attribute:
+```java
+@AdminModel(
+        fieldsets = @AdminFieldset(
+                fields = {
+                        "approved",
+                        "postTime",
+                        "author",
+                        "text",
+                        "category",
+                        "tags"
+                }
+        )
+)
+```
+The result will be a form with the specified fields:
+![Edit Form with overridden fieldset](media/form-001.png)  
+Next, let's move the `category` and `tags` fields into a dedicated fieldset named "Meta":
+```java
+@AdminModel(
+        fieldsets = {
+                @AdminFieldset(
+                        fields = {
+                                "approved",
+                                "postTime",
+                                "author",
+                                "text"
+                        }
+                ),
+                @AdminFieldset(
+                        label = "Meta",
+                        fields = {"category", "tags"}
+                )
+        }
+)
+```
+![Edit Form with labeled Meta fieldset](media/form-002.png)  
+
+#### Edit Restrictions
+Note that the "Author" field isn't editable.
+This is because the entity column is marked as `updatable = false`, and editing it won't have any effect anyway.
+You can force disable the admin form field from being editable by setting `insertable = false` or `updatable = false`, even if the entity column doesn't impose these restrictions.
 
 #### Widgets and Custom Widgets
+The "Text" and "Tags" fields may not be very helpful in their default form.
+To customize their appearance, we can provide them with `template` settings, in the same time updating tags `representation`:
+```java
+    @Column(name = "text", nullable = false)
+    @AdminField(template = "admin/widget/textarea")
+    private String text;
+    
+    ...
+
+    @ManyToMany
+    @JoinTable(
+            name = "post_tags",
+            joinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id", nullable = false)
+    )
+    @AdminField(template = "admin/widget/multiselect_checkboxes", representation = "text")
+    private Set<Tag> tags;
+```
+![Edit Form with custom templates](media/form-003.png)  
+Field templates are simple [Thymeleaf fragments](https://www.thymeleaf.org/doc/articles/layouts.html), and you can further customize the appearance of the edit form by creating your own custom field templates.
 
 #### Validation
 
