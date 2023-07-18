@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core;
 
+import com.pocketcombats.admin.AdminValidation;
 import com.pocketcombats.admin.core.field.AdminFormFieldPluralValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldSingularValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
@@ -12,6 +13,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.SingularAttribute;
+import jakarta.validation.groups.Default;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -22,7 +24,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Validator;
+import org.springframework.validation.SmartValidator;
 
 import java.util.List;
 
@@ -33,14 +35,14 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     private final AdminModelRegistry modelRegistry;
     private final AdminHistoryWriter historyWriter;
     private final EntityManager em;
-    private final Validator validator;
+    private final SmartValidator validator;
     private final ConversionService conversionService;
 
     public AdminModelFormServiceImpl(
             AdminModelRegistry modelRegistry,
             AdminHistoryWriter historyWriter,
             EntityManager em,
-            Validator validator,
+            SmartValidator validator,
             ConversionService conversionService
     ) {
         this.modelRegistry = modelRegistry;
@@ -166,7 +168,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), model.modelName());
             }
         }
-        validator.validate(entity, bindingResult);
+        validator.validate(entity, bindingResult, AdminValidation.class, Default.class);
         return bindingResult;
     }
 

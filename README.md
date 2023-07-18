@@ -322,6 +322,13 @@ Let's try it out and annotate the `text` field with `@NotBlank`:
 ```
 Now, if we try to save a Post with an empty text, a validation error will be displayed:
 ![Edit Form validation error](media/form-004.png)
+You can narrow the applicability of validation constraints to be processed only by the admin edit form by specifying `groups = AdminValidation.class`.
+This allows you to separate the validation rules for the admin form from other parts of your application.  
+For example, the following annotation will only be applied to the admin edit form and won't affect other parts of your application, such as entity persistence:
+```java
+    @NotBlank(groups = AdminValidation.class)
+    private String text;
+```
 
 ### Externalized Configuration
 
