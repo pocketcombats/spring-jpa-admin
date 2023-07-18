@@ -306,6 +306,11 @@ To customize their appearance, we can provide them with `template` settings, in 
 ![Edit Form with custom templates](media/form-003.png)  
 Field templates are simple [Thymeleaf fragments](https://www.thymeleaf.org/doc/articles/layouts.html), and you can further customize the appearance of the edit form by creating your own custom field templates.
 
+#### Raw ID Fields
+We have the option to display the `author` field as a raw ID input instead of a select dropdown with all existing Demo Users.
+To achieve this, simply add `rawId = true` to the `@AdminField` annotation for the `author` field, without the need to change the `template` attribute.
+![Edit Form with raw id](media/form-005.png)
+
 #### Validation
 Spring JPA Admin utilizes [Jakarta Validation](https://beanvalidation.org/) to validate entities before saving them.  
 Let's try it out and annotate the `text` field with `@NotBlank`:
