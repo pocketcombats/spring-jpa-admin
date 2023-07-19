@@ -331,7 +331,159 @@ For example, the following annotation will only be applied to the admin edit for
 ```
 
 ### Externalized Configuration
+There are situations where you may not want to apply admin annotations directly to your entities, or it may not be feasible to do so.
+In such cases, Spring JPA Admin supports **externalized configuration**, allowing you to configure the admin settings separately.
+For demonstration, let's clean up the `Post` entity from admin-related annotations and create a dedicated `PostAdminModel` class to hold the admin configuration:
+```java
+@AdminModel(
+        entity = Post.class,
+        listFields = {"textPreview", "author", "postTime", "approved"},
+        filterFields = {"approved", "author", "tags"},
+        fieldsets = {
+                @AdminFieldset(
+                        fields = {
+                                "approved",
+                                "postTime",
+                                "author",
+                                "text"
+                        }
+                ),
+                @AdminFieldset(
+                        label = "Meta",
+                        fields = {"category", "tags"}
+                )
+        }
+)
+public class PostAdminModel {
+```
+Note the `entity = Post.class` attribute, which specifies the target entity for the admin configuration.
+
+#### Component Model
+Admin models are instantiated as Spring beans, which means they can depend on other beans and take advantage of additional functionality compared to plain entities.
+
+#### Custom List Fields
+Let's further clean up the `Post` model by moving the `getTextPreview` method to the admin model.
+We need to make a slight modification to the method to accept the target entity instance:
+```java
+    @AdminField(label = "Text")
+    public String getTextPreview(Post post) {
+        return StringUtils.abbreviate(post.getText(), 30);
+    }
+```
 
 #### Custom Actions
+Admin models can declare custom bulk actions.
+Unlike action methods defined on entities, these methods aren't required to be static.
+Let's define a custom `approve` method:
+```java
+    @AdminAction
+    public void approve(Iterable<Post> posts) {
+        for (Post post : posts) {
+            post.setApproved(true);
+        }
+    }
+```
+
+#### Field Overrides
+Next, let's clean up the `Post` entity by moving the `@AdminField` annotations to the admin model using the `fieldOverrides` attribute:
+```java
+        fieldOverrides = {
+                @AdminFieldOverride(
+                        name = "postTime",
+                        field = @AdminField(sortable = true)
+                ),
+                @AdminFieldOverride(
+                        name = "text",
+                        field = @AdminField(template = "admin/widget/textarea")
+                ),
+                @AdminFieldOverride(
+                        name = "author",
+                        field = @AdminField(
+                                sortBy = "username",
+                                representation = "username"
+                        )
+                ),
+                @AdminFieldOverride(
+                        name = "tags",
+                        field = @AdminField(
+                                template = "admin/widget/multiselect_checkboxes",
+                                representation = "text"
+                        )
+                )
+        }
+```
+The complete `PostAdminModel` will retain all the functionality previously implemented by the annotations on the `Post` entity and will look like this:
+```java
+/**
+ * Demonstrates JPA Admin annotations applied indirectly.
+ */
+@AdminModel(
+        entity = Post.class,
+        listFields = {"textPreview", "author", "postTime", "approved"},
+        filterFields = {"approved", "author", "tags"},
+        fieldsets = {
+                @AdminFieldset(
+                        fields = {
+                                "approved",
+                                "postTime",
+                                "author",
+                                "text"
+                        }
+                ),
+                @AdminFieldset(
+                        label = "Meta",
+                        fields = {"category", "tags"}
+                )
+        },
+        fieldOverrides = {
+                @AdminFieldOverride(
+                        name = "postTime",
+                        field = @AdminField(sortable = true)
+                ),
+                @AdminFieldOverride(
+                        name = "text",
+                        field = @AdminField(template = "admin/widget/textarea")
+                ),
+                @AdminFieldOverride(
+                        name = "author",
+                        field = @AdminField(
+                                sortBy = "username",
+                                representation = "username"
+                        )
+                ),
+                @AdminFieldOverride(
+                        name = "tags",
+                        field = @AdminField(
+                                template = "admin/widget/multiselect_checkboxes",
+                                representation = "text"
+                        )
+                )
+        }
+)
+public class PostAdminModel {
+
+    /**
+     * Admin Models are instantiated as Spring beans,
+     * allowing you to declare dependencies on other beans and leverage various Spring-related capabilities.
+     */
+    private final ConversionService conversionService;
+
+    public PostAdminModel(ConversionService conversionService) {
+        this.conversionService = conversionService;
+    }
+
+    @AdminField(label = "Text")
+    public String getTextPreview(Post post) {
+        return StringUtils.abbreviate(post.getText(), 30);
+    }
+
+    @AdminAction
+    public void approve(Iterable<Post> posts) {
+        for (Post post : posts) {
+            post.setApproved(true);
+        }
+    }
+}
+```
 
 ### Localization

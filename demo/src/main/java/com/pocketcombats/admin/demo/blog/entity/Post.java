@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.demo.blog.entity;
 
+import com.pocketcombats.admin.AdminValidation;
 import com.pocketcombats.admin.demo.user.entity.DemoUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -26,7 +27,7 @@ public class Post implements Serializable {
     private DemoUser author;
 
     @Column(name = "text", nullable = false)
-    @NotBlank
+    @NotBlank(groups = AdminValidation.class)
     private String text;
 
     @Column(name = "category")
@@ -42,8 +43,8 @@ public class Post implements Serializable {
     @ManyToMany
     @JoinTable(
             name = "post_tags",
-            joinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false, updatable = false),
-            inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id", nullable = false, updatable = false)
+            joinColumns = @JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false),
+            inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id", nullable = false)
     )
     private Set<Tag> tags;
 
