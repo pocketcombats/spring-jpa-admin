@@ -486,4 +486,14 @@ public class PostAdminModel {
 }
 ```
 
-### Localization
+## Localization
+Spring JPA Admin fully supports localization. You can refer to the `spring-jpa-admin-messages.properties` file for a complete list of supported keys.
+To enable localization, you should include the `spring-jpa-admin-messages` in the list of message basenames for your Spring Boot application. You can achieve this by adding the following configuration to your `application.yaml` file:
+```yaml
+spring.messages:
+  basename: messages,spring-jpa-admin-messages
+```
+With this configuration, Spring Boot will look for message properties in both the `messages.properties` file (or any other custom message file you have) and the `spring-jpa-admin-messages.properties` file.  
+All core annotations in Spring JPA Admin, such as `@AdminAction`, `@AdminField`, `@AdminFieldset`, `@AdminModel`, and `@AdminPackage`, allow you to specify a `label` attribute.
+This label can be either a hard-coded string or a localization key.  
+Using localization key allows you to provide translated labels for different languages, making your admin interface accessible to users from various locales.  
