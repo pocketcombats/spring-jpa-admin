@@ -49,7 +49,7 @@ public class DemoUser implements Serializable {
 Once you added `@AdminModel` annotation, navigate to admin site (`/admin/DemoUser/`) and see if it works: 
 ![Demo User list view](media/listview-001.png)  
 
-### Customizing List Fields
+### Customizing List View
 First column is always a link leading to edit form, but we'll cover that later.
 To start, we want to rearrange our list view columns:
 ```java
@@ -209,7 +209,7 @@ public class DemoUser implements Serializable {
 ```
 ![Demo User list view final result](media/listview-008.png)
 
-#### Field Representation
+### Field Representation
 Custom field representation is used for both the list view and the form view.
 Let's focus on the list view for now. Also, we'll switch to the `Post` entity.  
 Remember the `author` field where we added a custom `sortBy` attribute? By default, it looks like this:
