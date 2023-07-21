@@ -1,14 +1,17 @@
 package com.pocketcombats.admin.conf;
 
 import com.pocketcombats.admin.AdminModel;
+import com.pocketcombats.admin.AdminUrlParamsHelper;
 import com.pocketcombats.admin.core.AdminModelEntitiesListService;
 import com.pocketcombats.admin.core.AdminModelEntitiesListServiceImpl;
 import com.pocketcombats.admin.core.AdminModelFormService;
 import com.pocketcombats.admin.core.AdminModelFormServiceImpl;
 import com.pocketcombats.admin.core.AdminModelListEntityMapper;
 import com.pocketcombats.admin.core.AdminModelRegistry;
+import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.action.AdminModelActionService;
 import com.pocketcombats.admin.core.action.AdminModelActionServiceImpl;
+import com.pocketcombats.admin.core.action.DefaultDeleteAction;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.history.AdminHistoryCompiler;
 import com.pocketcombats.admin.history.AdminHistoryCompilerImpl;
@@ -16,6 +19,10 @@ import com.pocketcombats.admin.history.AdminHistoryWriter;
 import com.pocketcombats.admin.history.AdminHistoryWriterImpl;
 import com.pocketcombats.admin.history.NoOpAdminHistoryCompiler;
 import com.pocketcombats.admin.history.NoOpAdminHistoryWriter;
+import com.pocketcombats.admin.web.IndexController;
+import com.pocketcombats.admin.web.ModelActionController;
+import com.pocketcombats.admin.web.ModelFormController;
+import com.pocketcombats.admin.web.ModelListController;
 import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,16 +32,15 @@ import org.springframework.boot.autoconfigure.domain.EntityScanner;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.Ordered;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.SmartValidator;
 
+import java.util.List;
 import java.util.Set;
 
 @AutoConfiguration
 @EnableConfigurationProperties(JpaAdminProperties.class)
-@ComponentScan("com.pocketcombats.admin")
 public class JpaAdminAutoConfiguration implements Ordered {
 
     private static final Logger LOG = LoggerFactory.getLogger(JpaAdminAutoConfiguration.class);
@@ -161,5 +167,52 @@ public class JpaAdminAutoConfiguration implements Ordered {
         LOG.debug("Registering default SpelExpressionContextFactory");
 
         return new SpelExpressionContextFactory();
+    }
+
+    @Bean
+    public ActionsFactory adminActionsFactory(AdminHistoryWriter historyWriter, List<AdminModelAction> defaultActions) {
+        return new ActionsFactory(historyWriter, defaultActions);
+    }
+
+    @Bean
+    public AdminUrlParamsHelper adminUrlParamsHelper() {
+        return new AdminUrlParamsHelper();
+    }
+
+    @Bean
+    public AdminModelListEntityMapper adminModelListEntityMapper(
+            EntityManager em,
+            ConversionService conversionService
+    ) {
+        return new AdminModelListEntityMapper(em, conversionService);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "adminDeleteAction")
+    public DefaultDeleteAction adminDeleteAction(AdminHistoryWriter historyWriter) {
+        return new DefaultDeleteAction(historyWriter);
+    }
+
+    @Bean
+    public IndexController adminIndexController(
+            AdminModelRegistry entityRegistry,
+            AdminHistoryCompiler historyCompiler
+    ) {
+        return new IndexController(properties, entityRegistry, historyCompiler);
+    }
+
+    @Bean
+    public ModelListController adminModelListController(AdminModelEntitiesListService service) {
+        return new ModelListController(properties, service);
+    }
+
+    @Bean
+    public ModelFormController adminModelFormController(AdminModelFormService service) {
+        return new ModelFormController(properties, service);
+    }
+
+    @Bean
+    public ModelActionController adminModelActionController(AdminModelActionService service) {
+        return new ModelActionController(properties, service);
     }
 }

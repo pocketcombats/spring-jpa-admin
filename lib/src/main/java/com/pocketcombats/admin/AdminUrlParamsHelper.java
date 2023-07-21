@@ -1,6 +1,5 @@
 package com.pocketcombats.admin;
 
-import org.springframework.stereotype.Component;
 import org.thymeleaf.context.WebEngineContext;
 
 import java.util.Collection;
@@ -9,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
 public class AdminUrlParamsHelper {
 
     private static final Set<String> EXPECTED_PARAMS = Set.of("sort", "search");

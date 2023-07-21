@@ -4,11 +4,9 @@ import com.pocketcombats.admin.data.list.AdminEntityListEntry;
 import jakarta.persistence.EntityManager;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Component
 public class AdminModelListEntityMapper {
 
     private final EntityManager em;

@@ -9,15 +9,11 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Component
-@Order
 public class DefaultDeleteAction implements AdminModelAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDeleteAction.class);

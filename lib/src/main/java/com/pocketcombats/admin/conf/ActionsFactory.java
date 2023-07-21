@@ -8,7 +8,6 @@ import com.pocketcombats.admin.core.action.StaticMethodDelegatingAction;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.reflect.MethodUtils;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -18,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class ActionsFactory {
 
     private final AdminHistoryWriter historyWriter;
