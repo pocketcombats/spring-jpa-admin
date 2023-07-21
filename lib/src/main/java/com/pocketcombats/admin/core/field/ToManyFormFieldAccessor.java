@@ -8,7 +8,6 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.IdentifiableType;
 import jakarta.persistence.metamodel.PluralAttribute;
@@ -94,7 +93,7 @@ public class ToManyFormFieldAccessor extends AbstractFormFieldValueAccessor
     public Map<String, Object> getModelAttributes() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<?> query = cb.createQuery(attributeElementJavaType);
-        Root<?> root = query.from(attributeElementJavaType);
+        query.from(attributeElementJavaType);
         List<?> resultList = em.createQuery(query).getResultList();
 
         return Map.of(
