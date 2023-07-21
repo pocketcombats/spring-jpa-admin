@@ -51,6 +51,34 @@
                 <module>demo</module>
             </modules>
         </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.0</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>3.0.1</version>
+                        <configuration>
+                            <tagNameFormat>v@{project.version}</tagNameFormat>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <scm>
@@ -58,6 +86,14 @@
         <developerConnection>scm:git:ssh://github.com:pocketcombats/spring-jpa-admin.git</developerConnection>
         <url>https://github.com/pocketcombats/spring-jpa-admin/tree/master/</url>
     </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>github-pocketcombats</id>
+            <name>GitHub Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/pocketcombats/spring-jpa-admin</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
