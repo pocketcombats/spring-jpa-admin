@@ -5,9 +5,9 @@ VALUES (1, 'Demo Admin', true, 1),
        (4, 'Demo Disabled', false, 1);
 
 INSERT INTO demo_post (id, post_time, author_id, text, category, approved)
-VALUES (1, NOW(), 2, 'The very first post, with rather long text potentially breaking the list view.', null, true),
-       (2, NOW(), 4, 'Post by disabled user', 'DRAMA', false),
-       (3, NOW(), 1, 'Tagless post', null, false);
+VALUES (1, '2023-06-18T10:10Z', 2, 'The very first post, with rather long text potentially breaking the list view.', null, true),
+       (2, '2023-06-18T10:32Z', 4, 'Post by disabled user', 'DRAMA', false),
+       (3, '2023-06-19T00:00Z', 1, 'Tagless post', null, false);
 
 INSERT INTO tag (id, text)
 VALUES (1, 'First Tag'),
