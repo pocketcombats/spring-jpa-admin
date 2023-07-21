@@ -83,7 +83,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/pocketcombats/spring-jpa-admin.git</connection>
-        <developerConnection>scm:git:ssh://github.com:pocketcombats/spring-jpa-admin.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@github.com/pocketcombats/spring-jpa-admin.git</developerConnection>
         <url>https://github.com/pocketcombats/spring-jpa-admin/tree/master/</url>
     </scm>
 
