@@ -33,6 +33,8 @@ public @interface AdminModel {
 
     AdminFieldset[] fieldsets() default {};
 
+    AdminLink[] links() default {};
+
     boolean insertable() default true;
 
     boolean updatable() default true;
