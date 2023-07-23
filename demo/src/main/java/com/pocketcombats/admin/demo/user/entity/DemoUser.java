@@ -5,6 +5,7 @@ import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminFieldset;
 import com.pocketcombats.admin.AdminLink;
 import com.pocketcombats.admin.AdminModel;
+import com.pocketcombats.admin.demo.blog.entity.Comment;
 import com.pocketcombats.admin.demo.blog.entity.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +26,10 @@ import java.util.List;
         searchFields = {"id", "username"},
         filterFields = "enabled",
         fieldsets = @AdminFieldset(fields = {"enabled", "username"}),
-        links = @AdminLink(target = Post.class, preview = 3, sortBy = "-postTime"),
+        links = {
+                @AdminLink(target = Post.class, preview = 3, sortBy = "-postTime"),
+                @AdminLink(target = Comment.class, sortBy = "-postTime")
+        },
         // Prohibit direct demo users creation or deletion
         insertable = false,
         disableActions = "delete"

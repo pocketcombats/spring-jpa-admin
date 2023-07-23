@@ -7,7 +7,8 @@ VALUES (1, 'Demo Admin', true, 1),
 INSERT INTO demo_post (id, post_time, author_id, text, category, approved)
 VALUES (1, '2023-06-18T10:10Z', 2, 'The very first post, with rather long text potentially breaking the list view.', null, true),
        (2, '2023-06-18T10:32Z', 4, 'Post by disabled user', 'DRAMA', false),
-       (3, '2023-06-19T00:00Z', 1, 'Tagless post', null, false);
+       (3, '2023-06-19T00:00Z', 1, 'Tagless post', null, false),
+       (4, '2023-06-19T00:10Z', 2, 'Second post by Demo Editor', null, false);
 
 INSERT INTO tag (id, text)
 VALUES (1, 'First Tag'),

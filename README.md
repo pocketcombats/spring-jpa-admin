@@ -330,6 +330,46 @@ For example, the following annotation will only be applied to the admin edit for
     private String text;
 ```
 
+#### Relation Links
+To enhance our Edit Form, let's include links to related entities in the `DemoUser` entity.
+We'll provide links to Posts and Comments that are associated with the currently open user instance.
+To achieve this, we can include the `links` attribute in the `@AdminModel` annotation, as shown below:
+```java
+        links = {
+                @AdminLink(target = Post.class, sortBy = "-postTime"),
+                @AdminLink(target = Comment.class, sortBy = "-postTime")
+        }
+```
+So our complete `DemoUser` admin annotation looks following:
+```java
+@AdminModel(
+        listFields = {"username", "enabled"},
+        searchFields = {"id", "username"},
+        filterFields = "enabled",
+        fieldsets = @AdminFieldset(fields = {"enabled", "username"}),
+        links = {
+                @AdminLink(target = Post.class, sortBy = "-postTime"),
+                @AdminLink(target = Comment.class, sortBy = "-postTime")
+        },
+        // Prohibit direct demo users creation or deletion
+        insertable = false,
+        disableActions = "delete"
+)
+```
+Let's take a look at the edit form now:
+![Edit Form with relation links](media/form-006.png)
+
+By clicking on "Blog Post", users now can quickly navigate to the `Post` list view, where they will see only posts created by the "Demo Editor":
+![List View by User](media/listview-012.png)  
+One last enhancement we want to add is to include previews for the latest Posts created by user.
+To enable this, modify the `@AdminLink` annotation to include the `preview` attribute, as shown below:
+```java
+@AdminLink(target = Post.class, preview = 3, sortBy = "-postTime")
+```
+Now, when we review the updated Edit Form, we can see previews for the latest user Posts:
+![Edit Form with link previews](media/form-007.png)  
+These relation links and previews provide users with quick access to related content, making the admin interface more user-friendly and efficient.  
+
 ### Externalized Configuration
 There are situations where you may not want to apply admin annotations directly to your entities, or it may not be feasible to do so.
 In such cases, Spring JPA Admin supports **externalized configuration**, allowing you to configure the admin settings separately.
