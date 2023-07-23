@@ -1,8 +1,10 @@
 package com.pocketcombats.admin.core;
 
+import com.pocketcombats.admin.core.links.AdminModelLink;
 import com.pocketcombats.admin.data.list.AdminEntityListEntry;
 import com.pocketcombats.admin.data.list.AdminListColumn;
 import com.pocketcombats.admin.data.list.AdminModelEntitiesList;
+import com.pocketcombats.admin.data.list.EntityRelation;
 import com.pocketcombats.admin.data.list.ListAction;
 import com.pocketcombats.admin.data.list.ListFilter;
 import com.pocketcombats.admin.data.list.ListFilterOption;
@@ -17,6 +19,7 @@ import jakarta.persistence.criteria.Root;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -30,15 +33,18 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
     private final AdminModelRegistry modelRegistry;
     private final EntityManager em;
+    private final ConversionService conversionService;
     private final AdminModelListEntityMapper mapper;
 
     public AdminModelEntitiesListServiceImpl(
             AdminModelRegistry modelRegistry,
             EntityManager em,
+            ConversionService conversionService,
             AdminModelListEntityMapper mapper
     ) {
         this.modelRegistry = modelRegistry;
         this.em = em;
+        this.conversionService = conversionService;
         this.mapper = mapper;
     }
 
@@ -48,6 +54,57 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             String modelName,
             ModelRequest query,
             Map<String, String> filters
+    ) throws UnknownModelException {
+        return listEntities(modelName, query, filters, new PredicateFactory[0]);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminModelEntitiesList listRelationEntities(
+            String modelName,
+            ModelRequest query,
+            Map<String, String> filters,
+            EntityRelation relation
+    ) throws UnknownModelException {
+        AdminRegisteredModel model = modelRegistry.resolve(modelName);
+        AdminRegisteredModel relationModel = modelRegistry.resolve(relation.model());
+        AdminModelLink resolvedLink = relationModel.links().stream()
+                .filter(link -> link.target().equals(model.entityDetails().entityClass()))
+                .findAny()
+                .orElseThrow(() -> {
+                    LOG.error("Requested relation to {} not found (model {})", modelName, relationModel.modelName());
+                    return new UnknownModelException();
+                });
+        if (query.getSort() == null) {
+            query.setSort(resolvedLink.order());
+        }
+        Object id = conversionService.convert(
+                relation.id(),
+                relationModel.entityDetails().idAttribute().getJavaType()
+        );
+        Object reference = em.getReference(relationModel.entityDetails().entityClass(), id);
+        return listEntities(
+                modelName,
+                query,
+                filters,
+                (root) -> resolvedLink.predicateFactory().createPredicate(reference, root)
+        );
+    }
+
+    private AdminModelEntitiesList listEntities(
+            String modelName,
+            ModelRequest query,
+            Map<String, String> filters,
+            PredicateFactory... predicateFactories
+    ) throws UnknownModelException {
+        return listEntities(modelName, query, filters, new CompositePredicateFactory(em, predicateFactories));
+    }
+
+    private AdminModelEntitiesList listEntities(
+            String modelName,
+            ModelRequest query,
+            Map<String, String> filters,
+            PredicateFactory predicateFactory
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
         Class<?> entityClass = model.entityDetails().entityClass();
@@ -59,6 +116,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
         paginationQuery.select(cb.count(paginationRoot));
         applyModelRequest(model, paginationQuery, paginationRoot, query);
         applyFilters(model, paginationQuery, paginationRoot, filters);
+        applyPredicateFactory(paginationQuery, paginationRoot, predicateFactory);
         long totalCount = em.createQuery(paginationQuery).getSingleResult();
 
         int pageSize = model.pageSize();
@@ -75,6 +133,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             Root<?> root = dataQuery.from(entityClass);
             applyModelRequest(model, dataQuery, root, query);
             applyFilters(model, dataQuery, root, filters);
+            applyPredicateFactory(dataQuery, root, predicateFactory);
             applySorting(query.getSort(), model, dataQuery, root, cb);
             resultList = em.createQuery(dataQuery)
                     .setFirstResult((page - 1) * pageSize)
@@ -84,7 +143,6 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             resultList = Collections.emptyList();
         }
 
-        // To be part of admin model
         List<AdminListColumn> columns = model.listFields().stream()
                 .map(listField -> new AdminListColumn(
                         listField.name(),
@@ -103,7 +161,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 model.insertable(),
                 page,
                 pagesCount,
-                collectListFilters(model),
+                collectListFilters(model, predicateFactory),
                 columns,
                 collectActions(model),
                 entries
@@ -134,13 +192,23 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 .map(modelFilter -> modelFilter.createPredicate(cb, root, filters.get(modelFilter.getName())))
                 .toArray(Predicate[]::new);
         if (filterPredicates.length > 0) {
-            LOG.debug("Applying {} filter(s)", filterPredicates.length);
+            LOG.debug("Applying {} filter predicate(s)", filterPredicates.length);
             Predicate combinedFiltersPredicate = cb.and(filterPredicates);
             if (q.getRestriction() != null) {
                 q.where(cb.and(q.getRestriction(), combinedFiltersPredicate));
             } else {
                 q.where(combinedFiltersPredicate);
             }
+        }
+    }
+
+    private void applyPredicateFactory(CriteriaQuery<?> q, Root<?> root, PredicateFactory factory) {
+        Predicate predicate = factory.create(root);
+        if (q.getRestriction() != null) {
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            q.where(cb.and(q.getRestriction(), predicate));
+        } else {
+            q.where(predicate);
         }
     }
 
@@ -185,12 +253,15 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 .ifPresent(query::orderBy);
     }
 
-    private static List<ListFilter> collectListFilters(AdminRegisteredModel model) {
+    private static List<ListFilter> collectListFilters(
+            AdminRegisteredModel model,
+            PredicateFactory predicateFactory
+    ) {
         return model.filters().stream()
                 .map(modelFilter -> new ListFilter(
                         modelFilter.getName(),
                         modelFilter.getLabel(),
-                        modelFilter.collectOptions().stream()
+                        modelFilter.collectOptions(predicateFactory).stream()
                                 .map(filterOption -> new ListFilterOption(
                                         filterOption.label(),
                                         filterOption.value()

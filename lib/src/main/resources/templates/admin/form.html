@@ -31,9 +31,11 @@
             /* Same as .col-form-label */
             padding-top: calc(.375rem + 1px);
         }
+
         .form-control-readonly {
             display: block;
         }
+
         .form-control .form-check:first-child {
             padding-top: 0;
         }
@@ -60,53 +62,80 @@
                actionParams=${entity.id == null ? 'adminModel=${entity.modelName}' : 'adminModel=${entity.modelName}, id=${entity.id}'}"
       th:action="@{${actionUrl}(__${actionParams}__)}">
     <div class="container">
-        <!--/*@thymesVar id="thymeleafRequestContext" type="org.springframework.web.servlet.support.RequestContext"*/-->
-        <ul th:if="${errors?.hasGlobalErrors()}"
-            class="text-danger list-unstyled">
-            <li th:each="globalError: ${errors.globalErrors}"
-                th:text="${thymeleafRequestContext.getMessage(globalError, false)}"></li>
-        </ul>
-        <div th:each="fieldGroup: ${entity.fieldGroups}">
-            <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->
-            <h5 th:unless="${#strings.isEmpty(fieldGroup.label)}" th:text="${fieldGroup.label}"></h5>
-            <div th:each="field: ${fieldGroup.fields}" class="row form-row">
-                <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
-                <label th:for="${'model-field-' + field.name}"
-                       th:text="${#messages.msgOrNull(field.label) ?: field.label}"
-                       class="col-sm-2 col-form-label"></label>
-                <div class="col-sm-10"
-                     th:with="hasErrors=${errors != null && errors.hasFieldErrors(field.name)}">
-                    <div th:replace="~{${field.template} (hasErrors=${hasErrors})}"></div>
-                    <ul th:if="${hasErrors}"
-                        class="invalid-feedback list-unstyled">
-                         <li th:each="fieldError: ${errors.getFieldErrors(field.name)}"
-                             th:text="${thymeleafRequestContext.getMessage(fieldError, false)}">Please correct errors.</li>
-                    </ul>
+        <div class="row">
+            <div class="col-12 col-lg-9 col-xl-10"
+                 th:class="${entity.links.isEmpty() ? 'col' : 'col-12 col-lg-9 col-xl-10'}">
+                <!--/*@thymesVar id="thymeleafRequestContext" type="org.springframework.web.servlet.support.RequestContext"*/-->
+                <ul th:if="${errors?.hasGlobalErrors()}"
+                    class="d-none"
+                    th:class="'text-danger list-unstyled'">
+                    <li th:each="globalError: ${errors.globalErrors}"
+                        th:text="${thymeleafRequestContext.getMessage(globalError, false)}"></li>
+                </ul>
+                <div th:each="fieldGroup: ${entity.fieldGroups}">
+                    <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->
+                    <h5 th:unless="${#strings.isEmpty(fieldGroup.label)}" th:text="${fieldGroup.label}">Fieldset</h5>
+                    <div th:each="field: ${fieldGroup.fields}"
+                         class="row form-row">
+                        <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+                        <label th:for="${'model-field-' + field.name}"
+                               for="model-field-approved"
+                               th:text="${#messages.msgOrNull(field.label) ?: field.label}"
+                               class="col-sm-2 col-form-label">Approved</label>
+                        <div class="col-sm-10"
+                             th:with="hasErrors=${errors != null && errors.hasFieldErrors(field.name)}">
+                            <input th:remove="all" class="form-check-input" type="checkbox" id="model-field-approved" value="true"/>
+                            <th:block th:replace="~{${field.template} (hasErrors=${hasErrors})}" class="col-sm-10"/>
+                            <ul th:if="${hasErrors}"
+                                class="invalid-feedback list-unstyled">
+                                <li th:each="fieldError: ${errors.getFieldErrors(field.name)}"
+                                    th:text="${thymeleafRequestContext.getMessage(fieldError, false)}">Please correct
+                                    errors.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div th:remove="all">
-            <div class="row form-row">
-                <label for="model-field-approved" class="col-sm-2 col-form-label">Approved</label>
-                <div class="col-sm-10">
-                    <input class="form-check-input" type="checkbox" id="model-field-approved" value="true"/>
+                <div th:remove="all">
+                    <div class="row form-row">
+                        <label for="model-field-author" class="col-sm-2 col-form-label">Author</label>
+                        <div class="col-sm-10">
+                            <select id="model-field-author" class="form-select w-auto">
+                                <option>Author 1</option>
+                                <option>Author 2</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row form-row">
+                        <label for="model-field-text" class="col-sm-2 col-form-label">Text</label>
+                        <div class="col-sm-10">
+                            <textarea id="model-field-text" class="form-control" rows="4" cols="50">Text here</textarea>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row form-row">
-                <label for="model-field-author" class="col-sm-2 col-form-label">Author</label>
-                <div class="col-sm-10">
-                    <select id="model-field-author" class="form-select w-auto">
-                        <option>Author 1</option>
-                        <option>Author 2</option>
-                    </select>
-                </div>
-            </div>
-            <div class="row form-row">
-                <label for="model-field-text" class="col-sm-2 col-form-label">Text</label>
-                <div class="col-sm-10">
-                    <textarea id="model-field-text" class="form-control" rows="4" cols="50">Text here</textarea>
-                </div>
+            <div th:if="${!entity.links.isEmpty()}"
+                 class="col-12 col-lg-3 col-xl-2">
+                <h5 class="mt-4 mt-lg-0" th:text="#{spring-jpa-admin.links.title}">Links</h5>
+                <h6 class="bg-light mb-1" th:remove="all"><a href="list.html">Post</a></h6>
+                <th:block th:each="link: ${entity.links}">
+                    <h6 class="bg-light mb-1">
+                        <a href="list.html"
+                           th:href="@{/admin/{adminModel}/{entityId}/rel/{relation}/(adminModel=${entity.modelName}, entityId=${entity.id}, relation=${link.modelName})}"
+                           th:text="${#messages.msgOrNull(link.label) ?: link.label}">Comment</a>
+                    </h6>
+                    <ul th:unless="${link.entities.isEmpty()}" class="list-unstyled mb-2">
+                        <li th:each="relation: ${link.entities}"
+                            class="ps-1">
+                            <a href="form.html"
+                               th:href="@{/admin/{adminModel}/edit/{id}/(adminModel=${link.modelName}, id=${relation.entityId})}"
+                               th:text="${relation.representation}">Comment text prev...</a>
+                        </li>
+                        <li th:remove="all"><a href="form.html">Comment text prev...</a></li>
+                    </ul>
+                </th:block>
+                <h6 class="bg-light mb-1" th:remove="all"><a href="list.html">Auth</a></h6>
             </div>
         </div>
     </div>

@@ -2,6 +2,7 @@ package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
+import com.pocketcombats.admin.core.links.AdminModelLink;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import jakarta.annotation.Nullable;
 
@@ -19,6 +20,7 @@ public record AdminRegisteredModel(
         @Nullable SearchPredicateFactory searchPredicateFactory,
         List<AdminModelFilter> filters,
         List<AdminModelFieldset> fieldsets,
+        List<AdminModelLink> links,
         Map<String, AdminModelAction> actions
 ) {
 

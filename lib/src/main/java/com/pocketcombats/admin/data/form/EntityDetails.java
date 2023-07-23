@@ -8,6 +8,7 @@ public record EntityDetails(
         String id,
         String label,
         List<AdminFormFieldGroup> fieldGroups,
+        List<AdminRelationLink> links,
         boolean deletable
 ) implements Serializable {
 

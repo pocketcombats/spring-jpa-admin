@@ -11,6 +11,8 @@ import com.pocketcombats.admin.core.RegisteredEntityDetails;
 import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
+import com.pocketcombats.admin.core.links.AdminModelLink;
+import com.pocketcombats.admin.core.links.AdminModelLinkFactory;
 import com.pocketcombats.admin.core.search.CompositeSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
@@ -54,6 +56,7 @@ import java.util.stream.Collectors;
     private final AutowireCapableBeanFactory beanFactory;
     private final ConversionService conversionService;
     private final SpelExpressionContextFactory spelExpressionContextFactory;
+    private final AdminModelLinkFactory linksFactory;
     private final ActionsFactory actionsFactory;
 
     public AdminModelRegistryBuilder(
@@ -61,12 +64,14 @@ import java.util.stream.Collectors;
             AutowireCapableBeanFactory beanFactory,
             ConversionService conversionService,
             SpelExpressionContextFactory spelExpressionContextFactory,
+            AdminModelLinkFactory linksFactory,
             ActionsFactory actionsFactory
     ) {
         this.em = em;
         this.beanFactory = beanFactory;
         this.conversionService = conversionService;
         this.spelExpressionContextFactory = spelExpressionContextFactory;
+        this.linksFactory = linksFactory;
         this.actionsFactory = actionsFactory;
     }
 
@@ -167,6 +172,8 @@ import java.util.stream.Collectors;
 
         List<AdminModelFilter> filters = createModelFilters(modelAnnotation, entity, fieldFactory);
 
+        List<AdminModelLink> links = createModelLinks(modelName, modelAnnotation, targetClass);
+
         Map<String, AdminModelAction> actions = createActions(
                 modelName, modelAnnotation, targetClass, adminModelClass, adminModelBean
         );
@@ -187,6 +194,7 @@ import java.util.stream.Collectors;
                 searchPredicateFactory,
                 filters,
                 fieldsets,
+                links,
                 actions
         );
     }
@@ -372,6 +380,14 @@ import java.util.stream.Collectors;
                 .toList();
         filters.addAll(fieldFilters);
         return filters;
+    }
+
+    private List<AdminModelLink> createModelLinks(
+            String modelName,
+            AdminModel modelAnnotation,
+            Class<?> modelType
+    ) {
+        return linksFactory.createModelLinks(modelName, modelAnnotation, modelType);
     }
 
     private Map<String, AdminModelAction> createActions(

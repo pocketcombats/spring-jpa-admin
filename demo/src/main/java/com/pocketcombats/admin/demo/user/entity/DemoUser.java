@@ -2,6 +2,8 @@ package com.pocketcombats.admin.demo.user.entity;
 
 import com.pocketcombats.admin.AdminAction;
 import com.pocketcombats.admin.AdminField;
+import com.pocketcombats.admin.AdminFieldset;
+import com.pocketcombats.admin.AdminLink;
 import com.pocketcombats.admin.AdminModel;
 import com.pocketcombats.admin.demo.blog.entity.Post;
 import jakarta.persistence.Column;
@@ -22,6 +24,8 @@ import java.util.List;
         listFields = {"username", "enabled"},
         searchFields = {"id", "username"},
         filterFields = "enabled",
+        fieldsets = @AdminFieldset(fields = {"enabled", "username"}),
+        links = @AdminLink(target = Post.class, preview = 3, sortBy = "-postTime"),
         // Prohibit direct demo users creation or deletion
         insertable = false,
         disableActions = "delete"
@@ -34,7 +38,7 @@ public class DemoUser implements Serializable {
 
     @Size(min = 3, max = 15)
     @Column(name = "username", nullable = false)
-    @AdminField(updatable = false, sortable = true)
+    @AdminField(sortable = true)
     private String username;
 
     @Column(name = "enabled", nullable = false)

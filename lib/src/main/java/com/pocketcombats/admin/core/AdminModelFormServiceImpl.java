@@ -4,8 +4,10 @@ import com.pocketcombats.admin.AdminValidation;
 import com.pocketcombats.admin.core.field.AdminFormFieldPluralValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldSingularValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
+import com.pocketcombats.admin.core.links.AdminRelationLinkService;
 import com.pocketcombats.admin.data.form.AdminFormField;
 import com.pocketcombats.admin.data.form.AdminFormFieldGroup;
+import com.pocketcombats.admin.data.form.AdminRelationLink;
 import com.pocketcombats.admin.data.form.EntityDetails;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
 import jakarta.persistence.EntityManager;
@@ -34,6 +36,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     private final AdminModelRegistry modelRegistry;
     private final AdminHistoryWriter historyWriter;
+    private final AdminRelationLinkService relationLinkService;
     private final EntityManager em;
     private final SmartValidator validator;
     private final ConversionService conversionService;
@@ -41,12 +44,14 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     public AdminModelFormServiceImpl(
             AdminModelRegistry modelRegistry,
             AdminHistoryWriter historyWriter,
+            AdminRelationLinkService relationLinkService,
             EntityManager em,
             SmartValidator validator,
             ConversionService conversionService
     ) {
         this.modelRegistry = modelRegistry;
         this.historyWriter = historyWriter;
+        this.relationLinkService = relationLinkService;
         this.em = em;
         this.validator = validator;
         this.conversionService = conversionService;
@@ -68,11 +73,13 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     private EntityDetails getEntityDetails(AdminRegisteredModel model, Object entity, FormAction action) {
         List<AdminFormFieldGroup> formFieldGroups = mapFieldGroups(model, entity, action);
+        List<AdminRelationLink> links = relationLinkService.collectRelationLinks(model, entity);
         return new EntityDetails(
                 model.modelName(),
                 resolveId(entity),
                 model.label(),
                 formFieldGroups,
+                links,
                 model.actions().containsKey("delete")
         );
     }

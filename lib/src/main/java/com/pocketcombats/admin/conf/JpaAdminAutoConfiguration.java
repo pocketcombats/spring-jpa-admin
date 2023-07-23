@@ -13,6 +13,8 @@ import com.pocketcombats.admin.core.action.AdminModelActionService;
 import com.pocketcombats.admin.core.action.AdminModelActionServiceImpl;
 import com.pocketcombats.admin.core.action.DefaultDeleteAction;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
+import com.pocketcombats.admin.core.links.AdminModelLinkFactory;
+import com.pocketcombats.admin.core.links.AdminRelationLinkService;
 import com.pocketcombats.admin.history.AdminHistoryCompiler;
 import com.pocketcombats.admin.history.AdminHistoryCompilerImpl;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
@@ -63,6 +65,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
             EntityManager em,
             ConversionService conversionService,
             SpelExpressionContextFactory spelExpressionContextFactory,
+            AdminModelLinkFactory linksFactory,
             ActionsFactory actionsFactory
     ) throws Exception {
         LOG.debug("Registering default AdminModelRegistry");
@@ -73,6 +76,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
                 context.getAutowireCapableBeanFactory(),
                 conversionService,
                 spelExpressionContextFactory,
+                linksFactory,
                 actionsFactory
         );
         for (Class<?> annotatedModel : annotatedModels) {
@@ -86,6 +90,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
     public AdminModelEntitiesListService adminModelEntitiesListService(
             AdminModelRegistry modelRegistry,
             EntityManager em,
+            ConversionService conversionService,
             AdminModelListEntityMapper mapper
     ) {
         LOG.debug("Registering default AdminModelEntitiesListService");
@@ -93,6 +98,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
         return new AdminModelEntitiesListServiceImpl(
                 modelRegistry,
                 em,
+                conversionService,
                 mapper
         );
     }
@@ -102,6 +108,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
     public AdminModelFormService adminModelFormService(
             AdminModelRegistry modelRegistry,
             AdminHistoryWriter historyWriter,
+            AdminRelationLinkService relationLinkService,
             EntityManager em,
             SmartValidator validator,
             ConversionService conversionService
@@ -111,6 +118,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
         return new AdminModelFormServiceImpl(
                 modelRegistry,
                 historyWriter,
+                relationLinkService,
                 em,
                 validator,
                 conversionService
@@ -162,11 +170,26 @@ public class JpaAdminAutoConfiguration implements Ordered {
     }
 
     @Bean
+    public AdminRelationLinkService adminRelationLinkService(
+            AdminModelRegistry modelRegistry,
+            AdminModelListEntityMapper mapper,
+            EntityManager em,
+            ConversionService conversionService
+    ) {
+        return new AdminRelationLinkService(modelRegistry, mapper, em, conversionService);
+    }
+
+    @Bean
     @ConditionalOnMissingBean
     public SpelExpressionContextFactory spelExpressionContextFactory() {
         LOG.debug("Registering default SpelExpressionContextFactory");
 
         return new SpelExpressionContextFactory();
+    }
+
+    @Bean
+    public AdminModelLinkFactory adminModelLinkFactory(EntityManager em) {
+        return new AdminModelLinkFactory(em);
     }
 
     @Bean
@@ -202,8 +225,11 @@ public class JpaAdminAutoConfiguration implements Ordered {
     }
 
     @Bean
-    public ModelListController adminModelListController(AdminModelEntitiesListService service) {
-        return new ModelListController(properties, service);
+    public ModelListController adminModelListController(
+            AdminModelEntitiesListService entitiesListService,
+            AdminRelationLinkService relationLinkService
+    ) {
+        return new ModelListController(properties, entitiesListService, relationLinkService);
     }
 
     @Bean

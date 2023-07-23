@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core.filter;
 
+import com.pocketcombats.admin.core.PredicateFactory;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -39,10 +40,11 @@ public class ToManyFilterOptionsCollector implements FilterOptionsCollector {
     }
 
     @Override
-    public List<ModelFilterOption> collectOptions() {
+    public List<ModelFilterOption> collectOptions(PredicateFactory predicateFactory) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<?> query = cb.createQuery(attributeElementJavaType);
         Root<?> root = query.from(entityType);
+        query.where(predicateFactory.create(root));
         query.select(root.get(attribute.getName())).distinct(true);
         List<?> resultList = em.createQuery(query).getResultList();
         return resultList.stream()
