@@ -1,2 +1,3 @@
 com.pocketcombats.admin.conf.JpaAdminAutoConfiguration
+com.pocketcombats.admin.conf.JpaAdminSecurityConfiguration
 com.pocketcombats.admin.history.JpaAdminHistoryConfiguration

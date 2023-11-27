@@ -11,6 +11,7 @@ import java.util.Map;
 
 public record AdminRegisteredModel(
         String modelName,
+        int priority,
         String label,
         RegisteredEntityDetails entityDetails,
         boolean insertable,

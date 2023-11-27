@@ -3,6 +3,7 @@ package com.pocketcombats.admin.core;
 import com.pocketcombats.admin.data.AdminModelInfo;
 import com.pocketcombats.admin.data.AdminModelsGroup;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -21,6 +22,10 @@ public class AdminModelRegistryImpl implements AdminModelRegistry {
                 .map(entry -> new AdminModelsGroup(
                         entry.getKey(),
                         entry.getValue().stream()
+                                .sorted(
+                                        Comparator.comparingInt(AdminRegisteredModel::priority).reversed()
+                                                .thenComparing(AdminRegisteredModel::modelName)
+                                )
                                 .map(model -> new AdminModelInfo(model.label(), model.modelName()))
                                 .toList()
                 ))

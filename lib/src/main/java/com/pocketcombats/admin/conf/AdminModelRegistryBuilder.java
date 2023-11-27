@@ -183,8 +183,10 @@ import java.util.stream.Collectors;
                 entity,
                 entity.getId(entity.getIdType().getJavaType())
         );
+        int priority = getPriority(annotatedClass, targetClass);
         return new AdminRegisteredModel(
                 modelName,
+                priority,
                 label,
                 entityDetails,
                 modelAnnotation.insertable(),
@@ -197,6 +199,18 @@ import java.util.stream.Collectors;
                 links,
                 actions
         );
+    }
+
+    private int getPriority(Class<?> annotatedClass, Class<?> targetClass) {
+        Priority priorityAnnotation = AnnotationUtils.getAnnotation(annotatedClass, Priority.class);
+        if (priorityAnnotation == null) {
+            priorityAnnotation = AnnotationUtils.getAnnotation(targetClass, Priority.class);
+        }
+        if (priorityAnnotation != null) {
+            return priorityAnnotation.value();
+        } else {
+            return 0;
+        }
     }
 
     @Nullable
