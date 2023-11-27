@@ -427,7 +427,11 @@ import java.util.stream.Collectors;
                 .collect(Collectors.toMap(
                         entry -> entry.getKey().label(),
                         Map.Entry::getValue,
-                        (a, b) -> a,
+                        (a, b) -> {
+                            List<AdminRegisteredModel> result = new ArrayList<>(a);
+                            result.addAll(b);
+                            return result;
+                        },
                         LinkedHashMap::new
                 ));
         return new AdminModelRegistryImpl(models);
