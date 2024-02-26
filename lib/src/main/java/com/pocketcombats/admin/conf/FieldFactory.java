@@ -293,10 +293,7 @@ public class FieldFactory {
     }
 
     private AdminModelPropertyReader resolveListFieldReader(String name) {
-        AdminModelPropertyReader propertyAccessor = null;
-        if (modelAdminClass != null) {
-            propertyAccessor = findAdminModelPropertyReader(name);
-        }
+        AdminModelPropertyReader propertyAccessor = findAdminModelPropertyReader(name);
         if (propertyAccessor == null) {
             propertyAccessor = findEntityPropertyReader(name);
         }
@@ -312,6 +309,9 @@ public class FieldFactory {
 
     @Nullable
     private AdminModelPropertyReader findAdminModelPropertyReader(String name) {
+        if (modelAdminClass == null) {
+            return null;
+        }
         Method method = findModelAdminPropertyReader(modelAdminClass, name, targetClass);
         if (method != null) {
             return new AdminModelDelegatingPropertyReader(name, adminModelBean, method);

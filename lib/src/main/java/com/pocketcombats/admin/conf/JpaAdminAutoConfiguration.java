@@ -70,7 +70,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
     ) throws Exception {
         LOG.debug("Registering default AdminModelRegistry");
 
-        Set<Class<?>> annotatedModels = new EntityScanner(context).scan(AdminModel.class);
+        Set<Class<?>> annotatedModels = new AdminModelScanner(context).scan(AdminModel.class);
         AdminModelRegistryBuilder registryBuilder = new AdminModelRegistryBuilder(
                 em,
                 context.getAutowireCapableBeanFactory(),
