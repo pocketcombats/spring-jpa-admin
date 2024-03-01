@@ -13,7 +13,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.pocketcombats</groupId>
+            <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
             <artifactId>spring-jpa-admin</artifactId>
             <version>${project.version}</version>
         </dependency>
