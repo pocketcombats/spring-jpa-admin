@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -12,7 +10,7 @@
 
     <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
     <artifactId>parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0-M8</version>
     <packaging>pom</packaging>
 
     <name>Spring JPA Admin parent</name>
@@ -111,7 +109,7 @@
         <connection>scm:git:git://github.com/pocketcombats/spring-jpa-admin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/pocketcombats/spring-jpa-admin.git</developerConnection>
         <url>https://github.com/pocketcombats/spring-jpa-admin/tree/master/</url>
-        <tag>HEAD</tag>
+        <tag>v1.0.0-M8</tag>
     </scm>
 
     <distributionManagement>
@@ -132,7 +130,7 @@
                         <id>enforce</id>
                         <configuration>
                             <rules>
-                                <dependencyConvergence/>
+                                <dependencyConvergence />
                             </rules>
                         </configuration>
                         <goals>
