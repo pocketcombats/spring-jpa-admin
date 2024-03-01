@@ -10,7 +10,7 @@
 
     <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
     <artifactId>parent</artifactId>
-    <version>1.0.0-M8</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Spring JPA Admin parent</name>
@@ -109,7 +109,7 @@
         <connection>scm:git:git://github.com/pocketcombats/spring-jpa-admin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/pocketcombats/spring-jpa-admin.git</developerConnection>
         <url>https://github.com/pocketcombats/spring-jpa-admin/tree/master/</url>
-        <tag>v1.0.0-M8</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
