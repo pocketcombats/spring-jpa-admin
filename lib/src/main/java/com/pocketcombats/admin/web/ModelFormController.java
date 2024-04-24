@@ -54,7 +54,7 @@ public class ModelFormController {
             );
         } else {
             if (data.containsKey("save-continue")) {
-                return new ModelAndView("redirect:/admin/" + model + "/edit/" + result.entityDetails().id());
+                return new ModelAndView("redirect:/admin/" + model + "/edit/" + result.entityDetails().id() + "/");
             } else {
                 return new ModelAndView("redirect:/admin/" + model + "/");
             }
