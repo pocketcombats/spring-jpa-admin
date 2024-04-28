@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <title>Spring JPA Admin</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <!-- Google Fonts Roboto -->
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
+    <!-- MDB -->
+    <link rel="stylesheet"
+          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
+          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
+</head>
+<body>
+<header class="bg-light shadow-4 pt-4 pb-4 mb-4">
+    <div class="container">
+        <h1>Spring JPA Admin</h1>
+        <div class="row">
+            <h4>Please Sign In</h4>
+        </div>
+    </div>
+</header>
+    <div class="container text-danger" th:if="${errorMessage != null}" th:text="${errorMessage}">
+        Failed to login.
+    </div>
+    <div class="container" th:if="${param.logout != null}">
+        You have been logged out.
+    </div>
+<form class="pt-4" th:action="@{/admin/login}" method="post">
+    <div class="container">
+        <div class="row form-row">
+            <label for="username" class="col-sm-2 col-form-label">Username</label>
+            <div class="col-sm-3">
+                <input id="username" name="username" required class="form-control"/>
+            </div>
+        </div>
+        <div class="row form-row">
+            <label for="password" class="col-sm-2 col-form-label">Password</label>
+            <div class="col-sm-3">
+                <input id="password" type="password" name="password" required class="form-control"/>
+            </div>
+        </div>
+    </div>
+    <div class="bg-light pt-4 pb-4 mt-4">
+        <div class="container">
+            <div class="row row-cols-auto justify-content-between">
+                <div class="col">
+                    <input type="submit" class="btn btn-primary" value="Sign In"/>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+</body>
+</html>

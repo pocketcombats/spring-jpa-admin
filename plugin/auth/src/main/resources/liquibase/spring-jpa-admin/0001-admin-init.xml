@@ -1,0 +1,92 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="0001-admin-init" author="Spring JPA Admin">
+        <createSequence sequenceName="spring_admin_user_id_seq" incrementBy="10"/>
+        <createTable tableName="spring_admin_user">
+            <column name="id" type="integer">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="username" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username_lc" type="varchar">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createSequence sequenceName="spring_admin_authority_id_seq"  startValue="10" incrementBy="10"/>
+        <createTable tableName="spring_admin_authority">
+            <column name="id" type="integer">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="authority" type="varchar">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="description" type="varchar"/>
+        </createTable>
+        <insert tableName="spring_admin_authority">
+            <column name="id" value="1"/>
+            <column name="authority" value="ROLE_JPA_ADMIN"/>
+        </insert>
+        <insert tableName="spring_admin_authority">
+            <column name="id" value="2"/>
+            <column name="authority" value="ROLE_JPA_SUPERADMIN"/>
+        </insert>
+
+        <createTable tableName="spring_admin_user_authorities">
+            <column name="admin_user_id" type="integer">
+                <constraints nullable="false"
+                             foreignKeyName="spring_admin_user_authorities_user_id"
+                             referencedTableName="spring_admin_user" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="authority_id" type="integer">
+                <constraints nullable="false"
+                             foreignKeyName="spring_admin_user_authorities_authority_id"
+                             referencedTableName="spring_admin_authority" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+        </createTable>
+        <createIndex tableName="spring_admin_user_authorities" indexName="spring_admin_user_authorities_user_authority"
+                     unique="true">
+            <column name="admin_user_id"/>
+            <column name="authority_id"/>
+        </createIndex>
+
+        <createSequence sequenceName="spring_admin_user_auth_log_id_seq" incrementBy="100"/>
+        <createTable tableName="spring_admin_user_auth_log">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="integer">
+                <constraints nullable="false"
+                             foreignKeyName="spring_admin_user_auth_log_user_id"
+                             referencedTableName="spring_admin_user" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="timestamp" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="agent" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="spring_admin_user_auth_log"
+                     indexName="spring_admin_user_auth_log_user_id_user_timestamp">
+            <column name="user_id"/>
+            <column name="timestamp"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

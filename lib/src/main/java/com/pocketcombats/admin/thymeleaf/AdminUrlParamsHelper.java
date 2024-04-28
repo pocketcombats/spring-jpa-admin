@@ -1,4 +1,4 @@
-package com.pocketcombats.admin;
+package com.pocketcombats.admin.thymeleaf;
 
 import org.thymeleaf.context.WebEngineContext;
 

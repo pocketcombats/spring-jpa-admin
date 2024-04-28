@@ -5,6 +5,7 @@ import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.core.UnknownModelException;
+import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.data.form.AdminRelationLink;
 import com.pocketcombats.admin.data.form.AdminRelationPreview;
 import com.pocketcombats.admin.data.list.EntityRelation;
@@ -94,15 +95,22 @@ public class AdminRelationLinkService {
                 .setMaxResults(modelLink.preview())
                 .getResultList();
         return resultList.stream()
-                .map(entity -> createPreview(model, entity))
+                .map(entity -> createPreview(model, entity, modelLink.formatter()))
                 .toList();
     }
 
-    private AdminRelationPreview createPreview(AdminRegisteredModel model, Object entity) {
-        // Can relation preview have its own representation?
-        AdminModelListField firstListField = model.listFields().get(0);
-        Object representation = mapper.fieldValue(firstListField, entity);
-        return new AdminRelationPreview(resolveId(entity), representation.toString());
+    private AdminRelationPreview createPreview(
+            AdminRegisteredModel model,
+            Object entity,
+            @Nullable ValueFormatter formatter
+    ) {
+        if (formatter != null) {
+            return new AdminRelationPreview(resolveId(entity), formatter.format(entity));
+        } else {
+            AdminModelListField firstListField = model.listFields().get(0);
+            Object representation = mapper.fieldValue(firstListField, entity);
+            return new AdminRelationPreview(resolveId(entity), representation.toString());
+        }
     }
 
     private String resolveId(Object entity) {
@@ -118,7 +126,7 @@ public class AdminRelationLinkService {
                 model.entityDetails().idAttribute().getJavaType()
         );
         Object entity = em.find(model.entityDetails().entityClass(), id);
-        AdminRelationPreview preview = createPreview(model, entity);
+        AdminRelationPreview preview = createPreview(model, entity, null);
         return new Parent(model.label(), model.modelName(), preview);
     }
 }

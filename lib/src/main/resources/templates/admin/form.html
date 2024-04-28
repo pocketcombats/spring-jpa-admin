@@ -65,12 +65,12 @@
         <div class="row">
             <div class="col-12 col-lg-9 col-xl-10"
                  th:class="${entity.links.isEmpty() ? 'col' : 'col-12 col-lg-9 col-xl-10'}">
-                <!--/*@thymesVar id="thymeleafRequestContext" type="org.springframework.web.servlet.support.RequestContext"*/-->
+                <!--/*@thymesVar id="thymeleafRequestContext" type="org.thymeleaf.spring6.context.IThymeleafRequestContext"*/-->
                 <ul th:if="${errors?.hasGlobalErrors()}"
                     class="d-none"
                     th:class="'text-danger list-unstyled'">
                     <li th:each="globalError: ${errors.globalErrors}"
-                        th:text="${thymeleafRequestContext.getMessage(globalError, false)}"></li>
+                        th:text="${@messageHelper.getMessage(thymeleafRequestContext, globalError)}"></li>
                 </ul>
                 <div th:each="fieldGroup: ${entity.fieldGroups}">
                     <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->
@@ -89,7 +89,7 @@
                             <ul th:if="${hasErrors}"
                                 class="invalid-feedback list-unstyled">
                                 <li th:each="fieldError: ${errors.getFieldErrors(field.name)}"
-                                    th:text="${thymeleafRequestContext.getMessage(fieldError, false)}">Please correct
+                                    th:text="${@messageHelper.getMessage(thymeleafRequestContext, fieldError)}">Please correct
                                     errors.
                                 </li>
                             </ul>

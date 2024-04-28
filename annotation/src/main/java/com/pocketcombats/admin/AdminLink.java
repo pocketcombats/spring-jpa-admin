@@ -25,6 +25,12 @@ public @interface AdminLink {
     int preview() default 0;
 
     /**
+     * Representation formatter to for this relation in {@code SpEL} format.
+     * If representation is not set, first entry from the {@code listFields} of the target model will be used.
+     */
+    String representation() default "";
+
+    /**
      * Optional sort field.
      * May begin with "-" (minus) for descending order.
      */

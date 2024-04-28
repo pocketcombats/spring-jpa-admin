@@ -1,7 +1,7 @@
 package com.pocketcombats.admin.conf;
 
 import com.pocketcombats.admin.AdminModel;
-import com.pocketcombats.admin.AdminUrlParamsHelper;
+import com.pocketcombats.admin.thymeleaf.AdminUrlParamsHelper;
 import com.pocketcombats.admin.core.AdminModelEntitiesListService;
 import com.pocketcombats.admin.core.AdminModelEntitiesListServiceImpl;
 import com.pocketcombats.admin.core.AdminModelFormService;
@@ -21,6 +21,7 @@ import com.pocketcombats.admin.history.AdminHistoryWriter;
 import com.pocketcombats.admin.history.AdminHistoryWriterImpl;
 import com.pocketcombats.admin.history.NoOpAdminHistoryCompiler;
 import com.pocketcombats.admin.history.NoOpAdminHistoryWriter;
+import com.pocketcombats.admin.thymeleaf.MessageHelper;
 import com.pocketcombats.admin.web.IndexController;
 import com.pocketcombats.admin.web.ModelActionController;
 import com.pocketcombats.admin.web.ModelFormController;
@@ -30,13 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.domain.EntityScanner;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.SmartValidator;
+import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 
 import java.util.List;
 import java.util.Set;
@@ -188,8 +189,11 @@ public class JpaAdminAutoConfiguration implements Ordered {
     }
 
     @Bean
-    public AdminModelLinkFactory adminModelLinkFactory(EntityManager em) {
-        return new AdminModelLinkFactory(em);
+    public AdminModelLinkFactory adminModelLinkFactory(
+            EntityManager em,
+            SpelExpressionContextFactory spelExpressionContextFactory
+    ) {
+        return new AdminModelLinkFactory(em, spelExpressionContextFactory);
     }
 
     @Bean
@@ -200,6 +204,11 @@ public class JpaAdminAutoConfiguration implements Ordered {
     @Bean
     public AdminUrlParamsHelper adminUrlParamsHelper() {
         return new AdminUrlParamsHelper();
+    }
+
+    @Bean
+    public MessageHelper messageHelper() {
+        return new MessageHelper();
     }
 
     @Bean
@@ -240,5 +249,10 @@ public class JpaAdminAutoConfiguration implements Ordered {
     @Bean
     public ModelActionController adminModelActionController(AdminModelActionService service) {
         return new ModelActionController(properties, service);
+    }
+
+    @Bean
+    public SpringSecurityDialect springSecurityDialect() {
+        return new SpringSecurityDialect();
     }
 }

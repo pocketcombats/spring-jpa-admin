@@ -2,6 +2,9 @@ package com.pocketcombats.admin.core.links;
 
 import com.pocketcombats.admin.AdminLink;
 import com.pocketcombats.admin.AdminModel;
+import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
+import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
+import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
@@ -17,9 +20,14 @@ public class AdminModelLinkFactory {
     private static final Logger LOG = LoggerFactory.getLogger(AdminModelLinkFactory.class);
 
     private final EntityManager em;
+    private final SpelExpressionContextFactory spelExpressionContextFactory;
 
-    public AdminModelLinkFactory(EntityManager em) {
+    public AdminModelLinkFactory(
+            EntityManager em,
+            SpelExpressionContextFactory spelExpressionContextFactory
+    ) {
         this.em = em;
+        this.spelExpressionContextFactory = spelExpressionContextFactory;
     }
 
     public List<AdminModelLink> createModelLinks(
@@ -40,11 +48,21 @@ public class AdminModelLinkFactory {
             );
         }
         EntityType<?> targetEntity = em.getMetamodel().entity(linkAnnotation.target());
+        ValueFormatter formatter;
+        if (linkAnnotation.representation().isEmpty()) {
+            formatter = null;
+        } else {
+            formatter = new SpelExpressionFormatter(
+                    spelExpressionContextFactory,
+                    linkAnnotation.representation()
+            );
+        }
         return new AdminModelLink(
                 linkAnnotation.label(),
                 linkAnnotation.target(),
                 createPredicateFactory(modelType, targetEntity, linkAnnotation),
                 linkAnnotation.preview(),
+                formatter,
                 linkAnnotation.sortBy(),
                 createOrderFactory(targetEntity, linkAnnotation.sortBy())
         );

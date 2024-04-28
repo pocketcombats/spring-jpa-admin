@@ -28,6 +28,7 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.SmartValidator;
 
+import java.util.Collections;
 import java.util.List;
 
 public class AdminModelFormServiceImpl implements AdminModelFormService {
@@ -73,7 +74,9 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
 
     private EntityDetails getEntityDetails(AdminRegisteredModel model, Object entity, FormAction action) {
         List<AdminFormFieldGroup> formFieldGroups = mapFieldGroups(model, entity, action);
-        List<AdminRelationLink> links = relationLinkService.collectRelationLinks(model, entity);
+        List<AdminRelationLink> links = action == FormAction.CREATE
+                ? Collections.emptyList()
+                : relationLinkService.collectRelationLinks(model, entity);
         return new EntityDetails(
                 model.modelName(),
                 resolveId(entity),
@@ -111,6 +114,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                         fieldset.label(),
                         null,
                         fieldset.fields().stream()
+                                .filter(field -> action == FormAction.UPDATE || field.insertable())
                                 .map(field -> new AdminFormField(
                                         field.name(),
                                         field.label(),
@@ -140,11 +144,16 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
         Object entity = findEntity(model, stringId);
-        historyWriter.record(model, "edit", entity);
+        BindingResult bindingResult;
+        if (model.updatable()) {
+            historyWriter.record(model, "edit", entity);
 
-        BindingResult bindingResult = bind(model, entity, FormAction.UPDATE, rawData);
-        if (bindingResult.hasErrors()) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            bindingResult = bind(model, entity, FormAction.UPDATE, rawData);
+            if (bindingResult.hasErrors()) {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            }
+        } else {
+            bindingResult = new BeanPropertyBindingResult(entity, model.modelName());
         }
 
         return new AdminModelEditingResult(
@@ -176,6 +185,40 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             }
         }
         validator.validate(entity, bindingResult, AdminValidation.class, Default.class);
+        return bindingResult;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)
+    public BindingResult updateField(
+            String modelName,
+            String stringId,
+            String fieldName,
+            String value
+    ) throws UnknownModelException {
+        AdminRegisteredModel model = modelRegistry.resolve(modelName);
+        AdminModelField field = model.fieldsets().stream()
+                .flatMap(fieldset -> fieldset.fields().stream())
+                .filter(candidate -> candidate.name().equals(fieldName))
+                .findAny()
+                .orElseThrow();
+        if (!isEditable(model, field, FormAction.UPDATE)) {
+            LOG.error("Model {} field {} is not editable", modelName, fieldName);
+            throw new UnknownModelException();
+        }
+        Object entity = findEntity(model, stringId);
+        historyWriter.record(model, "edit " + fieldName, entity);
+        BindingResult bindingResult = new BeanPropertyBindingResult(entity, model.modelName());
+        AdminFormFieldValueAccessor accessor = field.valueAccessor();
+        if (accessor instanceof AdminFormFieldSingularValueAccessor singularValueAccessor) {
+            singularValueAccessor.setValue(entity, value, bindingResult);
+        } else {
+            LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), model.modelName());
+        }
+        validator.validate(entity, bindingResult, AdminValidation.class, Default.class);
+        if (bindingResult.hasErrors()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
         return bindingResult;
     }
 
