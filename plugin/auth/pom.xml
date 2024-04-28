@@ -7,8 +7,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.github.pocketcombats.spring-jpa-admin.plugin</groupId>
-    <artifactId>auth</artifactId>
+    <artifactId>plugin.auth</artifactId>
 
     <name>Spring JPA Admin Auth Plugin</name>
     <description>
