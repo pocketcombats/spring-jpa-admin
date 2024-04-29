@@ -193,6 +193,7 @@ import java.util.stream.Collectors;
                 modelAnnotation.updatable(),
                 modelAnnotation.pageSize(),
                 listFields,
+                modelAnnotation.defaultOrder(),
                 searchPredicateFactory,
                 filters,
                 fieldsets,

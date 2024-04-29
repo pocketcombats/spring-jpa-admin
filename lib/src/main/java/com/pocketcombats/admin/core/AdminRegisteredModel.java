@@ -18,6 +18,7 @@ public record AdminRegisteredModel(
         boolean updatable,
         int pageSize,
         List<AdminModelListField> listFields,
+        @Nullable String defaultOrder,
         @Nullable SearchPredicateFactory searchPredicateFactory,
         List<AdminModelFilter> filters,
         List<AdminModelFieldset> fieldsets,

@@ -219,6 +219,9 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             Root<?> root,
             CriteriaBuilder cb
     ) {
+        if (StringUtils.isEmpty(sortString)) {
+            sortString = model.defaultOrder();
+        }
         if (!StringUtils.isEmpty(sortString)) {
             String sortFieldName;
             boolean asc;

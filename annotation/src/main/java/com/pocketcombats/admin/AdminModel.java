@@ -31,6 +31,13 @@ public @interface AdminModel {
 
     String[] filterFields() default {};
 
+    /**
+     * Default order for the list view.
+     * Specified field must be {@link AdminField#sortable()}.
+     * May begin with "-" (minus) for descending order.
+     */
+    String defaultOrder() default "";
+
     AdminFieldset[] fieldsets() default {};
 
     AdminLink[] links() default {};
