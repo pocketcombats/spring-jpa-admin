@@ -17,6 +17,7 @@ import com.pocketcombats.admin.core.search.CompositeSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import com.pocketcombats.admin.core.search.TextSearchPredicateFactory;
+import com.pocketcombats.admin.core.search.UUIDSearchPredicateFactory;
 import com.pocketcombats.admin.util.AdminStringUtils;
 import com.pocketcombats.admin.util.PackageAnnotationFinder;
 import jakarta.annotation.Nullable;
@@ -34,15 +35,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.MultiValueMapAdapter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /* package */ class AdminModelRegistryBuilder {
@@ -253,6 +246,7 @@ import java.util.stream.Collectors;
         }
         Class<?> javaType = attribute.getJavaType();
         if (Number.class.isAssignableFrom(javaType)) {
+            //noinspection unchecked
             return new NumberSearchPredicateFactory(
                     attribute.getName(),
                     (Class<? extends Number>) attribute.getJavaType(),
@@ -260,6 +254,8 @@ import java.util.stream.Collectors;
             );
         } else if (CharSequence.class.isAssignableFrom(javaType)) {
             return new TextSearchPredicateFactory(attribute.getName());
+        } else if (UUID.class.isAssignableFrom(javaType)) {
+            return new UUIDSearchPredicateFactory(attribute.getName());
         } else {
             // Do we need to support search over boolean attributes?
             throw new IllegalStateException(
