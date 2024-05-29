@@ -20,7 +20,6 @@ public class SpringJpaAdminUserRepository {
                         "select u from SpringJpaAdminUser u join fetch u.authorities where u.lowerUsername = :lowerUsername",
                         SpringJpaAdminUser.class)
                 .setParameter("lowerUsername", username.toLowerCase())
-                .setMaxResults(1)
                 .getResultList();
         if (users.isEmpty()) {
             return Optional.empty();
