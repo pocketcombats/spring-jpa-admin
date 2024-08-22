@@ -1,0 +1,32 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
+
+    <changeSet id="0002-admin-history-log" author="Spring JPA Admin">
+        <createSequence sequenceName="admin_history_log_seq" incrementBy="50"/>
+        <createTable tableName="admin_history_log">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="action_time" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_repr" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
