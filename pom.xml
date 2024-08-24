@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
+        <version>3.3.3</version>
     </parent>
 
     <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
@@ -36,6 +36,7 @@
         <module>annotation</module>
         <module>lib</module>
         <module>plugin</module>
+        <module>bom</module>
     </modules>
 
     <profiles>
@@ -47,6 +48,7 @@
             <modules>
                 <module>annotation</module>
                 <module>lib</module>
+                <module>plugin</module>
                 <module>demo</module>
             </modules>
         </profile>
@@ -76,6 +78,7 @@
                         <version>3.0.1</version>
                         <configuration>
                             <tagNameFormat>v@{project.version}</tagNameFormat>
+                            <autoVersionSubmodules>true</autoVersionSubmodules>
                         </configuration>
                     </plugin>
                 </plugins>
