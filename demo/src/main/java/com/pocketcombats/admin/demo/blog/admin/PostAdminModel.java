@@ -15,6 +15,7 @@ import org.springframework.core.convert.ConversionService;
 @AdminModel(
         entity = Post.class,
         label = "demo.entity.post.label",
+        searchFields = {"author.username", "text"},
         listFields = {"textPreview", "author", "postTime", "approved"},
         filterFields = {"approved", "author", "tags"},
         fieldsets = {

@@ -27,6 +27,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -207,8 +208,7 @@ import java.util.stream.Collectors;
         }
     }
 
-    @Nullable
-    private SearchPredicateFactory createModelSearchPredicateFactory(
+    private @Nullable SearchPredicateFactory createModelSearchPredicateFactory(
             String modelName,
             AdminModel modelAnnotation,
             EntityType<?> entity
@@ -236,26 +236,35 @@ import java.util.stream.Collectors;
         }
     }
 
-    private SearchPredicateFactory getSearchPredicateFactory(String resolvedName, EntityType<?> entity, String searchField) {
-        Attribute<?, ?> attribute = entity.getAttribute(searchField);
-        if (attribute == null) {
-            throw new IllegalStateException(
-                    "Can't enable search for model " + resolvedName + ", field " + searchField +
-                            ": unknown attribute"
-            );
+    private SearchPredicateFactory getSearchPredicateFactory(
+            String resolvedName,
+            EntityType<?> entity,
+            String searchField
+    ) {
+        final Attribute<?, ?> attribute;
+        if (searchField.contains(".")) {
+            var bits = StringUtils.split(searchField, '.');
+            var sub = entity;
+            for (int i = 0; i < bits.length - 1; i++) {
+                sub = em.getEntityManagerFactory().getMetamodel()
+                        .entity(entity.getAttribute(bits[i]).getJavaType());
+            }
+            attribute = sub.getAttribute(bits[bits.length - 1]);
+        } else {
+            attribute = entity.getAttribute(searchField);
         }
         Class<?> javaType = attribute.getJavaType();
         if (Number.class.isAssignableFrom(javaType)) {
             //noinspection unchecked
             return new NumberSearchPredicateFactory(
-                    attribute.getName(),
+                    searchField,
                     (Class<? extends Number>) attribute.getJavaType(),
                     conversionService
             );
         } else if (CharSequence.class.isAssignableFrom(javaType)) {
-            return new TextSearchPredicateFactory(attribute.getName());
+            return new TextSearchPredicateFactory(searchField);
         } else if (UUID.class.isAssignableFrom(javaType)) {
-            return new UUIDSearchPredicateFactory(attribute.getName());
+            return new UUIDSearchPredicateFactory(searchField);
         } else {
             // Do we need to support search over boolean attributes?
             throw new IllegalStateException(

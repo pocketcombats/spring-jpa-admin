@@ -9,17 +9,17 @@ import java.util.Optional;
 
 public class TextSearchPredicateFactory implements SearchPredicateFactory {
 
-    private final String attribute;
+    private final String path;
 
-    public TextSearchPredicateFactory(String attribute) {
-        this.attribute = attribute;
+    public TextSearchPredicateFactory(String path) {
+        this.path = path;
     }
 
     @Override
     public Optional<Predicate> build(CriteriaBuilder cb, Root<?> root, String searchQuery) {
         return Optional.of(
                 cb.like(
-                        cb.lower(root.get(attribute)),
+                        cb.lower(PathUtils.resolve(root, path)),
                         "%" + AdminStringUtils.escapeLikeClause(searchQuery.toLowerCase()) + "%",
                         '\\'
                 )

@@ -9,10 +9,10 @@ import java.util.UUID;
 
 public class UUIDSearchPredicateFactory implements SearchPredicateFactory{
 
-    private final String attribute;
+    private final String path;
 
-    public UUIDSearchPredicateFactory(String attribute) {
-        this.attribute = attribute;
+    public UUIDSearchPredicateFactory(String path) {
+        this.path = path;
     }
 
     @Override
@@ -23,6 +23,6 @@ public class UUIDSearchPredicateFactory implements SearchPredicateFactory{
         } catch (IllegalArgumentException e) {
             return Optional.empty();
         }
-        return Optional.of(cb.equal(root.get(attribute), uuid));
+        return Optional.of(cb.equal(PathUtils.resolve(root, path), uuid));
     }
 }
