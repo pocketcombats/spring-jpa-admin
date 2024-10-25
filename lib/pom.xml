@@ -108,12 +108,12 @@
                         <path>
                             <groupId>org.springframework</groupId>
                             <artifactId>spring-context-indexer</artifactId>
-                            <version>6.0.11</version>
+                            <version>6.1.14</version>
                         </path>
                         <path>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-configuration-processor</artifactId>
-                            <version>3.2.5</version>
+                            <version>3.3.5</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -121,7 +121,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.8.4.0</version>
+                <version>4.8.6.5</version>
                 <configuration>
                     <effort>Max</effort>
                     <excludeFilterFile>spotbugs_exclude_filter.xml</excludeFilterFile>
