@@ -5,9 +5,11 @@ import com.pocketcombats.admin.AdminModel;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +43,7 @@ public class AdminModelLinkFactory {
     }
 
     private AdminModelLink create(String modelName, Class<?> modelType, AdminLink linkAnnotation) {
-        if (linkAnnotation.preview() < 1 && !"".equals(linkAnnotation.sortBy())) {
+        if (linkAnnotation.preview() < 1 && StringUtils.isNotEmpty(linkAnnotation.sortBy())) {
             LOG.debug(
                     "Link {} of model {} specifies order, but it will have no effect",
                     linkAnnotation, modelName
@@ -100,7 +102,11 @@ public class AdminModelLinkFactory {
         return new LinkPredicateFactory(em, mappedAttribute.getName());
     }
 
-    private LinkOrderFactory createOrderFactory(EntityType<?> entity, String order) {
+    private @Nullable LinkOrderFactory createOrderFactory(EntityType<?> entity, String order) {
+        if (StringUtils.isEmpty(order)) {
+            return null;
+        }
+
         Attribute<?, ?> attribute;
         boolean asc;
         if (order.startsWith("-")) {
