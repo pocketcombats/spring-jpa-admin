@@ -3,9 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
+        <groupId>com.pocketcombats.spring-jpa-admin</groupId>
         <artifactId>parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>bom</artifactId>
     <packaging>pom</packaging>
@@ -13,17 +14,17 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
+                <groupId>com.pocketcombats.spring-jpa-admin</groupId>
                 <artifactId>annotation</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>
-                <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
+                <groupId>com.pocketcombats.spring-jpa-admin</groupId>
                 <artifactId>spring-jpa-admin</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>
-                <groupId>com.github.pocketcombats.spring-jpa-admin</groupId>
+                <groupId>com.pocketcombats.spring-jpa-admin</groupId>
                 <artifactId>plugin.auth</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
