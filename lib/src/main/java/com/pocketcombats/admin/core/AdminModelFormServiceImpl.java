@@ -118,6 +118,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                                 .map(field -> new AdminFormField(
                                         field.name(),
                                         field.label(),
+                                        field.description(),
                                         !isEditable(model, field, action),
                                         field.template(),
                                         field.valueAccessor().readValue(entity),

@@ -18,6 +18,12 @@ public @interface AdminField {
     String label() default "";
 
     /**
+     * Form field description.
+     * Can be a localization key or plain text.
+     */
+    String description() default "";
+
+    /**
      * Override the default display value for entity’s fields that are empty (null, empty string, etc.).
      * The default value is — (a dash).
      */

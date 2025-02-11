@@ -12,26 +12,12 @@ import com.pocketcombats.admin.core.field.EnumFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.RawIdFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToManyFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
-import com.pocketcombats.admin.core.filter.AdminModelFilter;
-import com.pocketcombats.admin.core.filter.BasicFilterOptionsCollector;
-import com.pocketcombats.admin.core.filter.BasicFilterPredicateFactory;
-import com.pocketcombats.admin.core.filter.BooleanFilterOptionsCollector;
-import com.pocketcombats.admin.core.filter.ToManyFilterOptionsCollector;
-import com.pocketcombats.admin.core.filter.ToManyFilterPredicateFactory;
-import com.pocketcombats.admin.core.filter.ToOneFilterOptionsCollector;
-import com.pocketcombats.admin.core.filter.ToOneFilterPredicateFactory;
+import com.pocketcombats.admin.core.filter.*;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
 import com.pocketcombats.admin.core.formatter.ToStringValueFormatter;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
-import com.pocketcombats.admin.core.property.AdminModelDelegatingPropertyReader;
-import com.pocketcombats.admin.core.property.AdminModelDelegatingPropertyWriter;
-import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
-import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
-import com.pocketcombats.admin.core.property.FieldPropertyReader;
-import com.pocketcombats.admin.core.property.FieldPropertyWriter;
-import com.pocketcombats.admin.core.property.MethodPropertyReader;
-import com.pocketcombats.admin.core.property.MethodPropertyWriter;
+import com.pocketcombats.admin.core.property.*;
 import com.pocketcombats.admin.core.sort.PathSortExpressionFactory;
 import com.pocketcombats.admin.core.sort.SimpleSortExpressionFactory;
 import com.pocketcombats.admin.core.sort.SortExpressionFactory;
@@ -47,7 +33,6 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
-import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.util.StringUtils;
@@ -151,6 +136,7 @@ public class FieldFactory {
 
     public AdminModelField constructFormField(String name) {
         String label = null;
+        String description = null;
         String template = null;
         boolean insertable = true;
         boolean updatable = true;
@@ -158,6 +144,7 @@ public class FieldFactory {
         AdminField fieldConfig = resolveFieldConfig(name);
         if (fieldConfig != null) {
             label = fieldConfig.label();
+            description = fieldConfig.description();
             template = fieldConfig.template();
             insertable = fieldConfig.insertable();
             updatable = fieldConfig.updatable();
@@ -172,6 +159,9 @@ public class FieldFactory {
         if (!StringUtils.hasText(label)) {
             label = AdminStringUtils.toHumanReadableName(name);
         }
+        if (!StringUtils.hasText(description)) {
+            description = null;
+        }
 
         AdminFormFieldValueAccessor formFieldAccessor = resolveFormFieldAccessor(fieldConfig, name);
 
@@ -182,6 +172,7 @@ public class FieldFactory {
         return new AdminModelField(
                 name,
                 label,
+                description,
                 template,
                 insertable,
                 updatable,

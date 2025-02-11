@@ -42,7 +42,7 @@ public class DemoUser implements Serializable {
 
     @Size(min = 3, max = 15)
     @Column(name = "username", nullable = false)
-    @AdminField(sortable = true)
+    @AdminField(sortable = true, description = "Sample username description")
     private String username;
 
     @Column(name = "enabled", nullable = false)
