@@ -10,6 +10,7 @@ import com.pocketcombats.admin.data.form.AdminFormFieldGroup;
 import com.pocketcombats.admin.data.form.AdminRelationLink;
 import com.pocketcombats.admin.data.form.EntityDetails;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -58,7 +59,10 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         this.conversionService = conversionService;
     }
 
-    private String resolveId(Object entity) {
+    private @Nullable String resolveId(Object entity) {
+        if (!em.contains(entity)) {
+            return null;
+        }
         Object identifier = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
         return conversionService.convert(identifier, String.class);
     }
