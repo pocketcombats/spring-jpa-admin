@@ -32,6 +32,7 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
@@ -39,6 +40,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.MultiValueMapAdapter;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -175,7 +177,9 @@ import java.util.stream.Collectors;
                 modelName, modelAnnotation, targetClass, adminModelClass, adminModelBean
         );
 
-        List<AdminUniqueConstraint> uniqueConstraints = collectUniqueConstraints(entity, fieldsets, fieldFactory);
+        List<AdminUniqueConstraint> uniqueConstraints = collectUniqueConstraints(
+                modelName, entity, fieldsets, fieldFactory
+        );
 
         RegisteredEntityDetails entityDetails = new RegisteredEntityDetails(
                 targetClass,
@@ -441,6 +445,7 @@ import java.util.stream.Collectors;
     }
 
     private List<AdminUniqueConstraint> collectUniqueConstraints(
+            String modelName,
             EntityType<?> entityType,
             List<AdminModelFieldset> fieldsets,
             FieldFactory fieldFactory
@@ -467,6 +472,18 @@ import java.util.stream.Collectors;
                     return new CompositeAdminUniqueConstraint(constraints);
                 })
                 .toList();
+
+        if (!singleAttributeConstraints.isEmpty() || !compositeConstraints.isEmpty()) {
+            Method entityEqualsMethod = BeanUtils.findMethod(entityType.getJavaType(), "equals", Object.class);
+            if (entityEqualsMethod == null) {
+                throw new IllegalStateException("Model " + modelName + " has no equals method. Is it possible?");
+            }
+            if (entityEqualsMethod.getDeclaringClass().equals(Object.class)) {
+                throw new AdminConfigurationException(
+                        modelName + " defines unique constraints but does not override equals"
+                );
+            }
+        }
 
         if (compositeConstraints.isEmpty()) {
             return singleAttributeConstraints;

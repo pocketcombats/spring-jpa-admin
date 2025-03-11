@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core.predicate;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -20,7 +21,11 @@ public class BasicPredicateFactory implements ValuePredicateFactory {
     }
 
     @Override
-    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, Object rawValue) {
+    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, @Nullable Object rawValue) {
+        if (rawValue == null) {
+            return cb.isNull(root.get(attribute.getName()));
+        }
+
         Object value = attribute.getJavaType().isAssignableFrom(rawValue.getClass())
                 ? rawValue
                 : conversionService.convert(rawValue, attribute.getJavaType());

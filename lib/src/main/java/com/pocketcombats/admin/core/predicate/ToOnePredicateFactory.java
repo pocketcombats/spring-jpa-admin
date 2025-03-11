@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.core.predicate;
 
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
@@ -31,11 +32,20 @@ public class ToOnePredicateFactory implements ValuePredicateFactory {
     }
 
     @Override
-    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, Object value) {
-        Object id = attributeIdType.isAssignableFrom(value.getClass())
-                ? value
-                : conversionService.convert(value, attributeIdType);
-        Object reference = em.getReference(attribute.getJavaType(), id);
+    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, @Nullable Object value) {
+        if (value == null) {
+            return cb.isNull(root.get(attribute.getName()));
+        }
+
+        Object reference;
+        if (attribute.getJavaType().isAssignableFrom(value.getClass())) {
+            reference = value;
+        } else {
+            Object id = attributeIdType.isAssignableFrom(value.getClass())
+                    ? value
+                    : conversionService.convert(value, attributeIdType);
+            reference = em.getReference(attribute.getJavaType(), id);
+        }
         return cb.equal(root.get(attribute.getName()), reference);
     }
 }
