@@ -67,7 +67,7 @@
                     class="d-none"
                     th:class="'text-danger list-unstyled'">
                     <li th:each="globalError: ${errors.globalErrors}"
-                        th:text="${@messageHelper.getMessage(thymeleafRequestContext, globalError)}"></li>
+                        th:utext="${@messageHelper.getMessage(thymeleafRequestContext, globalError)}"></li>
                 </ul>
                 <div th:each="fieldGroup: ${entity.fieldGroups}">
                     <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->

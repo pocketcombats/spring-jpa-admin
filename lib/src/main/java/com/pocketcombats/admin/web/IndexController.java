@@ -31,7 +31,7 @@ public class IndexController {
     @Secured("ROLE_JPA_ADMIN")
     public ModelAndView index() {
         return new ModelAndView(
-                properties.getTemplates().getIndex(),
+                properties.getTemplates().index(),
                 Map.of(
                         "modelGroups", entityRegistry.getModelGroups(),
                         "historyEnabled", !properties.isDisableHistory(),

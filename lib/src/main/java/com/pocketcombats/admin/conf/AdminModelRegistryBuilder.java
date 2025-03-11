@@ -18,6 +18,8 @@ import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import com.pocketcombats.admin.core.search.TextSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.UUIDSearchPredicateFactory;
+import com.pocketcombats.admin.core.uniqueness.AdminUniqueConstraint;
+import com.pocketcombats.admin.core.uniqueness.CompositeAdminUniqueConstraint;
 import com.pocketcombats.admin.util.AdminStringUtils;
 import com.pocketcombats.admin.util.PackageAnnotationFinder;
 import jakarta.annotation.Nullable;
@@ -36,6 +38,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.MultiValueMapAdapter;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -172,6 +175,8 @@ import java.util.stream.Collectors;
                 modelName, modelAnnotation, targetClass, adminModelClass, adminModelBean
         );
 
+        List<AdminUniqueConstraint> uniqueConstraints = collectUniqueConstraints(entity, fieldsets, fieldFactory);
+
         RegisteredEntityDetails entityDetails = new RegisteredEntityDetails(
                 targetClass,
                 entity,
@@ -192,7 +197,8 @@ import java.util.stream.Collectors;
                 filters,
                 fieldsets,
                 links,
-                actions
+                actions,
+                uniqueConstraints
         );
     }
 
@@ -347,12 +353,17 @@ import java.util.stream.Collectors;
             fieldsetTemplates = Arrays.stream(modelAnnotation.fieldsets())
                     .map(adminFieldset -> new FieldsetTemplate(
                             adminFieldset.label(),
-                            Arrays.asList(adminFieldset.fields())
+                            Arrays.asList(adminFieldset.fields()),
+                            adminFieldset.unique()
                     ))
                     .toList();
         } else {
             fieldsetTemplates = Collections.singletonList(
-                    new FieldsetTemplate(null, resolveDefaultFormFields(entity, adminModelClass, targetClass))
+                    new FieldsetTemplate(
+                            null,
+                            resolveDefaultFormFields(entity, adminModelClass, targetClass),
+                            false
+                    )
             );
         }
         return fieldsetTemplates.stream()
@@ -388,7 +399,8 @@ import java.util.stream.Collectors;
                 fieldsetTemplate.label(),
                 fieldsetTemplate.fields.stream()
                         .map(fieldFactory::constructFormField)
-                        .toList()
+                        .toList(),
+                fieldsetTemplate.unique()
         );
     }
 
@@ -428,6 +440,43 @@ import java.util.stream.Collectors;
         return actions;
     }
 
+    private List<AdminUniqueConstraint> collectUniqueConstraints(
+            EntityType<?> entityType,
+            List<AdminModelFieldset> fieldsets,
+            FieldFactory fieldFactory
+    ) {
+        // Single attribute unique constraints
+        var singleAttributeConstraints = entityType.getAttributes().stream()
+                .filter(attribute -> {
+                    Annotation columnAnnotation = FieldFactory.resolveColumnAnnotation(attribute);
+                    if (columnAnnotation == null) {
+                        return false;
+                    }
+                    Map<String, Object> annotationAttributes = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
+                    return (Boolean) annotationAttributes.get("unique");
+                })
+                .<AdminUniqueConstraint>map(attribute -> fieldFactory.constructFieldConstraint(attribute.getName()))
+                .toList();
+        // Multi-attribute unique constraints
+        var compositeConstraints = fieldsets.stream()
+                .filter(AdminModelFieldset::unique)
+                .<AdminUniqueConstraint>map(fieldset -> {
+                    var constraints = fieldset.fields().stream()
+                            .map(field -> fieldFactory.constructFieldConstraint(field.name()))
+                            .toList();
+                    return new CompositeAdminUniqueConstraint(constraints);
+                })
+                .toList();
+
+        if (compositeConstraints.isEmpty()) {
+            return singleAttributeConstraints;
+        } else {
+            List<AdminUniqueConstraint> constraints = new ArrayList<>(singleAttributeConstraints);
+            constraints.addAll(compositeConstraints);
+            return constraints;
+        }
+    }
+
     public AdminModelRegistry build() {
         Map<String, List<AdminRegisteredModel>> models = categorizedModels.entrySet().stream()
                 .collect(Collectors.toMap(
@@ -443,7 +492,11 @@ import java.util.stream.Collectors;
         return new AdminModelRegistryImpl(models);
     }
 
-    private record FieldsetTemplate(@Nullable String label, List<String> fields) {
+    private record FieldsetTemplate(
+            @Nullable String label,
+            List<String> fields,
+            boolean unique
+    ) {
     }
 
     private record PackageInfo(

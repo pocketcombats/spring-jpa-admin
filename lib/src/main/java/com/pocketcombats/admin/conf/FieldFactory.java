@@ -12,15 +12,25 @@ import com.pocketcombats.admin.core.field.EnumFormFieldValueAccessor;
 import com.pocketcombats.admin.core.field.RawIdFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToManyFormFieldAccessor;
 import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
-import com.pocketcombats.admin.core.filter.*;
+import com.pocketcombats.admin.core.filter.AdminModelFilter;
+import com.pocketcombats.admin.core.filter.BasicFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.BooleanFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.FilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.ToManyFilterOptionsCollector;
+import com.pocketcombats.admin.core.filter.ToOneFilterOptionsCollector;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.core.formatter.SpelExpressionFormatter;
 import com.pocketcombats.admin.core.formatter.ToStringValueFormatter;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
+import com.pocketcombats.admin.core.predicate.BasicPredicateFactory;
+import com.pocketcombats.admin.core.predicate.ToManyPredicateFactory;
+import com.pocketcombats.admin.core.predicate.ToOnePredicateFactory;
+import com.pocketcombats.admin.core.predicate.ValuePredicateFactory;
 import com.pocketcombats.admin.core.property.*;
 import com.pocketcombats.admin.core.sort.PathSortExpressionFactory;
 import com.pocketcombats.admin.core.sort.SimpleSortExpressionFactory;
 import com.pocketcombats.admin.core.sort.SortExpressionFactory;
+import com.pocketcombats.admin.core.uniqueness.SingleAdminUniqueConstraint;
 import com.pocketcombats.admin.util.AdminStringUtils;
 import com.pocketcombats.admin.util.TypeUtils;
 import jakarta.annotation.Nullable;
@@ -59,10 +69,8 @@ public class FieldFactory {
     private final String modelName;
     private final EntityType<?> entity;
     private final Class<?> targetClass;
-    @Nullable
-    private final Class<?> modelAdminClass;
-    @Nullable
-    private final Object adminModelBean;
+    private final @Nullable Class<?> modelAdminClass;
+    private final @Nullable Object adminModelBean;
 
     private final Map<String, AdminField> fieldOverrides;
     private final Map<String, AdminField> resolvedFieldsConfigurations = new HashMap<>();
@@ -120,7 +128,7 @@ public class FieldFactory {
 
         SortExpressionFactory sortExpressionFactory = null;
         if (fieldConfig != null) {
-            if (!fieldConfig.sortBy().equals("")) {
+            if (!fieldConfig.sortBy().isEmpty()) {
                 sortExpressionFactory = new PathSortExpressionFactory(name + "." + fieldConfig.sortBy());
             } else if (fieldConfig.sortable()) {
                 sortExpressionFactory = new SimpleSortExpressionFactory(name);
@@ -181,6 +189,23 @@ public class FieldFactory {
     }
 
     public AdminModelFilter constructFieldFilter(String name) {
+        return new AdminModelFilter(
+                name,
+                resolveFieldLabel(name),
+                constructValuePredicateFactory(name),
+                constructFilterOptionsCollector(name)
+        );
+    }
+
+    public SingleAdminUniqueConstraint constructFieldConstraint(String name) {
+        return new SingleAdminUniqueConstraint(
+                resolveFieldLabel(name),
+                constructValuePredicateFactory(name),
+                resolveFormFieldReader(name)
+        );
+    }
+
+    private String resolveFieldLabel(String name) {
         String label = null;
         AdminField fieldConfig = resolveFieldConfig(name);
         if (fieldConfig != null) {
@@ -189,43 +214,46 @@ public class FieldFactory {
         if (!StringUtils.hasText(label)) {
             label = AdminStringUtils.toHumanReadableName(name);
         }
+        return label;
+    }
 
+    private ValuePredicateFactory constructValuePredicateFactory(String name) {
         Attribute<?, ?> attribute = entity.getAttribute(name);
         Attribute.PersistentAttributeType attributeType = attribute.getPersistentAttributeType();
         return switch (attributeType) {
-            case ONE_TO_ONE, MANY_TO_ONE -> new AdminModelFilter(
-                    name, label,
-                    new ToOneFilterPredicateFactory(em, conversionService, attribute),
-                    new ToOneFilterOptionsCollector(
-                            em, conversionService,
-                            entity, attribute,
-                            createValueFormatter(name)
-                    )
+            case ONE_TO_ONE, MANY_TO_ONE -> new ToOnePredicateFactory(em, conversionService, attribute);
+            case ONE_TO_MANY, MANY_TO_MANY -> new ToManyPredicateFactory(em, conversionService, attribute);
+            case BASIC -> new BasicPredicateFactory(conversionService, attribute);
+            default -> throw new IllegalArgumentException(
+                    "Unsupported value predicate attribute type: " + attributeType + " (field " + name + " of model " + modelName + ")"
             );
-            case ONE_TO_MANY, MANY_TO_MANY -> new AdminModelFilter(
-                    name, label,
-                    new ToManyFilterPredicateFactory(em, conversionService, attribute),
-                    new ToManyFilterOptionsCollector(
-                            em, conversionService,
-                            entity, attribute,
-                            createValueFormatter(name)
-                    )
+        };
+    }
+
+    private FilterOptionsCollector constructFilterOptionsCollector(String name) {
+        Attribute<?, ?> attribute = entity.getAttribute(name);
+        Attribute.PersistentAttributeType attributeType = attribute.getPersistentAttributeType();
+        return switch (attributeType) {
+            case ONE_TO_ONE, MANY_TO_ONE -> new ToOneFilterOptionsCollector(
+                    em, conversionService,
+                    entity, attribute,
+                    createValueFormatter(name)
             );
-            case BASIC -> new AdminModelFilter(
-                    name, label,
-                    new BasicFilterPredicateFactory(conversionService, attribute),
-                    TypeUtils.isBoolean(attribute.getJavaType())
-                            ? new BooleanFilterOptionsCollector(em, entity, attribute)
-                            : new BasicFilterOptionsCollector(em, conversionService, entity, attribute)
+            case ONE_TO_MANY, MANY_TO_MANY -> new ToManyFilterOptionsCollector(
+                    em, conversionService,
+                    entity, attribute,
+                    createValueFormatter(name)
             );
+            case BASIC -> TypeUtils.isBoolean(attribute.getJavaType())
+                    ? new BooleanFilterOptionsCollector(em, entity, attribute)
+                    : new BasicFilterOptionsCollector(em, conversionService, entity, attribute);
             default -> throw new IllegalArgumentException(
                     "Unsupported filter attribute type: " + attributeType + " (field " + name + " of model " + modelName + ")"
             );
         };
     }
 
-    @Nullable
-    private AdminField resolveFieldConfig(String name) {
+    private @Nullable AdminField resolveFieldConfig(String name) {
         if (resolvedFieldsConfigurations.containsKey(name)) {
             return resolvedFieldsConfigurations.get(name);
         }
@@ -248,8 +276,7 @@ public class FieldFactory {
         return fieldConfig;
     }
 
-    @Nullable
-    private AdminField discoverFieldConfig(String name) {
+    private @Nullable AdminField discoverFieldConfig(String name) {
         // In most cases @AdminField will be applied directly to entity field
         try {
             Attribute<?, ?> attribute = entity.getAttribute(name);
@@ -298,8 +325,7 @@ public class FieldFactory {
         return propertyAccessor;
     }
 
-    @Nullable
-    private AdminModelPropertyReader findAdminModelPropertyReader(String name) {
+    private @Nullable AdminModelPropertyReader findAdminModelPropertyReader(String name) {
         if (modelAdminClass == null) {
             return null;
         }
@@ -310,8 +336,7 @@ public class FieldFactory {
         return null;
     }
 
-    @Nullable
-    private AdminModelPropertyWriter findAdminModelPropertyWriter(String name) {
+    private @Nullable AdminModelPropertyWriter findAdminModelPropertyWriter(String name) {
         Method method = findModelAdminPropertyWriter(modelAdminClass, name, targetClass);
         if (method != null) {
             return new AdminModelDelegatingPropertyWriter(name, adminModelBean, method);
@@ -319,8 +344,7 @@ public class FieldFactory {
         return null;
     }
 
-    @Nullable
-    private AdminModelPropertyReader findEntityPropertyReader(String name) {
+    private @Nullable AdminModelPropertyReader findEntityPropertyReader(String name) {
         PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(targetClass, name);
         if (pd != null) {
             return new MethodPropertyReader(pd.getName(), pd.getReadMethod());
@@ -328,8 +352,7 @@ public class FieldFactory {
         return null;
     }
 
-    @Nullable
-    private AdminModelPropertyWriter findEntityPropertyWriter(String name) {
+    private @Nullable AdminModelPropertyWriter findEntityPropertyWriter(String name) {
         PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(targetClass, name);
         if (pd != null && pd.getWriteMethod() != null) {
             return new MethodPropertyWriter(pd.getName(), pd.getWriteMethod());
@@ -337,8 +360,7 @@ public class FieldFactory {
         return null;
     }
 
-    @Nullable
-    private AdminModelPropertyReader findEntityFieldReader(String name) {
+    private @Nullable AdminModelPropertyReader findEntityFieldReader(String name) {
         Attribute<?, ?> attribute;
         try {
             attribute = entity.getAttribute(name);
@@ -360,8 +382,7 @@ public class FieldFactory {
         return null;
     }
 
-    @Nullable
-    private AdminModelPropertyWriter findEntityFieldWriter(String name) {
+    private @Nullable AdminModelPropertyWriter findEntityFieldWriter(String name) {
         Attribute<?, ?> attribute;
         try {
             attribute = entity.getAttribute(name);
@@ -376,8 +397,7 @@ public class FieldFactory {
         return null;
     }
 
-    @Nullable
-    private Method findModelAdminPropertyReader(Class<?> modelAdminClass, String name, Class<?> targetClass) {
+    private @Nullable Method findModelAdminPropertyReader(Class<?> modelAdminClass, String name, Class<?> targetClass) {
         Method method = tryFindModelAdminNamedPropertyReader(modelAdminClass, StringUtils.capitalize(name), targetClass);
         if (method == null) {
             method = tryFindModelAdminNamedPropertyReader(modelAdminClass, name, targetClass);
@@ -388,8 +408,7 @@ public class FieldFactory {
         return method;
     }
 
-    @Nullable
-    private Method tryFindModelAdminNamedPropertyReader(
+    private @Nullable Method tryFindModelAdminNamedPropertyReader(
             Class<?> modelAdminClass,
             String name,
             Class<?> targetClass
@@ -404,8 +423,7 @@ public class FieldFactory {
         return method;
     }
 
-    @Nullable
-    private Method findModelAdminPropertyWriter(Class<?> modelAdminClass, String name, Class<?> targetClass) {
+    private @Nullable Method findModelAdminPropertyWriter(Class<?> modelAdminClass, String name, Class<?> targetClass) {
         Method method = tryFindModelAdminNamedPropertyWriter(modelAdminClass, StringUtils.capitalize(name), targetClass);
         if (method == null) {
             method = tryFindModelAdminNamedPropertyWriter(modelAdminClass, name, targetClass);
@@ -416,8 +434,7 @@ public class FieldFactory {
         return method;
     }
 
-    @Nullable
-    private Method tryFindModelAdminNamedPropertyWriter(
+    private @Nullable Method tryFindModelAdminNamedPropertyWriter(
             Class<?> modelAdminClass,
             String name,
             Class<?> targetClass
@@ -470,8 +487,7 @@ public class FieldFactory {
         return reader;
     }
 
-    @Nullable
-    private AdminModelPropertyWriter resolveFormFieldWriter(String name) {
+    private @Nullable AdminModelPropertyWriter resolveFormFieldWriter(String name) {
         AdminModelPropertyWriter writer = findEntityPropertyWriter(name);
         if (writer == null) {
             writer = findEntityFieldWriter(name);
@@ -605,8 +621,7 @@ public class FieldFactory {
         return new DelegatingAdminFormFieldValueAccessorImpl(name, conversionService, reader, writer);
     }
 
-    @Nullable
-    private Annotation resolveColumnAnnotation(String fieldName) {
+    private @Nullable Annotation resolveColumnAnnotation(String fieldName) {
         Attribute<?, ?> attribute;
         try {
             attribute = entity.getAttribute(fieldName);
@@ -616,8 +631,7 @@ public class FieldFactory {
         return resolveColumnAnnotation(attribute);
     }
 
-    @Nullable
-    private static Annotation resolveColumnAnnotation(Attribute<?, ?> attribute) {
+    public static @Nullable Annotation resolveColumnAnnotation(Attribute<?, ?> attribute) {
         AnnotatedElement javaMember = (AnnotatedElement) attribute.getJavaMember();
         Column columnAnnotation = AnnotationUtils.getAnnotation(javaMember, Column.class);
         if (columnAnnotation != null) {

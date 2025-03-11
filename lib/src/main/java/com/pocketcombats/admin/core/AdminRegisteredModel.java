@@ -4,6 +4,7 @@ import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.links.AdminModelLink;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
+import com.pocketcombats.admin.core.uniqueness.AdminUniqueConstraint;
 import jakarta.annotation.Nullable;
 
 import java.util.List;
@@ -23,7 +24,8 @@ public record AdminRegisteredModel(
         List<AdminModelFilter> filters,
         List<AdminModelFieldset> fieldsets,
         List<AdminModelLink> links,
-        Map<String, AdminModelAction> actions
+        Map<String, AdminModelAction> actions,
+        List<AdminUniqueConstraint> uniqueConstraints
 ) {
 
 }

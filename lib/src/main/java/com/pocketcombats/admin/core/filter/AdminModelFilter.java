@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.core.filter;
 
 import com.pocketcombats.admin.core.PredicateFactory;
+import com.pocketcombats.admin.core.predicate.ValuePredicateFactory;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -11,13 +12,13 @@ public class AdminModelFilter {
 
     private final String name;
     private final String label;
-    private final FilterPredicateFactory factory;
+    private final ValuePredicateFactory factory;
     private final FilterOptionsCollector optionsCollector;
 
     public AdminModelFilter(
             String name,
             String label,
-            FilterPredicateFactory factory,
+            ValuePredicateFactory factory,
             FilterOptionsCollector optionsCollector
     ) {
         this.name = name;

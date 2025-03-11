@@ -1,4 +1,5 @@
-package com.pocketcombats.admin.core.filter;
+package com.pocketcombats.admin.core.predicate;
+
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -9,7 +10,7 @@ import jakarta.persistence.metamodel.IdentifiableType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.springframework.core.convert.ConversionService;
 
-public class ToOneFilterPredicateFactory implements FilterPredicateFactory {
+public class ToOnePredicateFactory implements ValuePredicateFactory {
 
     private final EntityManager em;
     private final ConversionService conversionService;
@@ -17,7 +18,7 @@ public class ToOneFilterPredicateFactory implements FilterPredicateFactory {
 
     private final Class<?> attributeIdType;
 
-    public ToOneFilterPredicateFactory(
+    public ToOnePredicateFactory(
             EntityManager em,
             ConversionService conversionService,
             Attribute<?, ?> attribute
@@ -30,8 +31,11 @@ public class ToOneFilterPredicateFactory implements FilterPredicateFactory {
     }
 
     @Override
-    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, String value) {
-        Object reference = em.getReference(attribute.getJavaType(), conversionService.convert(value, attributeIdType));
+    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, Object value) {
+        Object id = attributeIdType.isAssignableFrom(value.getClass())
+                ? value
+                : conversionService.convert(value, attributeIdType);
+        Object reference = em.getReference(attribute.getJavaType(), id);
         return cb.equal(root.get(attribute.getName()), reference);
     }
 }

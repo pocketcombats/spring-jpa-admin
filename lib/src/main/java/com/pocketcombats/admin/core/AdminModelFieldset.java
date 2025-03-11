@@ -6,7 +6,8 @@ import java.util.List;
 
 public record AdminModelFieldset(
         @Nullable String label,
-        List<AdminModelField> fields
+        List<AdminModelField> fields,
+        boolean unique
 ) {
 
 }

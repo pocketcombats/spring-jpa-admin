@@ -32,7 +32,7 @@ public class ModelFormController {
     public ModelAndView create(@PathVariable String modelName) throws UnknownModelException {
         EntityDetails entity = adminModelFormService.create(modelName);
         return new ModelAndView(
-                properties.getTemplates().getForm(),
+                properties.getTemplates().form(),
                 Map.of("entity", entity)
         );
     }
@@ -46,7 +46,7 @@ public class ModelFormController {
         AdminModelEditingResult result = adminModelFormService.create(model, data);
         if (result.bindingResult().hasErrors()) {
             return new ModelAndView(
-                    properties.getTemplates().getForm(),
+                    properties.getTemplates().form(),
                     Map.of(
                             "entity", result.entityDetails(),
                             "errors", result.bindingResult()
@@ -66,7 +66,7 @@ public class ModelFormController {
     public ModelAndView view(@PathVariable String modelName, @PathVariable String id) throws UnknownModelException {
         EntityDetails entity = adminModelFormService.details(modelName, id);
         return new ModelAndView(
-                properties.getTemplates().getForm(),
+                properties.getTemplates().form(),
                 Map.of("entity", entity)
         );
     }
@@ -81,7 +81,7 @@ public class ModelFormController {
         AdminModelEditingResult result = adminModelFormService.update(model, id, data);
         if (result.bindingResult().hasErrors()) {
             return new ModelAndView(
-                    properties.getTemplates().getForm(),
+                    properties.getTemplates().form(),
                     Map.of(
                             "entity", result.entityDetails(),
                             "errors", result.bindingResult()
@@ -91,7 +91,7 @@ public class ModelFormController {
             if (data.containsKey("save-continue")) {
                 EntityDetails entity = adminModelFormService.details(model, id);
                 return new ModelAndView(
-                        properties.getTemplates().getForm(),
+                        properties.getTemplates().form(),
                         Map.of("entity", entity)
                 );
             } else {

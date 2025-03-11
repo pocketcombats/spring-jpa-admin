@@ -47,7 +47,7 @@ public class ModelActionController {
 
         ActionPrompt prompt = service.prompt(model, request.getAction(), request.getId());
         return new ModelAndView(
-                properties.getTemplates().getActionPrompt(),
+                properties.getTemplates().actionPrompt(),
                 Map.of("prompt", prompt)
         );
     }

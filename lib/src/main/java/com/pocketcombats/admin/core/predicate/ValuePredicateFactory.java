@@ -1,11 +1,11 @@
-package com.pocketcombats.admin.core.filter;
+package com.pocketcombats.admin.core.predicate;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
 @FunctionalInterface
-public interface FilterPredicateFactory {
+public interface ValuePredicateFactory {
 
-    Predicate createPredicate(CriteriaBuilder cb, Root<?> root, String value);
+    Predicate createPredicate(CriteriaBuilder cb, Root<?> root, Object value);
 }

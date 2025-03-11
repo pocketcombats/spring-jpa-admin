@@ -14,6 +14,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.Size;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,7 +43,7 @@ public class DemoUser implements Serializable {
     private Integer id;
 
     @Size(min = 3, max = 15)
-    @Column(name = "username", nullable = false)
+    @Column(name = "username", unique = true, nullable = false)
     @AdminField(sortable = true, description = "Sample username description")
     private String username;
 
@@ -67,6 +69,32 @@ public class DemoUser implements Serializable {
         for (DemoUser user : users) {
             user.setEnabled(false);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (id == null) {
+            return false;
+        }
+
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof DemoUser demoUser)) {
+            return false;
+        }
+
+        return new EqualsBuilder()
+                .append(id, demoUser.id)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(id)
+                .toHashCode();
     }
 
     public Integer getId() {

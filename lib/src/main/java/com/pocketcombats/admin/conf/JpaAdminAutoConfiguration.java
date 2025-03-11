@@ -33,6 +33,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.convert.ConversionService;
@@ -112,7 +113,8 @@ public class JpaAdminAutoConfiguration implements Ordered {
             AdminRelationLinkService relationLinkService,
             EntityManager em,
             SmartValidator validator,
-            ConversionService conversionService
+            ConversionService conversionService,
+            MessageSource messageSource
     ) {
         LOG.debug("Registering default AdminModelFormService");
 
@@ -122,7 +124,8 @@ public class JpaAdminAutoConfiguration implements Ordered {
                 relationLinkService,
                 em,
                 validator,
-                conversionService
+                conversionService,
+                messageSource
         );
     }
 

@@ -3,6 +3,7 @@ package com.pocketcombats.admin.demo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,8 +27,8 @@ public class Application {
 
     @Bean
     public SecurityFilterChain appSecurityChain(HttpSecurity http) throws Exception {
-        http.formLogin(formLogin -> {});
-        http.authorizeHttpRequests(authorize -> authorize.requestMatchers("/admin/**").authenticated());
-        return http.build();
+        return http
+                .formLogin(Customizer.withDefaults())
+                .build();
     }
 }

@@ -42,7 +42,7 @@ public class ModelListController {
     ) throws UnknownModelException {
         Map<String, String> filters = collectFilters(data);
         return new ModelAndView(
-                properties.getTemplates().getList(),
+                properties.getTemplates().list(),
                 Map.of(
                         "entities", entitiesListService.listEntities(model, modelRequest, filters),
                         "query", modelRequest
@@ -62,7 +62,7 @@ public class ModelListController {
         Map<String, String> filters = collectFilters(data);
         EntityRelation entityRelation = new EntityRelation(model, id);
         return new ModelAndView(
-                properties.getTemplates().getList(),
+                properties.getTemplates().list(),
                 Map.of(
                         "entities", entitiesListService.listRelationEntities(
                                 relation,

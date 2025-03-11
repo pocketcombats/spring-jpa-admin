@@ -14,12 +14,15 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.validation.groups.Default;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +34,7 @@ import org.springframework.validation.SmartValidator;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AdminModelFormServiceImpl implements AdminModelFormService {
 
@@ -42,6 +46,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     private final EntityManager em;
     private final SmartValidator validator;
     private final ConversionService conversionService;
+    private final MessageSource messageSource;
 
     public AdminModelFormServiceImpl(
             AdminModelRegistry modelRegistry,
@@ -49,7 +54,8 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             AdminRelationLinkService relationLinkService,
             EntityManager em,
             SmartValidator validator,
-            ConversionService conversionService
+            ConversionService conversionService,
+            MessageSource messageSource
     ) {
         this.modelRegistry = modelRegistry;
         this.historyWriter = historyWriter;
@@ -57,6 +63,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         this.em = em;
         this.validator = validator;
         this.conversionService = conversionService;
+        this.messageSource = messageSource;
     }
 
     private @Nullable String resolveId(Object entity) {
@@ -153,9 +160,12 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         if (model.updatable()) {
             historyWriter.record(model, "edit", entity);
 
+            em.detach(entity);
             bindingResult = bind(model, entity, FormAction.UPDATE, rawData);
             if (bindingResult.hasErrors()) {
                 TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            } else {
+                entity = em.merge(entity);
             }
         } else {
             bindingResult = new BeanPropertyBindingResult(entity, model.modelName());
@@ -189,8 +199,58 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), model.modelName());
             }
         }
+        checkUniqueness(model, entity, action, bindingResult);
         validator.validate(entity, bindingResult, AdminValidation.class, Default.class);
         return bindingResult;
+    }
+
+    private void checkUniqueness(AdminRegisteredModel model, Object entity, FormAction action, BindingResult bindingResult) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<?> query = cb.createQuery(model.entityDetails().entityClass());
+        Root<?> root = query.from(model.entityDetails().entityClass());
+        Predicate[] predicates = model.uniqueConstraints().stream()
+                .map(constraint -> constraint.createPredicate(cb, root, entity))
+                .toArray(Predicate[]::new);
+        query.where(cb.or(predicates));
+        List<?> resultList = em.createQuery(query)
+                .setMaxResults(1)
+                .getResultList();
+        if (!resultList.isEmpty()) {
+            var existingEntity = resultList.get(0);
+            if ((action == FormAction.UPDATE && !entity.equals(existingEntity)) || action == FormAction.CREATE) {
+                rejectWithConstraintViolation(model, entity, existingEntity, bindingResult);
+            }
+        }
+    }
+
+    private void rejectWithConstraintViolation(
+            AdminRegisteredModel model,
+            Object entity,
+            Object conflictingEntity,
+            BindingResult bindingResult
+    ) {
+        for (var constraint : model.uniqueConstraints()) {
+            if (constraint.matches(entity, conflictingEntity)) {
+                String violatingFields = constraint.getFieldLabels().stream()
+                        .map(label -> "<b>" +
+                                messageSource.getMessage(label, null, label, LocaleContextHolder.getLocale()) +
+                                "</b>")
+                        .collect(Collectors.joining(", "));
+                var errorArgs = new String[]{model.modelName(), resolveId(conflictingEntity), violatingFields};
+                bindingResult.reject(
+                        "spring-jpa-admin.validation.uniqueness-violation.fields.message",
+                        errorArgs,
+                        null
+                );
+                return;
+            }
+        }
+        LOG.warn("Could not detect constraint violation for {}", model.modelName());
+        bindingResult.reject(
+                "spring-jpa-admin.validation.uniqueness-violation.message",
+                new String[]{model.modelName(), resolveId(conflictingEntity)},
+                null
+        );
     }
 
     @Override
