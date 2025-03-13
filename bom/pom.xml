@@ -24,8 +24,8 @@
                 <version>1.0.2-SNAPSHOT</version>
             </dependency>
             <dependency>
-                <groupId>com.pocketcombats.spring-jpa-admin</groupId>
-                <artifactId>plugin.auth</artifactId>
+                <groupId>com.pocketcombats.spring-jpa-admin.plugin</groupId>
+                <artifactId>auth</artifactId>
                 <version>1.0.2-SNAPSHOT</version>
             </dependency>
         </dependencies>

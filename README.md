@@ -1,20 +1,57 @@
 # Spring JPA Admin
 
-Spring JPA Admin is a library built on top of Spring Boot, JPA and Thymeleaf, designed to simplify the development of administrative interface.
-This library reads entity metadata to provide a user-friendly and customizable admin interface, enabling trusted users to manage content.
+Spring JPA Admin is a powerful library built on top of Spring Boot, JPA and Thymeleaf, designed to simplify the development of administrative interfaces. 
+This library reads entity metadata to provide a user-friendly and highly customizable admin interface, enabling trusted users to manage content.
 
 ## Requirements
+- Java 17+
 - Spring Boot 3.1+
 - Jakarta Persistence API (JPA) 3.1+
 
 ## Installation
-Spring JPA Admin consists of two artifacts: `annotations` and `lib`.
-The `com.pocketcombats.admin:annotations` library is required in modules that register entities with the admin site.
-For the admin site to function, your application must have a dependency on `com.pocketcombats.admin:lib`.
+Spring JPA Admin consists of two main artifacts:
+
+1. **Annotations** (`com.pocketcombats.spring-jpa-admin:annotations`): Required in modules that register entities with the admin site.
+2. **Library** (`com.pocketcombats.spring-jpa-admin:lib`): Core functionality for the admin site.
+
+### Maven
+```xml
+<dependencies>
+    <!-- Annotations (can be in a separate module) -->
+    <dependency>
+        <groupId>com.pocketcombats.spring-jpa-admin</groupId>
+        <artifactId>annotations</artifactId>
+        <version>${spring-jpa-admin.version}</version>
+    </dependency>
+  
+    <!-- Admin site -->
+    <dependency>
+        <groupId>com.pocketcombats.spring-jpa-admin</groupId>
+        <artifactId>lib</artifactId>
+        <version>${spring-jpa-admin.version}</version>
+        <scope>runtime</scope>
+    </dependency>
+</dependencies>
+```
+
+### Gradle
+```kotlin
+dependencies {
+    api(platform("com.pocketcombats.spring-jpa-admin:bom:1.0.1"))
+
+    // Annotations
+    implementation("com.pocketcombats.spring-jpa-admin:annotations")
+  
+    // Admin site
+    runtimeOnly("com.pocketcombats.spring-jpa-admin:lib")
+}
+```
 
 ## Security
-Spring JPA Admin ensures the security of sensitive endpoints by requiring the `"ROLE_JPA_ADMIN"` role.  
-Currently, the library doesn't provide fine-grained per-model permission configuration.
+Spring JPA Admin ensures the security of sensitive endpoints by requiring the `"ROLE_JPA_ADMIN"` role. Users without this role will not be able to access the admin interface.  
+Currently, the library doesn't provide fine-grained per-model permission configuration, but you can implement custom security logic using Spring Security.
+
+For authentication, you can use the [Authentication Plugin](#authentication-plugin) or integrate with your existing authentication.
 
 ## Quick start
 To quickly grasp the capabilities of Spring JPA Admin, we recommend exploring the included `demo` application.
@@ -33,7 +70,7 @@ public class DemoUser implements Serializable {
     @Column(name = "id", updatable = false)
     @GeneratedValue
     private Integer id;
-    
+
     @Column(name = "username", nullable = false)
     private String username;
 
@@ -42,7 +79,7 @@ public class DemoUser implements Serializable {
 
     @OneToMany(mappedBy = "author")
     private List<Post> posts = new ArrayList<>();
-    
+
     ...
 }
 ```
@@ -157,7 +194,7 @@ Methods for custom actions must be static (except for the case when they are def
 #### Site-Wide Custom Action
 If you need to create a site-wide list view custom action that applies to all entities, you can implement the `AdminModelAction` interface and register it as a Spring bean.
 The default "delete" action is implemented using this approach.
-  
+
 Here's a complete example for the `DemoUser` entity with custom column ordering, enabled filtering, sorting, searching, custom actions, and disabled "delete" action:
 ```java
 @Entity
@@ -224,7 +261,7 @@ The result is much more helpful:
 ![Post list view with custom author representation](media/listview-010.png)
 The `representation` is an expression in [SpEL](https://docs.spring.io/spring-framework/docs/3.0.x/reference/expressions.html) format, with the root object set to the entity being displayed.
 In most cases, you simply want to reference a field, like `username` in our case, or call a method of an entity.
-  
+
 Next, let's do something with the `Text` field.  
 We don't want to set a custom `representation` to avoid affecting the form view, so we'll provide a custom `listField` instead:
 ```java
@@ -291,7 +328,7 @@ To customize their appearance, we can provide them with `template` settings, in 
     @Column(name = "text", nullable = false)
     @AdminField(template = "admin/widget/textarea")
     private String text;
-    
+
     ...
 
     @ManyToMany
@@ -536,4 +573,38 @@ spring.messages:
 With this configuration, Spring Boot will look for message properties in both the `messages.properties` file (or any other custom message file you have) and the `spring-jpa-admin-messages.properties` file.  
 All core annotations in Spring JPA Admin, such as `@AdminAction`, `@AdminField`, `@AdminFieldset`, `@AdminModel`, and `@AdminPackage`, allow you to specify a `label` attribute.
 This label can be either a hard-coded string or a localization key.  
-Using localization key allows you to provide translated labels for different languages, making your admin interface accessible to users from various locales.  
+Using localization key allows you to provide translated labels for different languages, making your admin interface accessible to users from various locales.
+
+## Authentication Plugin
+Spring JPA Admin provides an optional authentication plugin for applications that doesn't otherwise require authentication.
+
+### Installation
+To use the authentication plugin, add the following dependency:
+
+#### Maven
+```xml
+<dependency>
+    <groupId>com.pocketcombats.spring-jpa-admin.plugin</groupId>
+    <artifactId>auth</artifactId>
+    <version>${spring-jpa-admin.version}</version>
+    <scope>runtime</scope>
+</dependency>
+```
+
+#### Gradle
+```kotlin
+runtimeOnly("com.pocketcombats.spring-jpa-admin.plugin:auth")
+```
+
+### Configuration
+The authentication plugin can be configured using properties in your `application.yaml` file:
+
+```yaml
+spring.jpa-admin:
+  auth:
+    password-strength: 10  # BCrypt strength (default: 10)
+    create-default-admin: true  # Whether to create a default user (default: false). DO NOT enable this in production!
+```
+
+## License
+Spring JPA Admin is released under the Apache License. See the LICENSE file for details.

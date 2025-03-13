@@ -1,26 +1,11 @@
 package com.pocketcombats.admin.plugin.auth.conf;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties("spring.jpa-admin.auth")
-public class JpaAdminAuthProperties {
-
-    private int passWordStrength = 10;
-    private boolean createDefaultAdmin = true;
-
-    public int getPassWordStrength() {
-        return passWordStrength;
-    }
-
-    public void setPassWordStrength(int passWordStrength) {
-        this.passWordStrength = passWordStrength;
-    }
-
-    public boolean isCreateDefaultAdmin() {
-        return createDefaultAdmin;
-    }
-
-    public void setCreateDefaultAdmin(boolean createDefaultAdmin) {
-        this.createDefaultAdmin = createDefaultAdmin;
-    }
+public record JpaAdminAuthProperties(
+        @DefaultValue("10") int passWordStrength,
+        @DefaultValue("false") boolean createDefaultAdmin
+) {
 }
