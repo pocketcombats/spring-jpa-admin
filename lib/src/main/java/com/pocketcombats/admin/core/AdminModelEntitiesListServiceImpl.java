@@ -1,14 +1,8 @@
 package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.core.links.AdminModelLink;
-import com.pocketcombats.admin.data.list.AdminEntityListEntry;
-import com.pocketcombats.admin.data.list.AdminListColumn;
-import com.pocketcombats.admin.data.list.AdminModelEntitiesList;
-import com.pocketcombats.admin.data.list.EntityRelation;
-import com.pocketcombats.admin.data.list.ListAction;
-import com.pocketcombats.admin.data.list.ListFilter;
-import com.pocketcombats.admin.data.list.ListFilterOption;
-import com.pocketcombats.admin.data.list.ModelRequest;
+import com.pocketcombats.admin.core.permission.AdminPermissionService;
+import com.pocketcombats.admin.data.list.*;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -20,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -33,17 +28,20 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
     private final AdminModelRegistry modelRegistry;
     private final EntityManager em;
+    private final AdminPermissionService permissionService;
     private final ConversionService conversionService;
     private final AdminModelListEntityMapper mapper;
 
     public AdminModelEntitiesListServiceImpl(
             AdminModelRegistry modelRegistry,
             EntityManager em,
+            AdminPermissionService permissionService,
             ConversionService conversionService,
             AdminModelListEntityMapper mapper
     ) {
         this.modelRegistry = modelRegistry;
         this.em = em;
+        this.permissionService = permissionService;
         this.conversionService = conversionService;
         this.mapper = mapper;
     }
@@ -67,6 +65,11 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             EntityRelation relation
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canView(model)) {
+            throw new AccessDeniedException("You don't have permission to view " + modelName);
+        }
+
         AdminRegisteredModel relationModel = modelRegistry.resolve(relation.model());
         AdminModelLink resolvedLink = relationModel.links().stream()
                 .filter(link -> link.target().equals(model.entityDetails().entityClass()))
@@ -107,6 +110,11 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             PredicateFactory predicateFactory
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canView(model)) {
+            throw new AccessDeniedException("You don't have permission to view " + modelName);
+        }
+
         Class<?> entityClass = model.entityDetails().entityClass();
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -143,6 +151,9 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             resultList = Collections.emptyList();
         }
 
+        // Only set insertable to true if the model is insertable AND the current user has "create" permission
+        boolean insertable = model.insertable() && permissionService.canCreate(model);
+
         List<AdminListColumn> columns = model.listFields().stream()
                 .map(listField -> new AdminListColumn(
                         listField.name(),
@@ -158,7 +169,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 model.label(),
                 model.modelName(),
                 model.searchPredicateFactory() != null,
-                model.insertable(),
+                insertable,
                 page,
                 pagesCount,
                 collectListFilters(model, predicateFactory),
@@ -276,7 +287,12 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 .toList();
     }
 
-    private static List<ListAction> collectActions(AdminRegisteredModel model) {
+    private List<ListAction> collectActions(AdminRegisteredModel model) {
+        // Only show actions if the user has edit permission
+        if (!permissionService.canEdit(model)) {
+            return Collections.emptyList();
+        }
+
         return model.actions().values().stream()
                 .map(action -> new ListAction(action.getId(), action.getLabel()))
                 .toList();

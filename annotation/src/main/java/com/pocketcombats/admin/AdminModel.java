@@ -8,6 +8,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation used to define an admin model for the JPA Admin interface.
+ * <p>
+ * If applied to an entity class, it will directly use that class as the model entity.
+ * If applied to a non-entity class, the {@link #entity()} attribute must be specified
+ * to indicate which entity class this admin model represents.
+ */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
@@ -20,6 +27,13 @@ public @interface AdminModel {
      * Otherwise, a valid entity class must be provided.
      */
     Class<?> entity() default Void.class;
+
+    /**
+     * Defines permission requirements for different actions on this admin model.
+     * <p>
+     * See {@link AdminModelPermissions} for more details on how to configure permissions.
+     */
+    AdminModelPermissions permissions() default @AdminModelPermissions;
 
     String label() default "";
 

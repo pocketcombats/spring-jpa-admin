@@ -6,6 +6,7 @@ import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.core.UnknownModelException;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
+import com.pocketcombats.admin.core.permission.AdminPermissionService;
 import com.pocketcombats.admin.data.form.AdminRelationLink;
 import com.pocketcombats.admin.data.form.AdminRelationPreview;
 import com.pocketcombats.admin.data.list.EntityRelation;
@@ -33,17 +34,20 @@ public class AdminRelationLinkService {
     private final AdminModelRegistry modelRegistry;
     private final AdminModelListEntityMapper mapper;
     private final EntityManager em;
+    private final AdminPermissionService permissionService;
     private final ConversionService conversionService;
 
     public AdminRelationLinkService(
             AdminModelRegistry modelRegistry,
             AdminModelListEntityMapper mapper,
             EntityManager em,
+            AdminPermissionService permissionService,
             ConversionService conversionService
     ) {
         this.modelRegistry = modelRegistry;
         this.mapper = mapper;
         this.em = em;
+        this.permissionService = permissionService;
         this.conversionService = conversionService;
     }
 
@@ -54,13 +58,15 @@ public class AdminRelationLinkService {
                 .toList();
     }
 
-    @Nullable
-    private AdminRelationLink createRelationLink(Object entity, AdminModelLink modelLink) {
+    private @Nullable AdminRelationLink createRelationLink(Object entity, AdminModelLink modelLink) {
         AdminRegisteredModel targetModel;
         try {
             targetModel = modelRegistry.resolve(modelLink.target().getSimpleName());
         } catch (UnknownModelException e) {
             LOG.error("Class {} isn't a registered admin model", modelLink.target());
+            return null;
+        }
+        if (!permissionService.canView(targetModel)) {
             return null;
         }
         String label = modelLink.label();

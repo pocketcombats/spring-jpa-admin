@@ -23,7 +23,7 @@ Spring JPA Admin consists of two main artifacts:
         <artifactId>annotations</artifactId>
         <version>${spring-jpa-admin.version}</version>
     </dependency>
-  
+
     <!-- Admin site -->
     <dependency>
         <groupId>com.pocketcombats.spring-jpa-admin</groupId>
@@ -41,15 +41,17 @@ dependencies {
 
     // Annotations
     implementation("com.pocketcombats.spring-jpa-admin:annotations")
-  
+
     // Admin site
     runtimeOnly("com.pocketcombats.spring-jpa-admin:lib")
 }
 ```
 
 ## Security
-Spring JPA Admin ensures the security of sensitive endpoints by requiring the `"ROLE_JPA_ADMIN"` role. Users without this role will not be able to access the admin interface.  
-Currently, the library doesn't provide fine-grained per-model permission configuration, but you can implement custom security logic using Spring Security.
+Spring JPA Admin ensures the security of sensitive endpoints by requiring the `"ROLE_JPA_ADMIN"` role. 
+Users without this role will not be able to access the admin interface.  
+The library provides fine-grained per-model permission configuration through the `@AdminModelPermissions` annotation, 
+allowing you to control who can view, edit, or create entities for each model. See the [Permissions](#permissions) section for details.
 
 For authentication, you can use the [Authentication Plugin](#authentication-plugin) or integrate with your existing authentication.
 
@@ -80,7 +82,7 @@ public class DemoUser implements Serializable {
     @OneToMany(mappedBy = "author")
     private List<Post> posts = new ArrayList<>();
 
-    ...
+    // ...
 }
 ```
 Once you added `@AdminModel` annotation, navigate to admin site (`/admin/DemoUser/`) and see if it works: 
@@ -163,6 +165,42 @@ It is possible to disable creation or modification of any particular entity.
 For example, you can disable the creation of new entities by setting `insertable = false` in the `@AdminModel` annotation.
 Similarly, using `updatable = false` disables the modification of existing records while still allowing the creation of new ones.
 
+### Permissions
+Spring JPA Admin provides fine-grained permission control through the `@AdminModelPermissions` annotation. 
+This allows you to restrict who can view, edit, or create entities for each model based on user roles.
+
+#### Configuring Permissions
+To configure permissions for a model, use the `permissions` attribute in the `@AdminModel` annotation:
+
+```java
+@AdminModel(
+    permissions = @AdminModelPermissions(
+        view = {},
+        edit = {"ROLE_MANAGER", "ROLE_ADMIN"},
+        create = {"ROLE_ADMIN"}
+    )
+)
+public class Post {
+    // ...
+}
+```
+
+In this example:
+- Any authenticated user can view posts
+- Users with either `ROLE_MANAGER` or `ROLE_ADMIN` can edit posts
+- Only users with `ROLE_ADMIN` can create new posts
+
+#### Permission Types
+The `@AdminModelPermissions` annotation supports three types of permissions:
+
+1. **view**: Controls who can see the model in the admin interface and view its entities
+2. **edit**: Controls who can modify existing entities
+3. **create**: Controls who can create new entities
+
+If you don't specify permissions for a particular action, it means that action is available to all users who have 
+access to the admin interface (i.e., users with the `ROLE_JPA_ADMIN` role).  
+If a user doesn't have the required permission, they will receive an "Access Denied" error.
+
 ### Bulk Actions
 Spring JPA Admin allows performing bulk actions on selected records in the list view.
 By default, only the "delete" action is enabled.
@@ -241,7 +279,8 @@ public class DemoUser implements Serializable {
             user.setEnabled(false);
         }
     }
-    ...
+    
+    // ...
 }
 ```
 ![Demo User list view final result](media/listview-008.png)
@@ -329,7 +368,7 @@ To customize their appearance, we can provide them with `template` settings, in 
     @AdminField(template = "admin/widget/textarea")
     private String text;
 
-    ...
+    // ...
 
     @ManyToMany
     @JoinTable(
@@ -432,6 +471,9 @@ For demonstration, let's clean up the `Post` entity from admin-related annotatio
         }
 )
 public class PostAdminModel {
+    
+    // ...
+}
 ```
 Note the `entity = Post.class` attribute, which specifies the target entity for the admin configuration.
 

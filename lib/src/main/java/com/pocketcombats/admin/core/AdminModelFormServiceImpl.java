@@ -5,6 +5,7 @@ import com.pocketcombats.admin.core.field.AdminFormFieldPluralValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldSingularValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
 import com.pocketcombats.admin.core.links.AdminRelationLinkService;
+import com.pocketcombats.admin.core.permission.AdminPermissionService;
 import com.pocketcombats.admin.data.form.AdminFormField;
 import com.pocketcombats.admin.data.form.AdminFormFieldGroup;
 import com.pocketcombats.admin.data.form.AdminRelationLink;
@@ -24,6 +25,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -45,6 +47,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     private final AdminRelationLinkService relationLinkService;
     private final EntityManager em;
     private final SmartValidator validator;
+    private final AdminPermissionService permissionService;
     private final ConversionService conversionService;
     private final MessageSource messageSource;
 
@@ -54,6 +57,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             AdminRelationLinkService relationLinkService,
             EntityManager em,
             SmartValidator validator,
+            AdminPermissionService permissionService,
             ConversionService conversionService,
             MessageSource messageSource
     ) {
@@ -62,6 +66,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         this.relationLinkService = relationLinkService;
         this.em = em;
         this.validator = validator;
+        this.permissionService = permissionService;
         this.conversionService = conversionService;
         this.messageSource = messageSource;
     }
@@ -78,6 +83,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     @Transactional(readOnly = true)
     public EntityDetails details(String modelName, String stringId) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canView(model)) {
+            throw new AccessDeniedException("You don't have permission to view " + modelName);
+        }
+
         Object entity = findEntity(model, stringId);
 
         return getEntityDetails(model, entity, FormAction.UPDATE);
@@ -140,9 +150,20 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 .toList();
     }
 
-    private static boolean isEditable(AdminRegisteredModel model, AdminModelField field, FormAction action) {
+    /**
+     * Determines if a field is editable based on the model, field, action, and user permissions.
+     * <p>
+     * For UPDATE actions, a field is editable if:
+     * 1. The model is updatable
+     * 2. The field is updatable
+     * 3. The user has the "edit" permission for the model
+     * <p>
+     * For CREATE actions, a field is editable if it is "insertable".
+     * User permission for entity creation should be checked before that.
+     */
+    private boolean isEditable(AdminRegisteredModel model, AdminModelField field, FormAction action) {
         return switch (action) {
-            case UPDATE -> model.updatable() && field.updatable();
+            case UPDATE -> model.updatable() && field.updatable() && permissionService.canEdit(model);
             case CREATE -> field.insertable();
         };
     }
@@ -155,6 +176,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             MultiValueMap<String, String> rawData
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canEdit(model)) {
+            throw new AccessDeniedException("You don't have permission to edit " + modelName);
+        }
+
         Object entity = findEntity(model, stringId);
         BindingResult bindingResult;
         if (model.updatable()) {
@@ -262,6 +288,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             String value
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canEdit(model)) {
+            throw new AccessDeniedException("You don't have permission to edit " + modelName);
+        }
+
         AdminModelField field = model.fieldsets().stream()
                 .flatMap(fieldset -> fieldset.fields().stream())
                 .filter(candidate -> candidate.name().equals(fieldName))
@@ -291,6 +322,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     @Transactional(readOnly = true)
     public EntityDetails create(String modelName) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canCreate(model)) {
+            throw new AccessDeniedException("You don't have permission to create " + modelName);
+        }
+
         Object entity = BeanUtils.instantiateClass(model.entityDetails().entityClass());
 
         return getEntityDetails(model, entity, FormAction.CREATE);
@@ -303,6 +339,11 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             MultiValueMap<String, String> rawData
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canCreate(model)) {
+            throw new AccessDeniedException("You don't have permission to create " + modelName);
+        }
+
         Object entity = BeanUtils.instantiateClass(model.entityDetails().entityClass());
 
         BindingResult bindingResult = bind(model, entity, FormAction.CREATE, rawData);

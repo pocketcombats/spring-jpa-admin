@@ -5,6 +5,7 @@ import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.core.RegisteredEntityDetails;
 import com.pocketcombats.admin.core.UnknownModelException;
+import com.pocketcombats.admin.core.permission.AdminPermissionService;
 import com.pocketcombats.admin.data.action.ActionColumn;
 import com.pocketcombats.admin.data.action.ActionPrompt;
 import com.pocketcombats.admin.data.list.AdminEntityListEntry;
@@ -16,6 +17,7 @@ import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,17 +30,20 @@ public class AdminModelActionServiceImpl implements AdminModelActionService {
     private final AdminModelRegistry modelRegistry;
     private final AdminModelListEntityMapper mapper;
     private final EntityManager em;
+    private final AdminPermissionService permissionService;
     private final ConversionService conversionService;
 
     public AdminModelActionServiceImpl(
             AdminModelRegistry modelRegistry,
             AdminModelListEntityMapper mapper,
             EntityManager em,
+            AdminPermissionService permissionService,
             ConversionService conversionService
     ) {
         this.modelRegistry = modelRegistry;
         this.mapper = mapper;
         this.em = em;
+        this.permissionService = permissionService;
         this.conversionService = conversionService;
     }
 
@@ -47,6 +52,13 @@ public class AdminModelActionServiceImpl implements AdminModelActionService {
     public ActionPrompt prompt(String modelName, String actionName, List<String> stringIds)
             throws UnknownModelException, UnknownActionException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        // Check if user has permission to edit this model
+        // This is necessary because actions typically modify the model
+        if (!permissionService.canEdit(model)) {
+            throw new AccessDeniedException("You don't have permission to edit " + modelName);
+        }
+
         AdminModelAction action = getAction(model, actionName);
 
         List<ActionColumn> columns = collectColumns(model);
@@ -104,6 +116,11 @@ public class AdminModelActionServiceImpl implements AdminModelActionService {
     public void perform(String modelName, String actionName, List<String> stringIds)
             throws UnknownModelException, UnknownActionException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
+
+        if (!permissionService.canEdit(model)) {
+            throw new AccessDeniedException("You don't have permission to edit " + modelName);
+        }
+
         AdminModelAction action = getAction(model, actionName);
 
         List<?> entities = findEntities(model, stringIds);

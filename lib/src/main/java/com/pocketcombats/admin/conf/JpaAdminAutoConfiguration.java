@@ -15,6 +15,8 @@ import com.pocketcombats.admin.core.action.DefaultDeleteAction;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.core.links.AdminModelLinkFactory;
 import com.pocketcombats.admin.core.links.AdminRelationLinkService;
+import com.pocketcombats.admin.core.permission.AdminPermissionService;
+import com.pocketcombats.admin.core.permission.AdminPermissionServiceImpl;
 import com.pocketcombats.admin.history.AdminHistoryCompiler;
 import com.pocketcombats.admin.history.AdminHistoryCompilerImpl;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
@@ -89,9 +91,18 @@ public class JpaAdminAutoConfiguration implements Ordered {
 
     @Bean
     @ConditionalOnMissingBean
+    public AdminPermissionService adminPermissionService() {
+        LOG.debug("Registering default AdminPermissionService");
+
+        return new AdminPermissionServiceImpl();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public AdminModelEntitiesListService adminModelEntitiesListService(
             AdminModelRegistry modelRegistry,
             EntityManager em,
+            AdminPermissionService permissionService,
             ConversionService conversionService,
             AdminModelListEntityMapper mapper
     ) {
@@ -100,6 +111,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
         return new AdminModelEntitiesListServiceImpl(
                 modelRegistry,
                 em,
+                permissionService,
                 conversionService,
                 mapper
         );
@@ -113,6 +125,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
             AdminRelationLinkService relationLinkService,
             EntityManager em,
             SmartValidator validator,
+            AdminPermissionService permissionService,
             ConversionService conversionService,
             MessageSource messageSource
     ) {
@@ -124,6 +137,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
                 relationLinkService,
                 em,
                 validator,
+                permissionService,
                 conversionService,
                 messageSource
         );
@@ -135,11 +149,12 @@ public class JpaAdminAutoConfiguration implements Ordered {
             AdminModelRegistry modelRegistry,
             AdminModelListEntityMapper mapper,
             EntityManager em,
+            AdminPermissionService permissionService,
             ConversionService conversionService
     ) {
         LOG.debug("Registering default AdminModelActionService");
 
-        return new AdminModelActionServiceImpl(modelRegistry, mapper, em, conversionService);
+        return new AdminModelActionServiceImpl(modelRegistry, mapper, em, permissionService, conversionService);
     }
 
     @Bean
@@ -178,9 +193,10 @@ public class JpaAdminAutoConfiguration implements Ordered {
             AdminModelRegistry modelRegistry,
             AdminModelListEntityMapper mapper,
             EntityManager em,
+            AdminPermissionService permissionService,
             ConversionService conversionService
     ) {
-        return new AdminRelationLinkService(modelRegistry, mapper, em, conversionService);
+        return new AdminRelationLinkService(modelRegistry, mapper, em, permissionService, conversionService);
     }
 
     @Bean
@@ -231,9 +247,10 @@ public class JpaAdminAutoConfiguration implements Ordered {
     @Bean
     public IndexController adminIndexController(
             AdminModelRegistry entityRegistry,
-            AdminHistoryCompiler historyCompiler
+            AdminHistoryCompiler historyCompiler,
+            AdminPermissionService permissionService
     ) {
-        return new IndexController(properties, entityRegistry, historyCompiler);
+        return new IndexController(properties, entityRegistry, historyCompiler, permissionService);
     }
 
     @Bean

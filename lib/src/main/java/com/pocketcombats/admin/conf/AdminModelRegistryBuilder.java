@@ -139,6 +139,13 @@ import java.util.stream.Collectors;
         return new PackageInfo(packageName, priority, adminPackageAnnotation);
     }
 
+    /**
+     * Constructs an {@link AdminRegisteredModel} from an {@link AdminModel} annotation.
+     * <p>
+     * This method processes the annotation and creates a fully configured admin model
+     * with all the necessary components, such as fields, actions, filters, and permissions.
+     * It also resolves entity details, creates search predicates, and collects unique constraints.
+     */
     private AdminRegisteredModel constructAdminModel(
             String modelName,
             AdminModel modelAnnotation,
@@ -202,7 +209,8 @@ import java.util.stream.Collectors;
                 fieldsets,
                 links,
                 actions,
-                uniqueConstraints
+                uniqueConstraints,
+                modelAnnotation.permissions()
         );
     }
 
