@@ -186,6 +186,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         if (model.updatable()) {
             historyWriter.record(model, "edit", entity);
 
+            initializeWriteableField(model, entity);
             em.detach(entity);
             bindingResult = bind(model, entity, FormAction.UPDATE, rawData);
             if (bindingResult.hasErrors()) {
@@ -201,6 +202,16 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 getEntityDetails(model, entity, FormAction.UPDATE),
                 bindingResult
         );
+    }
+
+    private void initializeWriteableField(AdminRegisteredModel model, Object entity) {
+        List<AdminModelField> writeableFields = model.fieldsets().stream()
+                .flatMap(fieldset -> fieldset.fields().stream())
+                .filter(field -> isEditable(model, field, FormAction.UPDATE))
+                .toList();
+        for (AdminModelField field : writeableFields) {
+            field.valueAccessor().readValue(entity);
+        }
     }
 
     private BindingResult bind(
