@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.pocketcombats.spring-jpa-admin</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.0.2-SNAPSHOT</version>
+        <version>1.0.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>com.pocketcombats.spring-jpa-admin</groupId>
             <artifactId>spring-jpa-admin</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.0.2</version>
         </dependency>
 
         <dependency>
