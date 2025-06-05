@@ -10,6 +10,7 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.springframework.security.core.GrantedAuthority;
 
 @AdminModel(
@@ -31,6 +32,13 @@ public class SpringJpaAdminAuthority implements GrantedAuthority {
     @AdminField(representation = "#abbreviate(#this, 20)")
     @Column(name = "description")
     private String description;
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("authority", authority)
+                .toString();
+    }
 
     @Override
     public boolean equals(Object o) {
