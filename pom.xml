@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.2</version>
+        <version>3.5.0</version>
     </parent>
 
     <groupId>com.pocketcombats.spring-jpa-admin</groupId>
@@ -135,7 +135,7 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                        <version>12.1.0</version>
+                        <version>12.1.2</version>
                         <configuration>
                             <failBuildOnCVSS>8</failBuildOnCVSS>
                             <skipProvidedScope>true</skipProvidedScope>
@@ -193,7 +193,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.14.0</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
