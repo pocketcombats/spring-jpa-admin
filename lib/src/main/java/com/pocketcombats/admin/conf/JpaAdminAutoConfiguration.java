@@ -1,7 +1,6 @@
 package com.pocketcombats.admin.conf;
 
 import com.pocketcombats.admin.AdminModel;
-import com.pocketcombats.admin.thymeleaf.AdminUrlParamsHelper;
 import com.pocketcombats.admin.core.AdminModelEntitiesListService;
 import com.pocketcombats.admin.core.AdminModelEntitiesListServiceImpl;
 import com.pocketcombats.admin.core.AdminModelFormService;
@@ -23,6 +22,7 @@ import com.pocketcombats.admin.history.AdminHistoryWriter;
 import com.pocketcombats.admin.history.AdminHistoryWriterImpl;
 import com.pocketcombats.admin.history.NoOpAdminHistoryCompiler;
 import com.pocketcombats.admin.history.NoOpAdminHistoryWriter;
+import com.pocketcombats.admin.thymeleaf.AdminUrlParamsHelper;
 import com.pocketcombats.admin.thymeleaf.MessageHelper;
 import com.pocketcombats.admin.web.IndexController;
 import com.pocketcombats.admin.web.ModelActionController;

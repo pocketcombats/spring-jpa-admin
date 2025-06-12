@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Role;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 
 /**
  * Attempts to allow {@link AdminHistoryLog} to be auto-scanned.
@@ -30,6 +31,7 @@ public class JpaAdminHistoryConfiguration {
         this.em = em;
     }
 
+    @Async
     @EventListener
     public void onContextRefresh(ContextRefreshedEvent event) {
         try {
