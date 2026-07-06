@@ -7,15 +7,17 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import java.util.Set;
 
 public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-    private static final AntPathRequestMatcher DEFAULT_ANT_PATH_REQUEST_MATCHER =
-            new AntPathRequestMatcher("/admin/login", "POST");
+    private static final RequestMatcher DEFAULT_ANT_PATH_REQUEST_MATCHER =
+            PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/admin/login");
     private static final Set<String> LOCALHOST_ADDRESSES = Set.of("127.0.0.1", "0:0:0:0:0:0:0:1", "::1");
 
     private final boolean adminLocalhostOnly;

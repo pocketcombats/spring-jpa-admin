@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core;
 
+import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.data.list.AdminEntityListEntry;
 import jakarta.persistence.EntityManager;
 import org.apache.commons.lang3.ObjectUtils;
@@ -29,10 +30,11 @@ public class AdminModelListEntityMapper {
 
     public Object fieldValue(AdminModelListField field, Object entity) {
         Object value = field.valueAccessor().getValue(entity);
-        if (field.valueFormatter() == null) {
+        ValueFormatter valueFormatter = field.valueFormatter();
+        if (valueFormatter == null) {
             return value;
         } else {
-            value = field.valueFormatter().format(value);
+            value = valueFormatter.format(value);
         }
         if (ObjectUtils.isEmpty(value)) {
             return field.emptyValue();

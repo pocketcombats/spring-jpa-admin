@@ -94,8 +94,9 @@ public class AdminRelationLinkService {
         Root<?> root = query.from(modelLink.target());
         Predicate predicate = modelLink.predicateFactory().createPredicate(ref, root);
         query.where(predicate);
-        if (modelLink.orderFactory() != null) {
-            query.orderBy(modelLink.orderFactory().create(root));
+        LinkOrderFactory orderFactory = modelLink.orderFactory();
+        if (orderFactory != null) {
+            query.orderBy(orderFactory.create(root));
         }
         List<?> resultList = em.createQuery(query)
                 .setMaxResults(modelLink.preview())

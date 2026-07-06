@@ -6,6 +6,7 @@ import com.pocketcombats.admin.core.AdminRegisteredModel;
 import jakarta.persistence.EntityManager;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.util.List;
 public class AdminHistoryWriterImpl implements AdminHistoryWriter {
 
     private static final int MAX_REPR_LENGTH = 200;
+    private static final String UNKNOWN_USERNAME = "unknown";
 
     private final AdminModelListEntityMapper mapper;
     private final EntityManager em;
@@ -69,10 +71,14 @@ public class AdminHistoryWriterImpl implements AdminHistoryWriter {
     }
 
     protected String resolveUsername() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return UNKNOWN_USERNAME;
+        }
+        Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails userDetails) {
             return userDetails.getUsername();
         }
-        return principal.toString();
+        return principal == null ? UNKNOWN_USERNAME : principal.toString();
     }
 }

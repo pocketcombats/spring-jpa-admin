@@ -2,6 +2,7 @@ package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.core.links.AdminModelLink;
 import com.pocketcombats.admin.core.permission.AdminPermissionService;
+import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import com.pocketcombats.admin.data.list.*;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
@@ -181,10 +182,11 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
 
     private void applyModelRequest(AdminRegisteredModel model, CriteriaQuery<?> q, Root<?> root, ModelRequest query) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
-        if (!StringUtils.isEmpty(query.getSearch()) && model.searchPredicateFactory() != null) {
+        SearchPredicateFactory searchPredicateFactory = model.searchPredicateFactory();
+        if (!StringUtils.isEmpty(query.getSearch()) && searchPredicateFactory != null) {
             q.where(
                     cb.and(
-                            cb.or(model.searchPredicateFactory().build(cb, root, query.getSearch()).stream().toArray(Predicate[]::new))
+                            cb.or(searchPredicateFactory.build(cb, root, query.getSearch()).stream().toArray(Predicate[]::new))
                             // TODO: additional predicates from config
                     )
             );

@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.conf;
 
-import org.springframework.boot.autoconfigure.domain.EntityScanner;
+import org.springframework.boot.persistence.autoconfigure.EntityScanner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 
