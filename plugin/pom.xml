@@ -10,6 +10,8 @@
     <artifactId>plugin</artifactId>
     <packaging>pom</packaging>
 
+    <name>Spring JPA Admin plugins</name>
+
     <modules>
         <module>auth</module>
     </modules>

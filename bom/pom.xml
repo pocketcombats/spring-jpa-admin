@@ -11,6 +11,8 @@
     <artifactId>bom</artifactId>
     <packaging>pom</packaging>
 
+    <name>Spring JPA Admin BOM</name>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
