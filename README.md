@@ -5,14 +5,16 @@ This library reads entity metadata to provide a user-friendly and highly customi
 
 ## Requirements
 - Java 17+
-- Spring Boot 3.1+
-- Jakarta Persistence API (JPA) 3.1+
+- Spring Boot 4.0+
+- Jakarta Persistence API (JPA) 3.2+
+
+For Spring Boot 3.x applications, use version 1.0.2.
 
 ## Installation
 Spring JPA Admin consists of two main artifacts:
 
-1. **Annotations** (`com.pocketcombats.spring-jpa-admin:annotations`): Required in modules that register entities with the admin site.
-2. **Library** (`com.pocketcombats.spring-jpa-admin:lib`): Core functionality for the admin site.
+1. **Annotations** (`com.pocketcombats.spring-jpa-admin:annotation`): Required in modules that register entities with the admin site.
+2. **Library** (`com.pocketcombats.spring-jpa-admin:spring-jpa-admin`): Core functionality for the admin site.
 
 ### Maven
 ```xml
@@ -20,14 +22,14 @@ Spring JPA Admin consists of two main artifacts:
     <!-- Annotations (can be in a separate module) -->
     <dependency>
         <groupId>com.pocketcombats.spring-jpa-admin</groupId>
-        <artifactId>annotations</artifactId>
+        <artifactId>annotation</artifactId>
         <version>${spring-jpa-admin.version}</version>
     </dependency>
 
     <!-- Admin site -->
     <dependency>
         <groupId>com.pocketcombats.spring-jpa-admin</groupId>
-        <artifactId>lib</artifactId>
+        <artifactId>spring-jpa-admin</artifactId>
         <version>${spring-jpa-admin.version}</version>
         <scope>runtime</scope>
     </dependency>
@@ -37,13 +39,13 @@ Spring JPA Admin consists of two main artifacts:
 ### Gradle
 ```kotlin
 dependencies {
-    api(platform("com.pocketcombats.spring-jpa-admin:bom:1.0.1"))
+    api(platform("com.pocketcombats.spring-jpa-admin:bom:1.0.2"))
 
     // Annotations
-    implementation("com.pocketcombats.spring-jpa-admin:annotations")
+    implementation("com.pocketcombats.spring-jpa-admin:annotation")
 
     // Admin site
-    runtimeOnly("com.pocketcombats.spring-jpa-admin:lib")
+    runtimeOnly("com.pocketcombats.spring-jpa-admin:spring-jpa-admin")
 }
 ```
 
@@ -85,22 +87,22 @@ public class DemoUser implements Serializable {
     // ...
 }
 ```
-Once you added `@AdminModel` annotation, navigate to admin site (`/admin/DemoUser/`) and see if it works: 
+Once you've added the `@AdminModel` annotation, navigate to the admin site (`/admin/DemoUser/`) and see if it works: 
 ![Demo User list view](media/listview-001.png)  
 
 ### Customizing List View
-First column is always a link leading to edit form, but we'll cover that later.
+The first column is always a link leading to the edit form, but we'll cover that later.
 To start, we want to rearrange our list view columns:
 ```java
 @AdminModel(listFields = {"username", "enabled"})
 ```
-Restart admin site and open our entity again
+Restart the admin site and open our entity again
 ![Demo User list view rearranged](media/listview-002.png)
-Much better. Also note, that `Enabled` column now contains cross- and check-marks instead of text because the field is of type boolean.
+Much better. Also note that the `Enabled` column now contains cross and check marks instead of text because the field is of type boolean.
 
 #### Filtering
 Spring JPA Admin allows you to define filters to select specific records in the list view.
-We want to quickly select only enabled or disabled users, let's modify our annotation:
+To quickly select only enabled or disabled users, let's modify our annotation:
 ```java
 @AdminModel(
         listFields = {"username", "enabled"},
@@ -136,10 +138,10 @@ Now let's say we want to be able to sort our Demo Users by username. Annotate `u
 ```java
 @AdminField(sortable = true)
 ```
-Restart admin site, and now you can sort users!
+Restart the admin site, and now you can sort users!
 ![Demo User list view with sorting](media/listview-005.png)
 Most of the fields can be annotated with `sortable = true`.
-For relation attributes you can specify `sortBy`. For example, if you want to sort Posts by author username, it will look like:
+For relation attributes you can specify `sortBy`. For example, if you want to sort Posts by author username, it will look like this:
 ```java
 @ManyToOne
 @JoinColumn(name = "author_id")
@@ -149,7 +151,7 @@ private DemoUser author;
 
 #### Searching
 Spring JPA Admin allows users to search for specific records in the list view.
-To enable searching for Demo Users by their ids and usernames, modify the `@AdminModel` annotation to include the `searchFields` attribute (and remove the post count in the same time):
+To enable searching for Demo Users by their ids and usernames, modify the `@AdminModel` annotation to include the `searchFields` attribute (and remove the post count at the same time):
 ```java
 @AdminModel(
         listFields = {"username", "enabled"},
@@ -157,7 +159,7 @@ To enable searching for Demo Users by their ids and usernames, modify the `@Admi
         filterFields = "enabled"
 )
 ```
-As before, restart admin site and try searching:
+As before, restart the admin site and try searching:
 ![Demo User list view with search field](media/listview-006.png)
 
 ### Edit Restrictions
@@ -186,7 +188,7 @@ public class Post {
 ```
 
 In this example:
-- Any authenticated user can view posts
+- Any user with access to the admin interface can view posts
 - Users with either `ROLE_MANAGER` or `ROLE_ADMIN` can edit posts
 - Only users with `ROLE_ADMIN` can create new posts
 
@@ -227,7 +229,7 @@ For example, let's define custom actions to enable and disable Demo Users:
 ```
 That's it! After restarting the admin site, the custom actions will be available for selected Demo Users in the list view:
 ![Demo User list view with custom actions](media/listview-007.png)
-Methods for custom actions must be static (except for the case when they are defined on a separate model-admin class, more on this later) and must accept a single argument with the list of selected entity records.
+Methods for custom actions must be static (unless they are defined on a separate admin model class, more on this later) and must accept a single argument with the list of selected entity records.
 
 #### Site-Wide Custom Action
 If you need to create a site-wide list view custom action that applies to all entities, you can implement the `AdminModelAction` interface and register it as a Spring bean.
@@ -298,11 +300,11 @@ Let's adjust the annotation to include a custom `representation`:
 ```
 The result is much more helpful:
 ![Post list view with custom author representation](media/listview-010.png)
-The `representation` is an expression in [SpEL](https://docs.spring.io/spring-framework/docs/3.0.x/reference/expressions.html) format, with the root object set to the entity being displayed.
+The `representation` is an expression in [SpEL](https://docs.spring.io/spring-framework/reference/core/expressions.html) format, with the root object set to the entity being displayed.
 In most cases, you simply want to reference a field, like `username` in our case, or call a method of an entity.
 
 Next, let's do something with the `Text` field.  
-We don't want to set a custom `representation` to avoid affecting the form view, so we'll provide a custom `listField` instead:
+We don't want to set a custom `representation` because it would also affect the form view, so we'll provide a custom list field instead:
 ```java
     @AdminField(label = "Text")
     public String getTextPreview() {
@@ -357,12 +359,12 @@ Next, let's move the `category` and `tags` fields into a dedicated fieldset name
 
 #### Edit Restrictions
 Note that the "Author" field isn't editable.
-This is because the entity column is marked as `updatable = false`, and editing it won't have any effect anyway.
-You can force disable the admin form field from being editable by setting `insertable = false` or `updatable = false`, even if the entity column doesn't impose these restrictions.
+This is because the entity column is marked as `updatable = false`, so editing it wouldn't have any effect anyway.
+You can also force a form field to be read-only by setting `insertable = false` or `updatable = false` on the `@AdminField` annotation, even if the entity column doesn't impose these restrictions.
 
 #### Widgets and Custom Widgets
 The "Text" and "Tags" fields may not be very helpful in their default form.
-To customize their appearance, we can provide them with `template` settings, in the same time updating tags `representation`:
+To customize their appearance, we can provide them with `template` settings, at the same time updating the tags' `representation`:
 ```java
     @Column(name = "text", nullable = false)
     @AdminField(template = "admin/widget/textarea")
@@ -430,7 +432,7 @@ Let's try it out and annotate the `text` field with `@NotBlank`:
 ```
 Now, if we try to save a Post with an empty text, a validation error will be displayed:
 ![Edit Form validation error](media/form-004.png)
-You can narrow the applicability of validation constraints to be processed only by the admin edit form by specifying `groups = AdminValidation.class`.
+You can restrict validation constraints to the admin edit form by specifying `groups = AdminValidation.class`.
 This allows you to separate the validation rules for the admin form from other parts of your application.  
 For example, the following annotation will only be applied to the admin edit form and won't affect other parts of your application, such as entity persistence:
 ```java
@@ -448,7 +450,7 @@ To achieve this, we can include the `links` attribute in the `@AdminModel` annot
                 @AdminLink(target = Comment.class, sortBy = "-postTime")
         }
 ```
-So our complete `DemoUser` admin annotation looks following:
+So our complete `DemoUser` admin annotation looks like this:
 ```java
 @AdminModel(
         listFields = {"username", "enabled"},
@@ -467,9 +469,9 @@ So our complete `DemoUser` admin annotation looks following:
 Let's take a look at the edit form now:
 ![Edit Form with relation links](media/form-006.png)
 
-By clicking on "Blog Post", users now can quickly navigate to the `Post` list view, where they will see only posts created by the "Demo Editor":
+By clicking on "Blog Post", users can now quickly navigate to the `Post` list view, where they will see only posts created by the "Demo Editor":
 ![List View by User](media/listview-012.png)  
-One last enhancement we want to add is to include previews for the latest Posts created by user.
+One last enhancement we want to add is previews for the latest Posts created by the user.
 To enable this, modify the `@AdminLink` annotation to include the `preview` attribute, as shown below:
 ```java
 @AdminLink(target = Post.class, preview = 3, sortBy = "-postTime")
@@ -481,7 +483,7 @@ These relation links and previews provide users with quick access to related con
 ### Externalized Configuration
 There are situations where you may not want to apply admin annotations directly to your entities, or it may not be feasible to do so.
 In such cases, Spring JPA Admin supports **externalized configuration**, allowing you to configure the admin settings separately.
-For demonstration, let's clean up the `Post` entity from admin-related annotations and create a dedicated `PostAdminModel` class to hold the admin configuration:
+For demonstration, let's remove the admin-related annotations from the `Post` entity and create a dedicated `PostAdminModel` class to hold the admin configuration:
 ```java
 @AdminModel(
         entity = Post.class,
@@ -513,7 +515,7 @@ Note the `entity = Post.class` attribute, which specifies the target entity for 
 Admin models are instantiated as Spring beans, which means they can depend on other beans and take advantage of additional functionality compared to plain entities.
 
 #### Custom List Fields
-Let's further clean up the `Post` model by moving the `getTextPreview` method to the admin model.
+Let's further clean up the `Post` entity by moving the `getTextPreview` method to the admin model.
 We need to make a slight modification to the method to accept the target entity instance:
 ```java
     @AdminField(label = "Text")
@@ -639,7 +641,7 @@ public class PostAdminModel {
 
 ## Localization
 Spring JPA Admin fully supports localization. You can refer to the `spring-jpa-admin-messages.properties` file for a complete list of supported keys.
-To enable localization, you should include the `spring-jpa-admin-messages` in the list of message basenames for your Spring Boot application. You can achieve this by adding the following configuration to your `application.yaml` file:
+To enable localization, include `spring-jpa-admin-messages` in the list of message basenames for your Spring Boot application. You can achieve this by adding the following configuration to your `application.yaml` file:
 ```yaml
 spring.messages:
   basename: messages,spring-jpa-admin-messages
@@ -647,10 +649,10 @@ spring.messages:
 With this configuration, Spring Boot will look for message properties in both the `messages.properties` file (or any other custom message file you have) and the `spring-jpa-admin-messages.properties` file.  
 All core annotations in Spring JPA Admin, such as `@AdminAction`, `@AdminField`, `@AdminFieldset`, `@AdminModel`, and `@AdminPackage`, allow you to specify a `label` attribute.
 This label can be either a hard-coded string or a localization key.  
-Using localization key allows you to provide translated labels for different languages, making your admin interface accessible to users from various locales.
+Using a localization key allows you to provide translated labels for different languages, making your admin interface accessible to users from various locales.
 
 ## Authentication Plugin
-Spring JPA Admin provides an optional authentication plugin for applications that doesn't otherwise require authentication.
+Spring JPA Admin provides an optional authentication plugin for applications that don't otherwise require authentication.
 
 ### Installation
 To use the authentication plugin, add the following dependency:
@@ -677,8 +679,8 @@ The authentication plugin can be configured using properties in your `applicatio
 spring.jpa-admin:
   auth:
     password-strength: 10  # BCrypt strength (default: 10)
-    create-default-admin: true  # Whether to create a default user (default: false). DO NOT enable this in production!
+    create-default-admin: true  # Whether to create a default admin user (default: false). DO NOT enable this in production!
 ```
 
 ## License
-Spring JPA Admin is released under the Apache License. See the LICENSE file for details.
+Spring JPA Admin is released under the Apache License 2.0. See the LICENSE file for details.
