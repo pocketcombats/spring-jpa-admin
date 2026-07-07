@@ -37,6 +37,9 @@ public class Post implements Serializable {
     @Column(name = "approved", nullable = false)
     private boolean approved;
 
+    @Embedded
+    private SeoMetadata seo;
+
     @OneToMany(orphanRemoval = true)
     private List<Comment> comments;
 
@@ -113,6 +116,14 @@ public class Post implements Serializable {
 
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
+    }
+
+    public SeoMetadata getSeo() {
+        return seo;
+    }
+
+    public void setSeo(SeoMetadata seo) {
+        this.seo = seo;
     }
 
     public List<PostReaction> getReactions() {

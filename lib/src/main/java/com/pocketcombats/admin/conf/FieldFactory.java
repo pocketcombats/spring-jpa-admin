@@ -5,13 +5,7 @@ import com.pocketcombats.admin.AdminFieldOverride;
 import com.pocketcombats.admin.AdminModel;
 import com.pocketcombats.admin.core.AdminModelField;
 import com.pocketcombats.admin.core.AdminModelListField;
-import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
-import com.pocketcombats.admin.core.field.BooleanFormFieldValueAccessor;
-import com.pocketcombats.admin.core.field.DelegatingAdminFormFieldValueAccessorImpl;
-import com.pocketcombats.admin.core.field.EnumFormFieldValueAccessor;
-import com.pocketcombats.admin.core.field.RawIdFormFieldAccessor;
-import com.pocketcombats.admin.core.field.ToManyFormFieldAccessor;
-import com.pocketcombats.admin.core.field.ToOneFormFieldAccessor;
+import com.pocketcombats.admin.core.field.*;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.filter.BasicFilterOptionsCollector;
 import com.pocketcombats.admin.core.filter.BooleanFilterOptionsCollector;
@@ -38,6 +32,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.EmbeddableType;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.slf4j.Logger;
@@ -53,9 +48,13 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FieldFactory {
@@ -522,6 +521,7 @@ public class FieldFactory {
                         attribute, reader, writer, createValueFormatter(name)
                 );
                 case BASIC -> selectBasicFormFieldAccessor(name, isOptional(fieldConfig, attribute), reader, writer);
+                case EMBEDDED -> createEmbeddedFormFieldAccessor(name, attribute, reader, writer);
                 default -> throw new IllegalStateException(
                         "Unsupported attribute type: " + persistentAttributeType +
                                 " (field " + name + " of model " + modelName + ")"
@@ -535,6 +535,60 @@ public class FieldFactory {
             optional = true;
         }
         return selectBasicFormFieldAccessor(name, optional, reader, writer);
+    }
+
+    private AdminFormFieldValueAccessor createEmbeddedFormFieldAccessor(
+            String name,
+            Attribute<?, ?> attribute,
+            AdminModelPropertyReader reader,
+            @Nullable AdminModelPropertyWriter writer
+    ) {
+        Class<?> embeddableType = attribute.getJavaType();
+        EmbeddableType<?> embeddable = em.getMetamodel().embeddable(embeddableType);
+        Set<String> persistentAttributes = embeddable.getAttributes().stream()
+                .map(Attribute::getName)
+                .collect(Collectors.toSet());
+
+        List<EmbeddedFormFieldProperty> properties = new ArrayList<>();
+        Set<String> handled = new HashSet<>();
+        // Walk the type hierarchy to preserve source declaration order while still covering
+        // persistent properties inherited from a mapped superclass.
+        for (Class<?> type = embeddableType; type != null && type != Object.class; type = type.getSuperclass()) {
+            for (Field field : type.getDeclaredFields()) {
+                String propertyName = field.getName();
+                if (!persistentAttributes.contains(propertyName) || !handled.add(propertyName)) {
+                    continue;
+                }
+                properties.add(constructEmbeddedProperty(embeddableType, propertyName, field));
+            }
+        }
+
+        return new EmbeddedFormFieldAccessor(
+                conversionService, name, embeddableType, properties, reader, writer
+        );
+    }
+
+    private EmbeddedFormFieldProperty constructEmbeddedProperty(
+            Class<?> embeddableType,
+            String propertyName,
+            Field field
+    ) {
+        PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(embeddableType, propertyName);
+
+        AdminModelPropertyReader reader = pd != null && pd.getReadMethod() != null
+                ? new MethodPropertyReader(propertyName, pd.getReadMethod())
+                : new FieldPropertyReader(field);
+        AdminModelPropertyWriter writer = pd != null && pd.getWriteMethod() != null
+                ? new MethodPropertyWriter(propertyName, pd.getWriteMethod())
+                : new FieldPropertyWriter(field);
+
+        return new EmbeddedFormFieldProperty(
+                propertyName,
+                AdminStringUtils.toHumanReadableName(propertyName),
+                reader.getJavaType(),
+                reader,
+                writer
+        );
     }
 
     private AdminFormFieldValueAccessor createToOneFormFieldAccessor(
@@ -562,27 +616,16 @@ public class FieldFactory {
     }
 
     private ValueFormatter createValueFormatter(String fieldName) {
-        if (!fieldValueFormatters.containsKey(fieldName)) {
-            AdminField fieldConfiguration = resolveFieldConfig(fieldName);
-            if (fieldConfiguration == null) {
-                fieldValueFormatters.put(fieldName, new ToStringValueFormatter());
-            } else {
-                ValueFormatter formatter;
-                if (fieldConfiguration.representation().equals("")) {
-                    formatter = new ToStringValueFormatter();
-                } else {
-                    formatter = new SpelExpressionFormatter(
-                            spelExpressionContextFactory,
-                            fieldConfiguration.representation()
-                    );
-                }
-                fieldValueFormatters.put(
-                        fieldName,
-                        formatter
-                );
+        return fieldValueFormatters.computeIfAbsent(fieldName, name -> {
+            AdminField fieldConfiguration = resolveFieldConfig(name);
+            if (fieldConfiguration == null || fieldConfiguration.representation().isEmpty()) {
+                return new ToStringValueFormatter();
             }
-        }
-        return fieldValueFormatters.get(fieldName);
+            return new SpelExpressionFormatter(
+                    spelExpressionContextFactory,
+                    fieldConfiguration.representation()
+            );
+        });
     }
 
     private static boolean isRawId(@Nullable AdminField fieldConfig) {

@@ -532,12 +532,6 @@ import java.util.stream.Collectors;
 
         private static final PackageInfo DEFAULT = new PackageInfo("", Integer.MAX_VALUE, null);
 
-        private PackageInfo(String packageName, int priority, AdminPackage packageConfig) {
-            this.packageName = packageName;
-            this.priority = priority;
-            this.packageConfig = packageConfig;
-        }
-
         @Override
         public int compareTo(PackageInfo o) {
             if (o.priority != priority) {

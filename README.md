@@ -387,6 +387,38 @@ We have the option to display the `author` field as a raw ID input instead of a 
 To achieve this, simply add `rawId = true` to the `@AdminField` annotation for the `author` field, without the need to change the `template` attribute.
 ![Edit Form with raw id](media/form-005.png)
 
+#### Embedded Fields
+JPA `@Embedded` attributes are supported out of the box. Each persistent property of the embeddable type is
+rendered as a separate input, grouped together under the embedded field's label.
+
+Declare an `@Embeddable` type:
+```java
+@Embeddable
+public class SeoMetadata {
+
+    @Column(name = "seo_title")
+    private String metaTitle;
+
+    @Column(name = "seo_description")
+    private String metaDescription;
+
+    // getters and setters
+}
+```
+Reference it from your entity and include it in a fieldset like any other field:
+```java
+    @Embedded
+    private SeoMetadata seo;
+```
+```java
+@AdminFieldset(label = "Meta", fields = {"category", "tags", "seo"})
+```
+The embeddable instance is created lazily — it is only instantiated once one of its properties receives a
+non-empty value, so entities without embedded data keep a `null` embeddable. Properties are rendered in their
+declaration order (own properties first, then any inherited from a mapped superclass), and per-property
+validation errors are reported against the nested `<field>.<property>` path. The default widget is
+`admin/widget/embedded`; supply a custom `template` on the field to change its appearance.
+
 #### Validation
 Spring JPA Admin utilizes [Jakarta Validation](https://beanvalidation.org/) to validate entities before saving them.  
 Let's try it out and annotate the `text` field with `@NotBlank`:

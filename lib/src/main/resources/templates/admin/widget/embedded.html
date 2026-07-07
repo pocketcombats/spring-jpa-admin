@@ -1,0 +1,31 @@
+<!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+<!--/*@thymesVar id="hasErrors" type="boolean"*/-->
+<div class="embedded-field">
+    <!--/*@thymesVar id="property" type="com.pocketcombats.admin.core.field.EmbeddedFormFieldProperty"*/-->
+    <div th:each="property : ${field.templateData['_properties']}"
+         class="row form-row align-items-center"
+         th:with="propertyErrors=${errors != null ? errors.getFieldErrors(field.name + '.' + property.name) : null},
+                  hasPropertyErrors=${propertyErrors != null and !propertyErrors.isEmpty()}">
+        <label th:for="${'model-field-' + field.name + '.' + property.name}"
+               th:text="${#messages.msgOrNull(property.label) ?: property.label}"
+               class="col-sm-3 col-form-label">Property</label>
+        <div class="col-sm-9">
+            <span th:if="${field.readonly}"
+                  th:text="${field.value[property.name]}"
+                  class="form-control-readonly"></span>
+            <input th:unless="${field.readonly}"
+                   th:id="${'model-field-' + field.name + '.' + property.name}"
+                   th:name="${'model-field-' + field.name + '.' + property.name}"
+                   th:value="${field.value[property.name]}"
+                   class="form-control"
+                   th:classappend="${hasPropertyErrors ? 'is-invalid' : ''}"/>
+            <ul th:if="${hasPropertyErrors}"
+                class="invalid-feedback list-unstyled">
+                <li th:each="fieldError : ${propertyErrors}"
+                    th:text="${@messageHelper.getMessage(thymeleafRequestContext, fieldError)}">Please correct
+                    errors.
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

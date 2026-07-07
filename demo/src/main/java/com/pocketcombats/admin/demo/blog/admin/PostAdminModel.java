@@ -29,7 +29,7 @@ import org.springframework.core.convert.ConversionService;
                 ),
                 @AdminFieldset(
                         label = "Meta",
-                        fields = {"category", "tags"}
+                        fields = {"category", "tags", "seo"}
                 )
         },
         fieldOverrides = {

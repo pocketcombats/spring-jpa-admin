@@ -4,6 +4,7 @@ import com.pocketcombats.admin.AdminValidation;
 import com.pocketcombats.admin.core.field.AdminFormFieldPluralValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldSingularValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
+import com.pocketcombats.admin.core.field.EmbeddedFormFieldAccessor;
 import com.pocketcombats.admin.core.links.AdminRelationLinkService;
 import com.pocketcombats.admin.core.permission.AdminPermissionService;
 import com.pocketcombats.admin.data.form.AdminFormField;
@@ -226,16 +227,21 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 .toList();
 
         BindingResult bindingResult = new BeanPropertyBindingResult(entity, model.modelName());
+
         for (AdminModelField field : writeableFields) {
+            String parameterName = "model-field-" + field.name();
             AdminFormFieldValueAccessor accessor = field.valueAccessor();
-            if (accessor instanceof AdminFormFieldSingularValueAccessor singularValueAccessor) {
-                singularValueAccessor.setValue(entity, rawData.getFirst("model-field-" + field.name()), bindingResult);
+            if (accessor instanceof EmbeddedFormFieldAccessor embeddedValueAccessor) {
+                embeddedValueAccessor.bind(parameterName, entity, rawData, bindingResult);
+            } else if (accessor instanceof AdminFormFieldSingularValueAccessor singularValueAccessor) {
+                singularValueAccessor.setValue(entity, rawData.getFirst(parameterName), bindingResult);
             } else if (accessor instanceof AdminFormFieldPluralValueAccessor pluralValueAccessor) {
-                pluralValueAccessor.setValues(entity, rawData.get("model-field-" + field.name()), bindingResult);
+                pluralValueAccessor.setValues(entity, rawData.get(parameterName), bindingResult);
             } else {
                 LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), model.modelName());
             }
         }
+
         checkUniqueness(model, entity, action, bindingResult);
         validator.validate(entity, bindingResult, AdminValidation.class, Default.class);
         return bindingResult;
