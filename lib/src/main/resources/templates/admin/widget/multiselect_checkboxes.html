@@ -1,7 +1,9 @@
 <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
 <!--/*@thymesVar id="hasErrors" type="boolean"*/-->
 <div class="form-control overflow-auto"
+     role="group"
      th:classappend="${hasErrors ? 'is-invalid' : ''}"
+     th:aria-describedby="${hasErrors ? 'model-field-' + field.name + '-errors' : null}"
      style="max-height: 10rem">
     <div class="form-check"
          th:each="option : ${field.templateData()['_options']}">

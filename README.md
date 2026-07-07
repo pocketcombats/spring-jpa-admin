@@ -384,6 +384,12 @@ To customize their appearance, we can provide them with `template` settings, at 
 ![Edit Form with custom templates](media/form-003.png)  
 Field templates are simple [Thymeleaf fragments](https://www.thymeleaf.org/doc/articles/layouts.html), and you can further customize the appearance of the edit form by creating your own custom field templates.
 
+> **Note:** On Spring Boot 4 (Spring Framework 7), custom templates must not use the `#themes`
+> expression object or the `thymeleafRequestContext` context variable. Thymeleaf's `thymeleaf-spring6`
+> integration still references the theme support that was
+> [removed in Spring Framework 7](https://github.com/spring-projects/spring-framework/wiki/Upgrading-to-Spring-Framework-7.0),
+> so touching either of them fails at runtime.
+
 #### Raw ID Fields
 We have the option to display the `author` field as a raw ID input instead of a select dropdown with all existing Demo Users.
 To achieve this, simply add `rawId = true` to the `@AdminField` annotation for the `author` field, without the need to change the `template` attribute.

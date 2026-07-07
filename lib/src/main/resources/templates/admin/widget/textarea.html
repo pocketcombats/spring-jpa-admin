@@ -7,4 +7,6 @@
           th:text="${field.value}"
           class="form-control"
           th:classappend="${hasErrors ? 'is-invalid' : ''}"
+          th:aria-invalid="${hasErrors ? 'true' : null}"
+          th:aria-describedby="${hasErrors ? 'model-field-' + field.name + '-errors' : null}"
           rows="4" cols="50"></textarea>

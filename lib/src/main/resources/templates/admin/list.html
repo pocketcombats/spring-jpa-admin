@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"
+<html lang="en" th:lang="${#locale.toLanguageTag()}"
       th:with="entitiesLabel=${#messages.msgOrNull(entities.label) ?: entities.label}">
 <!--/*@thymesVar id="entities" type="com.pocketcombats.admin.data.list.AdminModelEntitiesList"*/-->
 <!--/*@thymesVar id="modelRequest" type="com.pocketcombats.admin.data.list.ModelRequest"*/-->
@@ -11,6 +11,7 @@
     <title th:text="${entitiesLabel}">Model One</title>
     <!-- Font Awesome -->
     <link rel="stylesheet"
+          th:href="@{/webjars/font-awesome/css/all.min.css}"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <!-- Google Fonts Roboto -->
     <link rel="stylesheet"
@@ -95,6 +96,7 @@
                 let selectAllCheckbox = document.createElement('input');
                 selectAllCheckbox.type = 'checkbox';
                 selectAllCheckbox.className = 'form-check-input';
+                selectAllCheckbox.setAttribute('aria-label', selectAllContainer.dataset.selectAllLabel || 'Select all');
                 selectAllCheckbox.addEventListener('change', function (event) {
                     for (const row of rows) {
                         toggleSelected(row, event.target.checked);
@@ -125,7 +127,7 @@
         <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
         <div class="row row-cols-auto align-items-center mt-4">
             <div class="col col-lg-9 col-xl-10">
-                <h4 aria-label="breadcrumb">
+                <h4>
                     <th:block th:if="${parent != null}" class="d-none">
                         <a th:href="@{/admin/{adminModel}/(adminModel=${parent.modelName})}"
                            th:text="${#messages.msgOrNull(parent.label) ?: parent.label}"
@@ -232,7 +234,8 @@
                         <thead>
                         <tr>
                             <th th:if="${!entities.entities.isEmpty() && !entities.actions.isEmpty()}"
-                                class="select-all"></th>
+                                class="select-all"
+                                th:data-select-all-label="#{spring-jpa-admin.action.select-all}"></th>
                             <th th:each="column: ${entities.columns}"
                                 th:class="${column.sortable() ? 'sortable' : ''}"
                                 th:with="columnLabel=${#messages.msgOrNull(column.label) ?: column.label}"
@@ -268,7 +271,9 @@
                         </tr>
                         <tr th:each="entity: ${entities.entities}">
                             <td th:if="${!entities.actions.isEmpty()}">
-                                <input type="checkbox" name="id" class="form-check-input" th:value="${entity.id}"/>
+                                <input type="checkbox" name="id" class="form-check-input"
+                                       th:value="${entity.id}"
+                                       th:aria-label="${entity.getAttributeByIndex(0)}"/>
                             </td>
                             <td th:each="column, columnStat: ${entities.columns}">
                                 <a th:if="${columnStat.first}"
@@ -280,12 +285,14 @@
                                 <th:block th:unless="${columnStat.first}" style="display:none">
                                     <th:block th:if="${column.bool}">
                                         <th:block th:if="${entity.getAttributeByIndex(columnStat.index)}">
-                                            <i class="fa-solid fa-circle-check text-success"></i>
-                                            <span class="d-none">+</span>
+                                            <i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i>
+                                            <span class="visually-hidden"
+                                                  th:text="#{spring-jpa-admin.boolean.true}">Yes</span>
                                         </th:block>
                                         <th:block th:unless="${entity.getAttributeByIndex(columnStat.index)}">
-                                            <i class="fa-solid fa-circle-xmark text-danger"></i>
-                                            <span class="d-none">-</span>
+                                            <i class="fa-solid fa-circle-xmark text-danger" aria-hidden="true"></i>
+                                            <span class="visually-hidden"
+                                                  th:text="#{spring-jpa-admin.boolean.false}">No</span>
                                         </th:block>
                                     </th:block>
                                     <span th:unless="${column.bool}"
@@ -294,8 +301,8 @@
                             </td>
                             <td th:remove="all">Long description of the first entity.<br/>Multiline as well.</td>
                             <td th:remove="all">
-                                <i class="fa-solid fa-circle-check text-success"></i>
-                                <span class="d-none">+</span>
+                                <i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i>
+                                <span class="visually-hidden">Yes</span>
                             </td>
                         </tr>
                         <tr th:remove="all">
@@ -304,7 +311,8 @@
                             </td>
                             <td><a href="form.html">Another Entity</a></td>
                             <td>Description</td>
-                            <td><i class="fa-solid fa-circle-xmark text-danger"></i><span class="d-none">-</span></td>
+                            <td><i class="fa-solid fa-circle-xmark text-danger" aria-hidden="true"></i><span
+                                    class="visually-hidden">No</span></td>
                         </tr>
                         </tbody>
                     </table>
@@ -333,7 +341,7 @@
                 </form>
             </main>
 
-            <nav role="doc-pagelist">
+            <nav th:aria-label="#{spring-jpa-admin.pagination.title}">
                 <ul class="pagination mt-2">
                     <li class="page-item disabled" th:class="${'page-item' + (entities.page < 2 ? ' disabled' : '')}">
                         <a th:if="${entities.page > 1}"

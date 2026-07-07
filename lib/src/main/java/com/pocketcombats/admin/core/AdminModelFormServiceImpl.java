@@ -35,9 +35,11 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.SmartValidator;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AdminModelFormServiceImpl implements AdminModelFormService {
@@ -122,6 +124,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         );
         List<?> resultList = em.createQuery(q).setMaxResults(2).getResultList();
         // TODO: Handle 0 and 2 result list size
+        @SuppressWarnings("redundant")
         Object entity = resultList.get(0);
         return entity;
     }
@@ -272,14 +275,21 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             Object conflictingEntity,
             BindingResult bindingResult
     ) {
+        String conflictingEntityId = Objects.requireNonNull(resolveId(conflictingEntity));
         for (var constraint : model.uniqueConstraints()) {
             if (constraint.matches(entity, conflictingEntity)) {
+                // These args end up in a th:utext block; escape them so only the message template controls markup
                 String violatingFields = constraint.getFieldLabels().stream()
-                        .map(label -> "<b>" +
-                                messageSource.getMessage(label, null, label, LocaleContextHolder.getLocale()) +
-                                "</b>")
+                        .map(label -> {
+                            String resolved = messageSource.getMessage(label, null, label, LocaleContextHolder.getLocale());
+                            return "<b>" + HtmlUtils.htmlEscape(resolved != null ? resolved : label) + "</b>";
+                        })
                         .collect(Collectors.joining(", "));
-                var errorArgs = new String[]{model.modelName(), resolveId(conflictingEntity), violatingFields};
+                var errorArgs = new String[]{
+                        HtmlUtils.htmlEscape(model.modelName()),
+                        HtmlUtils.htmlEscape(conflictingEntityId),
+                        violatingFields
+                };
                 bindingResult.reject(
                         "spring-jpa-admin.validation.uniqueness-violation.fields.message",
                         errorArgs,
@@ -291,7 +301,10 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         LOG.warn("Could not detect constraint violation for {}", model.modelName());
         bindingResult.reject(
                 "spring-jpa-admin.validation.uniqueness-violation.message",
-                new String[]{model.modelName(), resolveId(conflictingEntity)},
+                new String[]{
+                        HtmlUtils.htmlEscape(model.modelName()),
+                        HtmlUtils.htmlEscape(conflictingEntityId)
+                },
                 null
         );
     }

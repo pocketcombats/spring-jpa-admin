@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"
+<html lang="en" th:lang="${#locale.toLanguageTag()}"
       th:with="entityLabel=${#messages.msgOrNull(entity.label) ?: entity.label}">
 <!--/*@thymesVar id="entity" type="com.pocketcombats.admin.data.form.EntityDetails"*/-->
 <!--/*@thymesVar id="errors" type="org.springframework.validation.Errors"*/-->
@@ -10,6 +10,7 @@
     <title th:text="#{spring-jpa-admin.action.edit(${entityLabel})}">Edit Model One</title>
     <!-- Font Awesome -->
     <link rel="stylesheet"
+          th:href="@{/webjars/font-awesome/css/all.min.css}"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <!-- Google Fonts Roboto -->
     <link rel="stylesheet"
@@ -62,12 +63,11 @@
         <div class="row">
             <div class="col-12 col-lg-9 col-xl-10"
                  th:class="${entity.links.isEmpty() ? 'col' : 'col-12 col-lg-9 col-xl-10'}">
-                <!--/*@thymesVar id="thymeleafRequestContext" type="org.thymeleaf.spring6.context.IThymeleafRequestContext"*/-->
                 <ul th:if="${errors?.hasGlobalErrors()}"
                     class="d-none"
                     th:class="'text-danger list-unstyled'">
                     <li th:each="globalError: ${errors.globalErrors}"
-                        th:utext="${@messageHelper.getMessage(thymeleafRequestContext, globalError)}"></li>
+                        th:utext="${@messageHelper.getMessage(globalError)}"></li>
                 </ul>
                 <div th:each="fieldGroup: ${entity.fieldGroups}">
                     <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->
@@ -82,17 +82,22 @@
                             <span th:if="${field.description != null}"
                                   data-mdb-toggle="tooltip"
                                   class="fa-solid fa-circle-info"
+                                  aria-hidden="true"
                                   title="Field description for admin site user"
                                   th:title="${#messages.msgOrNull(field.description) ?: field.description}"></span>
+                            <span th:if="${field.description != null}"
+                                  class="visually-hidden"
+                                  th:text="${#messages.msgOrNull(field.description) ?: field.description}"></span>
                         </label>
                         <div class="col-sm-10"
                              th:with="hasErrors=${errors != null && errors.hasFieldErrors(field.name)}">
                             <input th:remove="all" class="form-check-input" type="checkbox" id="model-field-approved" value="true"/>
                             <th:block th:replace="~{${field.template} (hasErrors=${hasErrors})}" class="col-sm-10"/>
                             <ul th:if="${hasErrors}"
+                                th:id="${'model-field-' + field.name + '-errors'}"
                                 class="invalid-feedback list-unstyled">
                                 <li th:each="fieldError: ${errors.getFieldErrors(field.name)}"
-                                    th:text="${@messageHelper.getMessage(thymeleafRequestContext, fieldError)}">Please correct
+                                    th:text="${@messageHelper.getMessage(fieldError)}">Please correct
                                     errors.
                                 </li>
                             </ul>

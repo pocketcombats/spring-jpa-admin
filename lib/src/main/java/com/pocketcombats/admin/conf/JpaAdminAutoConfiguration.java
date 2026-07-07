@@ -226,8 +226,8 @@ public class JpaAdminAutoConfiguration implements Ordered {
     }
 
     @Bean
-    public MessageHelper messageHelper() {
-        return new MessageHelper();
+    public MessageHelper messageHelper(MessageSource messageSource) {
+        return new MessageHelper(messageSource);
     }
 
     @Bean

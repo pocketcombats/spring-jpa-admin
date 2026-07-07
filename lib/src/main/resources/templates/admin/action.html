@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" th:lang="${#locale.toLanguageTag()}">
 <!--/*@thymesVar id="prompt" type="com.pocketcombats.admin.data.action.ActionPrompt"*/-->
 <head>
     <meta charset="UTF-8"/>
@@ -12,6 +12,7 @@
            th:text="${#messages.msgOrNull(prompt.description) ?: prompt.description}"></title>
     <!-- Font Awesome -->
     <link rel="stylesheet"
+          th:href="@{/webjars/font-awesome/css/all.min.css}"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
     <!-- Google Fonts Roboto -->
     <link rel="stylesheet"
@@ -73,12 +74,14 @@
                                 <td th:each="column, columnStat: ${prompt.columns}">
                                     <th:block th:if="${column.bool}" class="d-none">
                                         <th:block th:if="${entity.getAttributeByIndex(columnStat.index)}">
-                                            <i class="fa-solid fa-circle-check text-success"></i>
-                                            <span class="d-none">+</span>
+                                            <i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i>
+                                            <span class="visually-hidden"
+                                                  th:text="#{spring-jpa-admin.boolean.true}">Yes</span>
                                         </th:block>
                                         <th:block th:unless="${entity.getAttributeByIndex(columnStat.index)}">
-                                            <i class="fa-solid fa-circle-xmark text-danger"></i>
-                                            <span class="d-none">-</span>
+                                            <i class="fa-solid fa-circle-xmark text-danger" aria-hidden="true"></i>
+                                            <span class="visually-hidden"
+                                                  th:text="#{spring-jpa-admin.boolean.false}">No</span>
                                         </th:block>
                                     </th:block>
                                     <span th:unless="${column.bool}"
@@ -88,14 +91,15 @@
                                 </td>
                                 <td th:remove="all">Long description of the first entity.<br/>Multiline as well.</td>
                                 <td th:remove="all">
-                                    <i class="fa-solid fa-circle-check text-success"></i>
-                                    <span class="d-none">+</span>
+                                    <i class="fa-solid fa-circle-check text-success" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Yes</span>
                                 </td>
                             </tr>
                             <tr th:remove="all">
                                 <td>Another Entity</td>
                                 <td>Description</td>
-                                <td><i class="fa-solid fa-circle-xmark text-danger"></i><span class="d-none">-</span>
+                                <td><i class="fa-solid fa-circle-xmark text-danger" aria-hidden="true"></i><span
+                                        class="visually-hidden">No</span>
                                 </td>
                             </tr>
                             </tbody>

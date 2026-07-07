@@ -1,7 +1,10 @@
 <!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+<!--/*@thymesVar id="hasErrors" type="boolean"*/-->
 <input type="checkbox"
        class="form-check-input"
        th:id="${'model-field-' + field.name}"
        th:name="${'model-field-' + field.name}"
        th:checked="${field.value}"
+       th:aria-invalid="${hasErrors ? 'true' : null}"
+       th:aria-describedby="${hasErrors ? 'model-field-' + field.name + '-errors' : null}"
        th:disabled="${field.readonly}" value="true"/>

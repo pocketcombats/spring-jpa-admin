@@ -18,11 +18,14 @@
                    th:name="${'model-field-' + field.name + '.' + property.name}"
                    th:value="${field.value[property.name]}"
                    class="form-control"
-                   th:classappend="${hasPropertyErrors ? 'is-invalid' : ''}"/>
+                   th:classappend="${hasPropertyErrors ? 'is-invalid' : ''}"
+                   th:aria-invalid="${hasPropertyErrors ? 'true' : null}"
+                   th:aria-describedby="${hasPropertyErrors ? 'model-field-' + field.name + '.' + property.name + '-errors' : null}"/>
             <ul th:if="${hasPropertyErrors}"
+                th:id="${'model-field-' + field.name + '.' + property.name + '-errors'}"
                 class="invalid-feedback list-unstyled">
                 <li th:each="fieldError : ${propertyErrors}"
-                    th:text="${@messageHelper.getMessage(thymeleafRequestContext, fieldError)}">Please correct
+                    th:text="${@messageHelper.getMessage(fieldError)}">Please correct
                     errors.
                 </li>
             </ul>

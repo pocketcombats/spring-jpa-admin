@@ -1,14 +1,21 @@
 package com.pocketcombats.admin.thymeleaf;
 
+import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceResolvable;
-import org.thymeleaf.spring6.context.IThymeleafRequestContext;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 /**
- * Direct access to {@code IThymeleafRequestContext} from template is prohibited
+ * Resolves {@link MessageSourceResolvable}s (e.g. validation errors) from templates.
  */
 public class MessageHelper {
 
-    public String getMessage(IThymeleafRequestContext context, MessageSourceResolvable message) {
-        return context.getMessage(message, false);
+    private final MessageSource messageSource;
+
+    public MessageHelper(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
+    public String getMessage(MessageSourceResolvable message) {
+        return messageSource.getMessage(message, LocaleContextHolder.getLocale());
     }
 }
