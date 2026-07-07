@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.util;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -16,5 +17,22 @@ public class AdminStringUtilsTest {
     })
     public void testHumanReadableNameFormatter(String input, String expectedOutput) {
         assertEquals(expectedOutput, AdminStringUtils.toHumanReadableName(input));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "plain,plain",
+            "50%,50\\%",
+            "a_b,a\\_b",
+            "50%_off,50\\%\\_off",
+            "[test],\\[test\\]",
+    })
+    public void escapesLikeWildcards(String input, String expectedOutput) {
+        assertEquals(expectedOutput, AdminStringUtils.escapeLikeClause(input));
+    }
+
+    @Test
+    public void escapesBackslashWithSingleBackslash() {
+        assertEquals("a\\\\b", AdminStringUtils.escapeLikeClause("a\\b"));
     }
 }

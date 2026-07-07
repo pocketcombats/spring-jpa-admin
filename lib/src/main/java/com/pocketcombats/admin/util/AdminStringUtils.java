@@ -16,7 +16,7 @@ public final class AdminStringUtils {
     }
 
     public static String escapeLikeClause(String input) {
-        return LIKE_ESCAPE_PATTERN.matcher(input).replaceAll("\\$1");
+        return LIKE_ESCAPE_PATTERN.matcher(input).replaceAll("\\\\$1");
     }
 
     public static String toHumanReadableName(String input) {
