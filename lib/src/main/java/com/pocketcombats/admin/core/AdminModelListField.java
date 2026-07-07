@@ -3,6 +3,7 @@ package com.pocketcombats.admin.core;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.sort.SortExpressionFactory;
+import com.pocketcombats.admin.util.TypeUtils;
 import jakarta.annotation.Nullable;
 
 public record AdminModelListField(
@@ -15,6 +16,6 @@ public record AdminModelListField(
 ) {
 
     public boolean bool() {
-        return valueAccessor.getJavaType().equals(Boolean.class) || valueAccessor.getJavaType().equals(Boolean.TYPE);
+        return TypeUtils.isBoolean(valueAccessor.getJavaType());
     }
 }

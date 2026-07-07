@@ -5,7 +5,6 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CompositeAdminUniqueConstraint implements AdminUniqueConstraint {
 
@@ -33,6 +32,6 @@ public class CompositeAdminUniqueConstraint implements AdminUniqueConstraint {
     public List<String> getFieldLabels() {
         return constraints.stream()
                 .flatMap(constraint -> constraint.getFieldLabels().stream())
-                .collect(Collectors.toList());
+                .toList();
     }
 }

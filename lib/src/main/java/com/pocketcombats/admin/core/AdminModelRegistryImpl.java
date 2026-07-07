@@ -30,9 +30,10 @@ public class AdminModelRegistryImpl implements AdminModelRegistry {
 
     @Override
     public AdminRegisteredModel resolve(String modelName) throws UnknownModelException {
-        if (!modelsByName.containsKey(modelName)) {
+        AdminRegisteredModel model = modelsByName.get(modelName);
+        if (model == null) {
             throw new UnknownModelException();
         }
-        return modelsByName.get(modelName);
+        return model;
     }
 }

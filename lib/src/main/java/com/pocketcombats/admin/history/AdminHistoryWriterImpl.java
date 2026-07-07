@@ -48,7 +48,6 @@ public class AdminHistoryWriterImpl implements AdminHistoryWriter {
             );
 
             AdminHistoryLog log = new AdminHistoryLog();
-            log.setAction(action);
             log.setTime(now);
             log.setModel(model.modelName());
             log.setAction(action);

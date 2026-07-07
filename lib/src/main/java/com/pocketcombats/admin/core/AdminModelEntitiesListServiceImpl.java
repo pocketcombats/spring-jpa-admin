@@ -131,10 +131,9 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
         int pageSize = model.pageSize();
         int pagesCount = (int) Math.ceil((totalCount / (double) pageSize));
 
-        int page = query.getPage() == null ? 1 : query.getPage();
-        if (query.getPage() != null) {
-            page = Math.min(Math.max(query.getPage(), 1), pagesCount);
-        }
+        int page = query.getPage() == null
+                ? 1
+                : Math.min(Math.max(query.getPage(), 1), pagesCount);
 
         List<?> resultList;
         if (totalCount > 0) {

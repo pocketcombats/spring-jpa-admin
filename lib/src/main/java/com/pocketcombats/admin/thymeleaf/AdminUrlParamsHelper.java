@@ -32,7 +32,7 @@ public class AdminUrlParamsHelper {
                 }
             }
         }
-        if (value.equals("")) {
+        if (value.isEmpty()) {
             urlParams.remove(name);
         } else {
             urlParams.put(name, value);
