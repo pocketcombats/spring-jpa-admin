@@ -6,10 +6,12 @@ import com.pocketcombats.admin.AdminLink;
 import com.pocketcombats.admin.AdminModel;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 @AdminModel(
@@ -39,7 +41,7 @@ public class SpringJpaAdminUser implements UserDetails {
     @Id
     @Column(name = "id", updatable = false)
     @GeneratedValue(generator = "spring_admin_user_id")
-    private Integer id;
+    private @Nullable Integer id;
 
     @AdminField(sortable = true)
     @Column(name = "username", nullable = false)
@@ -65,13 +67,13 @@ public class SpringJpaAdminUser implements UserDetails {
             name = "spring_admin_user_authorities",
             joinColumns = @JoinColumn(name = "admin_user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id"))
-    private Set<SpringJpaAdminAuthority> authorities;
+    private Set<SpringJpaAdminAuthority> authorities = new HashSet<>();
 
-    public Integer getId() {
+    public @Nullable Integer getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(@Nullable Integer id) {
         this.id = id;
     }
 
@@ -90,7 +92,7 @@ public class SpringJpaAdminUser implements UserDetails {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(@Nullable String password) {
         if (password != null) {
             this.password = password;
         }

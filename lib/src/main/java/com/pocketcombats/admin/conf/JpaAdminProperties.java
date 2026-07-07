@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.conf;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.core.Ordered;

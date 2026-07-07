@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.core;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 

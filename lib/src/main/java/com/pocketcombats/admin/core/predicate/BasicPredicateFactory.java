@@ -1,10 +1,10 @@
 package com.pocketcombats.admin.core.predicate;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 
 public class BasicPredicateFactory implements ValuePredicateFactory {

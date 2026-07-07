@@ -4,7 +4,7 @@ import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.sort.SortExpressionFactory;
 import com.pocketcombats.admin.util.TypeUtils;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public record AdminModelListField(
         String name,

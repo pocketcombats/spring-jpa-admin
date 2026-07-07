@@ -3,7 +3,7 @@ package com.pocketcombats.admin.core.field;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.MethodPropertyReader;
 import com.pocketcombats.admin.core.property.MethodPropertyWriter;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -69,7 +69,7 @@ class EmbeddedFormFieldAccessorTest {
 
         assertEquals(
                 List.of("street", "city", "zip", "unit"),
-                properties.stream().map(p -> ((EmbeddedFormFieldProperty) p).getName()).toList()
+                properties.stream().map(p -> ((EmbeddedFormFieldProperty) p).name()).toList()
         );
     }
 

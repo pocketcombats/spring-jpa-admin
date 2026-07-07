@@ -11,13 +11,14 @@ import com.pocketcombats.admin.data.form.AdminRelationLink;
 import com.pocketcombats.admin.data.form.AdminRelationPreview;
 import com.pocketcombats.admin.data.list.EntityRelation;
 import com.pocketcombats.admin.data.list.Parent;
-import jakarta.annotation.Nullable;
+import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
@@ -116,13 +117,12 @@ public class AdminRelationLinkService {
         } else {
             AdminModelListField firstListField = model.listFields().get(0);
             Object representation = mapper.fieldValue(firstListField, entity);
-            return new AdminRelationPreview(resolveId(entity), representation.toString());
+            return new AdminRelationPreview(resolveId(entity), Objects.toString(representation, null));
         }
     }
 
     private String resolveId(Object entity) {
-        Object identifier = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(identifier, String.class);
+        return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
 
     @Transactional(readOnly = true)

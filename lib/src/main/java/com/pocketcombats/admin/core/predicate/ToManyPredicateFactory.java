@@ -7,7 +7,11 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.IdentifiableType;
 import jakarta.persistence.metamodel.PluralAttribute;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.lang.Contract;
+
+import java.util.Objects;
 
 public class ToManyPredicateFactory implements ValuePredicateFactory {
 
@@ -33,7 +37,9 @@ public class ToManyPredicateFactory implements ValuePredicateFactory {
     }
 
     @Override
-    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, Object value) {
+    @Contract("_, _, null -> fail")
+    public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, @Nullable Object value) {
+        Objects.requireNonNull(value);
         Object id = attributeIdType.isAssignableFrom(value.getClass())
                 ? value
                 : conversionService.convert(value, attributeIdType);

@@ -2,7 +2,7 @@ package com.pocketcombats.admin.core.field;
 
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
 
@@ -30,12 +30,12 @@ public class DelegatingAdminFormFieldValueAccessorImpl extends AbstractFormField
     }
 
     @Override
-    public Object readValue(Object instance) {
+    public @Nullable Object readValue(Object instance) {
         return getReader().getValue(instance);
     }
 
     @Override
-    public void setValue(Object instance, String value, BindingResult bindingResult) {
+    public void setValue(Object instance, @Nullable String value, BindingResult bindingResult) {
         AdminModelPropertyWriter writer = getWriter();
 
         Object convertedValue = conversionService.convert(value, writer.getJavaType());

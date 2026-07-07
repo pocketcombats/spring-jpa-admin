@@ -3,6 +3,7 @@ package com.pocketcombats.admin.plugin.auth.persistence;
 import com.pocketcombats.admin.AdminField;
 import com.pocketcombats.admin.AdminModel;
 import jakarta.persistence.*;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 import java.time.Instant;
@@ -21,7 +22,7 @@ public class SpringJpaAdminUserAuthLog implements Serializable {
     @Id
     @Column(name = "id", updatable = false)
     @GeneratedValue(generator = "spring_admin_user_auth_log_id")
-    private Long id;
+    private @Nullable Long id;
 
     @Column(name = "timestamp", nullable = false, updatable = false)
     private Instant timestamp;
@@ -37,11 +38,11 @@ public class SpringJpaAdminUserAuthLog implements Serializable {
     @Column(name = "agent", nullable = false, updatable = false)
     private String agent;
 
-    public Long getId() {
+    public @Nullable Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(@Nullable Long id) {
         this.id = id;
     }
 

@@ -3,14 +3,15 @@ package com.pocketcombats.admin.core.field;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
+import com.pocketcombats.admin.util.EntityUtils;
 import com.pocketcombats.admin.widget.Option;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.IdentifiableType;
 import jakarta.persistence.metamodel.PluralAttribute;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.CollectionFactory;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
@@ -105,11 +106,10 @@ public class ToManyFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     protected String getEntityStringId(Object entity) {
-        Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(id, String.class);
+        return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
 
-    protected String getEntityStringValue(Object entity) {
+    protected @Nullable String getEntityStringValue(Object entity) {
         return valueFormatter.format(entity);
     }
 

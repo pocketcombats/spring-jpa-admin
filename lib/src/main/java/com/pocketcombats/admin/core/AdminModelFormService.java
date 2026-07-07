@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.data.form.EntityDetails;
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 
@@ -18,7 +19,7 @@ public interface AdminModelFormService {
             String modelName,
             String stringId,
             String fieldName,
-            String value
+            @Nullable String value
     ) throws UnknownModelException;
 
     EntityDetails create(String modelName) throws UnknownModelException;

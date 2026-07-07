@@ -1,7 +1,7 @@
 package com.pocketcombats.admin.core.links;
 
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public record AdminModelLink(
         @Nullable String label,

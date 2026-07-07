@@ -41,11 +41,12 @@ public class ModelActionController {
             @PathVariable("model") String model,
             ActionRequest request
     ) throws UnknownModelException, UnknownActionException {
-        if (request.getId() == null || request.getId().isEmpty()) {
+        List<String> ids = request.id();
+        if (ids == null || ids.isEmpty()) {
             return new ModelAndView("redirect:/admin/" + model + "/");
         }
 
-        ActionPrompt prompt = service.prompt(model, request.getAction(), request.getId());
+        ActionPrompt prompt = service.prompt(model, request.action(), ids);
         return new ModelAndView(
                 properties.getTemplates().actionPrompt(),
                 Map.of("prompt", prompt)
@@ -58,8 +59,9 @@ public class ModelActionController {
             @PathVariable("model") String model,
             ActionRequest confirmation
     ) throws UnknownModelException, UnknownActionException {
-        if (confirmation.getId() != null && !confirmation.getId().isEmpty()) {
-            service.perform(model, confirmation.getAction(), confirmation.getId());
+        List<String> ids = confirmation.id();
+        if (ids != null && !ids.isEmpty()) {
+            service.perform(model, confirmation.action(), ids);
         }
         return "redirect:/admin/" + model + "/";
     }

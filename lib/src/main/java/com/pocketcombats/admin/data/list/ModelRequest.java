@@ -1,34 +1,36 @@
 package com.pocketcombats.admin.data.list;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.Serializable;
 
 public class ModelRequest implements Serializable {
 
-    private String search;
-    private String sort;
-    private Integer page;
+    private @Nullable String search;
+    private @Nullable String sort;
+    private @Nullable Integer page;
 
-    public String getSearch() {
+    public @Nullable String getSearch() {
         return search;
     }
 
-    public void setSearch(String search) {
+    public void setSearch(@Nullable String search) {
         this.search = search;
     }
 
-    public String getSort() {
+    public @Nullable String getSort() {
         return sort;
     }
 
-    public void setSort(String sort) {
+    public void setSort(@Nullable String sort) {
         this.sort = sort;
     }
 
-    public Integer getPage() {
+    public @Nullable Integer getPage() {
         return page;
     }
 
-    public void setPage(Integer page) {
+    public void setPage(@Nullable Integer page) {
         this.page = page;
     }
 }

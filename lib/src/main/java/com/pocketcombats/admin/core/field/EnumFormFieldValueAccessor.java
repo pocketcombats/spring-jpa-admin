@@ -4,7 +4,7 @@ import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
 import com.pocketcombats.admin.widget.Option;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.validation.BindingResult;
 
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public void setValue(Object instance, String value, BindingResult bindingResult) {
+    public void setValue(Object instance, @Nullable String value, BindingResult bindingResult) {
         if (Option.EMPTY.id().equals(value)) {
             getWriter().setValue(instance, null);
         } else {

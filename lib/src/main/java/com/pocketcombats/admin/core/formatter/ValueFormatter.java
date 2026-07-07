@@ -1,10 +1,11 @@
 package com.pocketcombats.admin.core.formatter;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
+import org.springframework.lang.Contract;
 
 @FunctionalInterface
 public interface ValueFormatter {
 
-    @Nullable
-    String format(@Nullable Object entity);
+    @Contract("!null -> !null")
+    @Nullable String format(@Nullable Object entity);
 }

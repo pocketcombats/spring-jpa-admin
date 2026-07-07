@@ -27,7 +27,6 @@ import com.pocketcombats.admin.core.sort.SortExpressionFactory;
 import com.pocketcombats.admin.core.uniqueness.SingleAdminUniqueConstraint;
 import com.pocketcombats.admin.util.AdminStringUtils;
 import com.pocketcombats.admin.util.TypeUtils;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.JoinColumn;
@@ -35,6 +34,7 @@ import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EmbeddableType;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -68,8 +68,7 @@ public class FieldFactory {
     private final String modelName;
     private final EntityType<?> entity;
     private final Class<?> targetClass;
-    private final @Nullable Class<?> modelAdminClass;
-    private final @Nullable Object adminModelBean;
+    private final @Nullable AdminModelBean adminModelBean;
 
     private final Map<String, AdminField> fieldOverrides;
     private final Map<String, AdminField> resolvedFieldsConfigurations = new HashMap<>();
@@ -83,8 +82,7 @@ public class FieldFactory {
             AdminModel modelAnnotation,
             Class<?> targetClass,
             EntityType<?> entity,
-            @Nullable Class<?> modelAdminClass,
-            @Nullable Object adminModelBean
+            @Nullable AdminModelBean adminModelBean
     ) {
         this.em = em;
         this.conversionService = conversionService;
@@ -93,7 +91,6 @@ public class FieldFactory {
         this.modelName = modelName;
         this.entity = entity;
         this.targetClass = targetClass;
-        this.modelAdminClass = modelAdminClass;
         this.adminModelBean = adminModelBean;
 
         this.fieldOverrides = Arrays.stream(modelAnnotation.fieldOverrides())
@@ -158,9 +155,10 @@ public class FieldFactory {
         }
         Annotation columnAnnotation = resolveColumnAnnotation(name);
         if (columnAnnotation != null) {
-            Map<String, Object> annotationAttributes = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
-            insertable = insertable && (Boolean) annotationAttributes.get("insertable");
-            updatable = updatable && (Boolean) annotationAttributes.get("updatable");
+            @SuppressWarnings("NullAway") Map<String, @Nullable Object> annotationAttributes
+                    = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
+            insertable = insertable && Boolean.TRUE.equals(annotationAttributes.get("insertable"));
+            updatable = updatable && Boolean.TRUE.equals(annotationAttributes.get("updatable"));
         }
 
         if (!StringUtils.hasText(label)) {
@@ -293,8 +291,8 @@ public class FieldFactory {
         }
 
         // If not, it's likely to be declared at admin model level
-        if (modelAdminClass != null) {
-            Method method = findModelAdminPropertyReader(modelAdminClass, name, targetClass);
+        if (adminModelBean != null) {
+            Method method = findModelAdminPropertyReader(adminModelBean.modelClass(), name, targetClass);
             if (method != null) {
                 AdminField annotation = AnnotationUtils.getAnnotation(
                         method,
@@ -325,20 +323,23 @@ public class FieldFactory {
     }
 
     private @Nullable AdminModelPropertyReader findAdminModelPropertyReader(String name) {
-        if (modelAdminClass == null) {
+        if (adminModelBean == null) {
             return null;
         }
-        Method method = findModelAdminPropertyReader(modelAdminClass, name, targetClass);
+        Method method = findModelAdminPropertyReader(adminModelBean.modelClass(), name, targetClass);
         if (method != null) {
-            return new AdminModelDelegatingPropertyReader(name, adminModelBean, method);
+            return new AdminModelDelegatingPropertyReader(name, adminModelBean.instance(), method);
         }
         return null;
     }
 
     private @Nullable AdminModelPropertyWriter findAdminModelPropertyWriter(String name) {
-        Method method = findModelAdminPropertyWriter(modelAdminClass, name, targetClass);
+        if (adminModelBean == null) {
+            return null;
+        }
+        Method method = findModelAdminPropertyWriter(adminModelBean.modelClass(), name, targetClass);
         if (method != null) {
-            return new AdminModelDelegatingPropertyWriter(name, adminModelBean, method);
+            return new AdminModelDelegatingPropertyWriter(name, adminModelBean.instance(), method);
         }
         return null;
     }
@@ -647,7 +648,7 @@ public class FieldFactory {
             String name,
             boolean optional,
             AdminModelPropertyReader reader,
-            AdminModelPropertyWriter writer
+            @Nullable AdminModelPropertyWriter writer
     ) {
         Class<?> type = reader.getJavaType();
         if (TypeUtils.isBoolean(type)) {

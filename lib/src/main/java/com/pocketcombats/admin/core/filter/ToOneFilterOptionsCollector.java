@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.core.filter;
 
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
+import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
@@ -35,8 +36,7 @@ public class ToOneFilterOptionsCollector extends AbstractAttributeFilterOptionsC
     }
 
     protected String getEntityStringId(Object entity) {
-        Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(id, String.class);
+        return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
 
     protected String getEntityStringValue(Object entity) {

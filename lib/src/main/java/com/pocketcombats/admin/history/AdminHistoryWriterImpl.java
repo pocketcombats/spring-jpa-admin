@@ -3,6 +3,7 @@ package com.pocketcombats.admin.history;
 import com.pocketcombats.admin.core.AdminModelListEntityMapper;
 import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
+import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.convert.ConversionService;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public class AdminHistoryWriterImpl implements AdminHistoryWriter {
 
@@ -43,7 +45,7 @@ public class AdminHistoryWriterImpl implements AdminHistoryWriter {
         for (Object entity : entities) {
             String id = resolveId(entity);
             String representation = StringUtils.abbreviate(
-                    mapper.fieldValue(representationField, entity).toString(),
+                    Objects.toString(mapper.fieldValue(representationField, entity), ""),
                     MAX_REPR_LENGTH
             );
 
@@ -65,8 +67,7 @@ public class AdminHistoryWriterImpl implements AdminHistoryWriter {
     }
 
     private String resolveId(Object entity) {
-        Object identifier = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(identifier, String.class);
+        return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
 
     protected String resolveUsername() {

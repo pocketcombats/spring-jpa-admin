@@ -76,7 +76,7 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
 
         boolean hasPermission = Arrays.stream(permissions)
                 .anyMatch(permission -> authorities.stream()
-                        .anyMatch(authority -> authority.getAuthority().equals(permission)));
+                        .anyMatch(authority -> permission.equals(authority.getAuthority())));
 
         if (LOG.isTraceEnabled()) {
             if (hasPermission) {

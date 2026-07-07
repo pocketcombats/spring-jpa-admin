@@ -6,7 +6,7 @@ import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.links.AdminModelLink;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import com.pocketcombats.admin.core.uniqueness.AdminUniqueConstraint;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;

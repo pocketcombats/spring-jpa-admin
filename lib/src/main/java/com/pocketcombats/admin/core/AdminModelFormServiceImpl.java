@@ -1,10 +1,10 @@
 package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.AdminValidation;
+import com.pocketcombats.admin.core.field.AdminFormFieldCompositeValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldPluralValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldSingularValueAccessor;
 import com.pocketcombats.admin.core.field.AdminFormFieldValueAccessor;
-import com.pocketcombats.admin.core.field.EmbeddedFormFieldAccessor;
 import com.pocketcombats.admin.core.links.AdminRelationLinkService;
 import com.pocketcombats.admin.core.permission.AdminPermissionService;
 import com.pocketcombats.admin.data.form.AdminFormField;
@@ -12,7 +12,7 @@ import com.pocketcombats.admin.data.form.AdminFormFieldGroup;
 import com.pocketcombats.admin.data.form.AdminRelationLink;
 import com.pocketcombats.admin.data.form.EntityDetails;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
-import jakarta.annotation.Nullable;
+import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -20,6 +20,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.SingularAttribute;
 import jakarta.validation.groups.Default;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -76,8 +77,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         if (!em.contains(entity)) {
             return null;
         }
-        Object identifier = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(identifier, String.class);
+        return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
 
     @Override
@@ -231,8 +231,8 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         for (AdminModelField field : writeableFields) {
             String parameterName = "model-field-" + field.name();
             AdminFormFieldValueAccessor accessor = field.valueAccessor();
-            if (accessor instanceof EmbeddedFormFieldAccessor embeddedValueAccessor) {
-                embeddedValueAccessor.bind(parameterName, entity, rawData, bindingResult);
+            if (accessor instanceof AdminFormFieldCompositeValueAccessor compositeValueAccessor) {
+                compositeValueAccessor.bind(parameterName, entity, rawData, bindingResult);
             } else if (accessor instanceof AdminFormFieldSingularValueAccessor singularValueAccessor) {
                 singularValueAccessor.setValue(entity, rawData.getFirst(parameterName), bindingResult);
             } else if (accessor instanceof AdminFormFieldPluralValueAccessor pluralValueAccessor) {
@@ -302,7 +302,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             String modelName,
             String stringId,
             String fieldName,
-            String value
+            @Nullable String value
     ) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(modelName);
 

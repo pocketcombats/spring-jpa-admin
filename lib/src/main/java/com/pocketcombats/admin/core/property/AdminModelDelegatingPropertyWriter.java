@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core.property;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.NotWritablePropertyException;
 import org.springframework.util.ReflectionUtils;
 
@@ -26,7 +27,7 @@ public class AdminModelDelegatingPropertyWriter implements AdminModelPropertyWri
     }
 
     @Override
-    public void setValue(Object instance, Object value) {
+    public void setValue(Object instance, @Nullable Object value) {
         try {
             method.invoke(adminModel, instance, value);
         } catch (Exception ex) {

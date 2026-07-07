@@ -3,8 +3,8 @@ package com.pocketcombats.admin.core.field;
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
+import com.pocketcombats.admin.util.EntityUtils;
 import com.pocketcombats.admin.widget.Option;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -13,6 +13,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.IdentifiableType;
 import jakarta.persistence.metamodel.SingularAttribute;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
 
@@ -91,16 +92,15 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
                 .toList();
     }
 
-    protected String getEntityStringId(Object entity) {
+    protected String getEntityStringId(@Nullable Object entity) {
         if (entity == null) {
             return Option.EMPTY.id();
         } else {
-            Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-            return ID_PREFIX + conversionService.convert(id, String.class);
+            return ID_PREFIX + EntityUtils.getEntityStringId(em, conversionService, entity);
         }
     }
 
-    protected String getEntityStringValue(Object entity) {
+    protected @Nullable String getEntityStringValue(Object entity) {
         return valueFormatter.format(entity);
     }
 
@@ -109,8 +109,8 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public void setValue(Object instance, String value, BindingResult bindingResult) {
-        if (Option.EMPTY.id().equals(value)) {
+    public void setValue(Object instance, @Nullable String value, BindingResult bindingResult) {
+        if (value == null || Option.EMPTY.id().equals(value)) {
             getWriter().setValue(instance, null);
         } else {
             Object referenceId = conversionService.convert(value.substring(ID_PREFIX.length()), attributeIdType);

@@ -1,8 +1,8 @@
 package com.pocketcombats.admin.demo.blog.entity;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 

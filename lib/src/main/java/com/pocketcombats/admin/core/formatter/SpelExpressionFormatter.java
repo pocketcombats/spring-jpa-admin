@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.core.formatter;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -19,8 +19,7 @@ public class SpelExpressionFormatter implements ValueFormatter {
     }
 
     @Override
-    @Nullable
-    public String format(@Nullable Object entity) {
+    public @Nullable String format(@Nullable Object entity) {
         Object value = expression.getValue(contextFactory.createContext(), entity);
         if (value == null) {
             return null;

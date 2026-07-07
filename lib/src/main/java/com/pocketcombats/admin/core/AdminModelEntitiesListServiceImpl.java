@@ -4,7 +4,6 @@ import com.pocketcombats.admin.core.links.AdminModelLink;
 import com.pocketcombats.admin.core.permission.AdminPermissionService;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import com.pocketcombats.admin.data.list.*;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -12,6 +11,7 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesListService {
@@ -131,9 +132,10 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
         int pageSize = model.pageSize();
         int pagesCount = (int) Math.ceil((totalCount / (double) pageSize));
 
-        int page = query.getPage() == null
+        Integer requestedPage = query.getPage();
+        int page = requestedPage == null
                 ? 1
-                : Math.min(Math.max(query.getPage(), 1), pagesCount);
+                : Math.min(Math.max(requestedPage, 1), pagesCount);
 
         List<?> resultList;
         if (totalCount > 0) {
@@ -201,7 +203,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
         CriteriaBuilder cb = em.getCriteriaBuilder();
         Predicate[] filterPredicates = model.filters().stream()
                 .filter(modelFilter -> filters.containsKey(modelFilter.getName()))
-                .map(modelFilter -> modelFilter.createPredicate(cb, root, filters.get(modelFilter.getName())))
+                .map(modelFilter -> modelFilter.createPredicate(cb, root, Objects.requireNonNull(filters.get(modelFilter.getName()))))
                 .toArray(Predicate[]::new);
         if (filterPredicates.length > 0) {
             LOG.debug("Applying {} filter predicate(s)", filterPredicates.length);

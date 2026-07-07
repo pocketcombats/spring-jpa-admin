@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.data.form;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -11,7 +11,7 @@ public record AdminFormField(
         @Nullable String description,
         boolean readonly,
         String template,
-        Object value,
+        @Nullable Object value,
         Map<String, ?> templateData
 ) implements Serializable {
 

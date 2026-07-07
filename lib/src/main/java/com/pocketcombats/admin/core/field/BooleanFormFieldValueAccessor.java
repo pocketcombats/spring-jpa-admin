@@ -2,7 +2,7 @@ package com.pocketcombats.admin.core.field;
 
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.validation.BindingResult;
 
 import java.util.Collections;
@@ -25,7 +25,7 @@ public class BooleanFormFieldValueAccessor extends AbstractFormFieldValueAccesso
     }
 
     @Override
-    public Object readValue(Object instance) {
+    public @Nullable Object readValue(Object instance) {
         return getReader().getValue(instance);
     }
 

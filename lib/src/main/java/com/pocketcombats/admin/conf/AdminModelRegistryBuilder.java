@@ -22,7 +22,6 @@ import com.pocketcombats.admin.core.uniqueness.AdminUniqueConstraint;
 import com.pocketcombats.admin.core.uniqueness.CompositeAdminUniqueConstraint;
 import com.pocketcombats.admin.util.AdminStringUtils;
 import com.pocketcombats.admin.util.PackageAnnotationFinder;
-import jakarta.annotation.Nullable;
 import jakarta.annotation.Priority;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
@@ -30,6 +29,7 @@ import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -125,8 +125,7 @@ import java.util.stream.Collectors;
         return packageInfo;
     }
 
-    @Nullable
-    private PackageInfo resolvePackageInfo(Class<?> aClass) {
+    private @Nullable PackageInfo resolvePackageInfo(Class<?> aClass) {
         String packageName = aClass.getPackageName();
         ClassLoader classLoader = aClass.getClassLoader();
         Package annotatedPackage = PackageAnnotationFinder.findAnnotatedPackage(classLoader, AdminPackage.class, packageName);
@@ -154,7 +153,9 @@ import java.util.stream.Collectors;
     ) {
         EntityType<?> entity = em.getEntityManagerFactory().getMetamodel().entity(targetClass);
         Class<?> adminModelClass = annotatedClass != targetClass ? annotatedClass : null;
-        Object adminModelBean = adminModelClass != null ? beanFactory.createBean(adminModelClass) : null;
+        AdminModelBean adminModelBean = adminModelClass != null
+                ? new AdminModelBean(adminModelClass, beanFactory.createBean(adminModelClass))
+                : null;
         String label = "".equals(modelAnnotation.label())
                 ? AdminStringUtils.toHumanReadableName(modelName)
                 : modelAnnotation.label();
@@ -167,7 +168,7 @@ import java.util.stream.Collectors;
 
         FieldFactory fieldFactory = new FieldFactory(
                 em, conversionService, spelExpressionContextFactory,
-                modelName, modelAnnotation, targetClass, entity, adminModelClass, adminModelBean
+                modelName, modelAnnotation, targetClass, entity, adminModelBean
         );
         List<AdminModelListField> listFields = createListFields(
                 modelName, modelAnnotation, targetClass, entity, adminModelClass, fieldFactory
@@ -181,7 +182,7 @@ import java.util.stream.Collectors;
         List<AdminModelLink> links = createModelLinks(modelName, modelAnnotation, targetClass);
 
         Map<String, AdminModelAction> actions = createActions(
-                modelName, modelAnnotation, targetClass, adminModelClass, adminModelBean
+                modelName, modelAnnotation, targetClass, adminModelBean
         );
 
         List<AdminUniqueConstraint> uniqueConstraints = collectUniqueConstraints(
@@ -309,7 +310,13 @@ import java.util.stream.Collectors;
         return listFields;
     }
 
-    private List<String> resolveListFieldNames(String modelName, AdminModel modelAnnotation, Class<?> targetClass, EntityType<?> entity, Class<?> adminModelClass) {
+    private List<String> resolveListFieldNames(
+            String modelName,
+            AdminModel modelAnnotation,
+            Class<?> targetClass,
+            EntityType<?> entity,
+            @Nullable Class<?> adminModelClass
+    ) {
         List<String> listFieldNames;
         if (modelAnnotation.listFields().length > 0) {
             listFieldNames = Arrays.asList(modelAnnotation.listFields());
@@ -438,13 +445,12 @@ import java.util.stream.Collectors;
             String modelName,
             AdminModel modelAnnotation,
             Class<?> targetClass,
-            @Nullable Class<?> adminModelClass,
-            @Nullable Object adminModelBean
+            @Nullable AdminModelBean adminModelBean
     ) {
         Map<String, AdminModelAction> actions = actionsFactory.createActions(
                 modelAnnotation,
                 targetClass,
-                adminModelClass, adminModelBean
+                adminModelBean
         );
         if (LOG.isTraceEnabled()) {
             LOG.trace("Model {} has actions of {}", modelName, actions.keySet());
@@ -465,8 +471,9 @@ import java.util.stream.Collectors;
                     if (columnAnnotation == null) {
                         return false;
                     }
-                    Map<String, Object> annotationAttributes = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
-                    return (Boolean) annotationAttributes.get("unique");
+                    @SuppressWarnings("NullAway") Map<String, @Nullable Object> annotationAttributes
+                            = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
+                    return Boolean.TRUE.equals(annotationAttributes.get("unique"));
                 })
                 .<AdminUniqueConstraint>map(attribute -> fieldFactory.constructFieldConstraint(attribute.getName()))
                 .toList();

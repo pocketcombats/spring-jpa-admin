@@ -2,7 +2,7 @@ package com.pocketcombats.admin.core.field;
 
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -23,7 +23,8 @@ import java.util.Map;
  * {@code <field parameter>.<property>} request parameter name. The embeddable instance is created lazily
  * when the first non-empty property value is bound.
  */
-public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor {
+public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor
+        implements AdminFormFieldCompositeValueAccessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmbeddedFormFieldAccessor.class);
 
@@ -58,7 +59,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor {
         Object embeddable = getReader().getValue(instance);
         Map<String, Object> values = new LinkedHashMap<>(properties.size());
         for (EmbeddedFormFieldProperty property : properties) {
-            values.put(property.getName(), embeddable == null ? null : property.read(embeddable));
+            values.put(property.name(), embeddable == null ? null : property.read(embeddable));
         }
         return values;
     }
@@ -73,6 +74,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor {
      *
      * @param parameterName request parameter prefix of the embedded field (e.g. {@code model-field-address})
      */
+    @Override
     public void bind(
             String parameterName,
             Object instance,
@@ -93,16 +95,16 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor {
             if (!property.isWritable()) {
                 continue;
             }
-            String rawValue = rawData.getFirst(parameterName + "." + property.getName());
+            String rawValue = rawData.getFirst(parameterName + "." + property.name());
             try {
                 Object converted = StringUtils.hasText(rawValue)
-                        ? conversionService.convert(rawValue, property.getJavaType())
+                        ? conversionService.convert(rawValue, property.javaType())
                         : null;
                 property.write(embeddable, converted);
             } catch (ConversionException e) {
-                LOG.debug("Failed to convert value for {}.{}", embeddableType.getSimpleName(), property.getName(), e);
+                LOG.debug("Failed to convert value for {}.{}", embeddableType.getSimpleName(), property.name(), e);
                 bindingResult.rejectValue(
-                        getName() + "." + property.getName(),
+                        getName() + "." + property.name(),
                         "typeMismatch",
                         "Invalid value"
                 );
@@ -114,7 +116,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor {
         return properties.stream()
                 .filter(EmbeddedFormFieldProperty::isWritable)
                 .anyMatch(property -> StringUtils.hasText(
-                        rawData.getFirst(parameterName + "." + property.getName())
+                        rawData.getFirst(parameterName + "." + property.name())
                 ));
     }
 }

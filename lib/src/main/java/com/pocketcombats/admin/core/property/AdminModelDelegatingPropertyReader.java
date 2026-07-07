@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core.property;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.NotReadablePropertyException;
 import org.springframework.util.ReflectionUtils;
 
@@ -26,7 +27,7 @@ public class AdminModelDelegatingPropertyReader implements AdminModelPropertyRea
     }
 
     @Override
-    public Object getValue(Object instance) {
+    public @Nullable Object getValue(Object instance) {
         try {
             return method.invoke(adminModel, instance);
         } catch (Exception ex) {

@@ -1,14 +1,13 @@
 package com.pocketcombats.admin.util;
 
-import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
 public class PackageAnnotationFinder {
 
-    @Nullable
-    public static Package findAnnotatedPackage(
+    public static @Nullable Package findAnnotatedPackage(
             ClassLoader classLoader,
             Class<? extends Annotation> annotationType,
             String packageName

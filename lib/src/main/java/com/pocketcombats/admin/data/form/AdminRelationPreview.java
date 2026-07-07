@@ -1,9 +1,11 @@
 package com.pocketcombats.admin.data.form;
 
+import org.jspecify.annotations.Nullable;
+
 import java.io.Serializable;
 
 public record AdminRelationPreview(
         String entityId,
-        String representation
+        @Nullable String representation
 ) implements Serializable {
 }

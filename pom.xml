@@ -31,6 +31,7 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <tomcat.version>11.0.23</tomcat.version>
+        <nullaway.version>0.13.7</nullaway.version>
     </properties>
 
     <modules>
@@ -173,6 +174,11 @@
                 <groupId>org.apache.tomcat.embed</groupId>
                 <artifactId>tomcat-embed-core</artifactId>
                 <version>${tomcat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.uber.nullaway</groupId>
+                <artifactId>nullaway</artifactId>
+                <version>${nullaway.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

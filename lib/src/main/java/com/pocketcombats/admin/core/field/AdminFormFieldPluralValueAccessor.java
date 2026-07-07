@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.core.field;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.validation.BindingResult;
 
 import java.util.List;

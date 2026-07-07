@@ -1,8 +1,10 @@
 package com.pocketcombats.admin.core.property;
 
+import org.jspecify.annotations.Nullable;
+
 public interface AdminModelPropertyReader {
 
     Class<?> getJavaType();
 
-    Object getValue(Object instance);
+    @Nullable Object getValue(Object instance);
 }

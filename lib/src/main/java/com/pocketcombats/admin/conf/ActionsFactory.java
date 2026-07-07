@@ -6,8 +6,8 @@ import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.action.AdminModelDelegatingAction;
 import com.pocketcombats.admin.core.action.StaticMethodDelegatingAction;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
-import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.reflect.MethodUtils;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -30,11 +30,10 @@ public class ActionsFactory {
         Collections.reverse(this.defaultActions);
     }
 
-    public Map<String, AdminModelAction> createActions(
+    /* package */ Map<String, AdminModelAction> createActions(
             AdminModel modelAnnotation,
             Class<?> targetClass,
-            @Nullable Class<?> adminModelClass,
-            @Nullable Object adminModelBean
+            @Nullable AdminModelBean adminModelBean
     ) {
         Map<String, AdminModelAction> actions = new LinkedHashMap<>();
         for (var defaultAction : defaultActions) {
@@ -50,14 +49,14 @@ public class ActionsFactory {
             }
             actions.put(actionMethod.getName(), new StaticMethodDelegatingAction(historyWriter, actionMethod));
         }
-        if (adminModelClass != null) {
+        if (adminModelBean != null) {
             // @AdminActions defined on admin model level have the highest precedence
-            for (Method actionMethod : findActionMethods(adminModelClass)) {
+            for (Method actionMethod : findActionMethods(adminModelBean.modelClass())) {
                 actions.put(
                         actionMethod.getName(),
                         new AdminModelDelegatingAction(
                                 historyWriter,
-                                adminModelBean,
+                                adminModelBean.instance(),
                                 actionMethod
                         )
                 );

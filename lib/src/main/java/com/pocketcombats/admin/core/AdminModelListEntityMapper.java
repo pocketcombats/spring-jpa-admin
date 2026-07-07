@@ -2,8 +2,10 @@ package com.pocketcombats.admin.core;
 
 import com.pocketcombats.admin.core.formatter.ValueFormatter;
 import com.pocketcombats.admin.data.list.AdminEntityListEntry;
+import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
 import org.apache.commons.lang3.ObjectUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 
 import java.util.List;
@@ -21,14 +23,14 @@ public class AdminModelListEntityMapper {
     public AdminEntityListEntry mapEntry(Object entity, List<AdminModelListField> fields) {
         String id = resolveId(entity);
 
-        List<Object> attributes = fields.stream()
-                .map(field -> fieldValue(field, entity))
+        List<@Nullable Object> attributes = fields.stream()
+                .<@Nullable Object>map(field -> fieldValue(field, entity))
                 .toList();
 
         return new AdminEntityListEntry(id, attributes);
     }
 
-    public Object fieldValue(AdminModelListField field, Object entity) {
+    public @Nullable Object fieldValue(AdminModelListField field, Object entity) {
         Object value = field.valueAccessor().getValue(entity);
         ValueFormatter valueFormatter = field.valueFormatter();
         if (valueFormatter == null) {
@@ -44,7 +46,6 @@ public class AdminModelListEntityMapper {
     }
 
     private String resolveId(Object entity) {
-        Object identifier = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(identifier, String.class);
+        return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
 }

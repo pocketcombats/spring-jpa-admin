@@ -1,6 +1,6 @@
 package com.pocketcombats.admin.core.field;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
@@ -12,15 +12,14 @@ public interface AdminFormFieldValueAccessor {
 
     Class<?> getReaderJavaType();
 
-    @Nullable
-    Class<?> getWriterJavaType();
+    @Nullable Class<?> getWriterJavaType();
 
     boolean isWritable();
 
     /**
      * Returned value is not necessarily of type equal to {@link #getReaderJavaType()}.
      */
-    Object readValue(Object instance);
+    @Nullable Object readValue(Object instance);
 
     Map<String, Object> getModelAttributes();
 }

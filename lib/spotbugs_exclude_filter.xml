@@ -11,4 +11,9 @@
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
 
+    <!-- Nullability is enforced by NullAway; disable SpotBugs' overlapping null checks -->
+    <Match>
+        <Bug code="NP,RCN"/>
+    </Match>
+
 </FindBugsFilter>

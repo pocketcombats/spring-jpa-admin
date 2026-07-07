@@ -2,14 +2,13 @@ package com.pocketcombats.admin.core.field;
 
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public abstract class AbstractFormFieldValueAccessor implements AdminFormFieldValueAccessor {
 
     private final String name;
     private final AdminModelPropertyReader reader;
-    @Nullable
-    private final AdminModelPropertyWriter writer;
+    private final @Nullable AdminModelPropertyWriter writer;
 
     public AbstractFormFieldValueAccessor(
             String name,

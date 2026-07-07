@@ -2,12 +2,13 @@ package com.pocketcombats.admin.core.field;
 
 import com.pocketcombats.admin.core.property.AdminModelPropertyReader;
 import com.pocketcombats.admin.core.property.AdminModelPropertyWriter;
-import jakarta.annotation.Nullable;
+import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.IdentifiableType;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.validation.BindingResult;
 
@@ -88,7 +89,6 @@ public class RawIdFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     protected String getEntityStringId(Object entity) {
-        Object id = em.getEntityManagerFactory().getPersistenceUnitUtil().getIdentifier(entity);
-        return conversionService.convert(id, String.class);
+        return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
 }
