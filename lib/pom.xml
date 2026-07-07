@@ -84,9 +84,8 @@
 
         <dependency>
             <groupId>org.webjars</groupId>
-            <artifactId>webjars-locator</artifactId>
+            <artifactId>webjars-locator-lite</artifactId>
             <scope>runtime</scope>
-            <version>0.50</version>
         </dependency>
         <dependency>
             <groupId>org.webjars.npm</groupId>
@@ -112,12 +111,10 @@
                         <path>
                             <groupId>org.springframework</groupId>
                             <artifactId>spring-context-indexer</artifactId>
-                            <version>6.1.14</version>
                         </path>
                         <path>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-configuration-processor</artifactId>
-                            <version>3.3.5</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

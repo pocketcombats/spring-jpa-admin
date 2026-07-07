@@ -57,7 +57,6 @@
                         <path>
                             <groupId>org.springframework</groupId>
                             <artifactId>spring-context-indexer</artifactId>
-                            <version>6.1.14</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -65,9 +64,6 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <executable>true</executable>
-                </configuration>
             </plugin>
         </plugins>
     </build>

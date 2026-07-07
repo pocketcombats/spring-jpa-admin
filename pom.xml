@@ -28,8 +28,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <tomcat.version>11.0.23</tomcat.version>
     </properties>
@@ -165,9 +164,18 @@
         <repository>
             <id>central</id>
             <name>Central Repository OSSRH</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
@@ -181,7 +189,7 @@
                             <rules>
                                 <dependencyConvergence />
                                 <requireMavenVersion>
-                                    <version>3.6.3</version>
+                                    <version>3.9.4</version>
                                 </requireMavenVersion>
                             </rules>
                         </configuration>

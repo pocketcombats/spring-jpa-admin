@@ -69,12 +69,10 @@
                         <path>
                             <groupId>org.springframework</groupId>
                             <artifactId>spring-context-indexer</artifactId>
-                            <version>6.1.14</version>
                         </path>
                         <path>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-configuration-processor</artifactId>
-                            <version>3.2.5</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
