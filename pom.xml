@@ -38,20 +38,11 @@
         <module>annotation</module>
         <module>lib</module>
         <module>plugin</module>
+        <module>demo</module>
         <module>bom</module>
     </modules>
 
     <profiles>
-        <profile>
-            <id>demo</id>
-            <modules>
-                <module>annotation</module>
-                <module>lib</module>
-                <module>plugin</module>
-                <module>demo</module>
-                <module>bom</module>
-            </modules>
-        </profile>
         <profile>
             <id>release</id>
             <build>

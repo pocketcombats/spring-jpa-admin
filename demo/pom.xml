@@ -10,6 +10,15 @@
     </parent>
     <artifactId>demo</artifactId>
 
+    <properties>
+        <!-- Demo application is built with the reactor but never published -->
+        <skipPublishing>true</skipPublishing>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <gpg.skip>true</gpg.skip>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <maven.source.skip>true</maven.source.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.pocketcombats.spring-jpa-admin</groupId>
