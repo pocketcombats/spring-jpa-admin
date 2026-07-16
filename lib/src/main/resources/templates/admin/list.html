@@ -127,7 +127,7 @@
         <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
         <div class="row row-cols-auto align-items-center mt-4">
             <div class="col col-lg-9 col-xl-10">
-                <h4>
+                <h4 aria-label="breadcrumb">
                     <th:block th:if="${parent != null}" class="d-none">
                         <a th:href="@{/admin/{adminModel}/(adminModel=${parent.modelName})}"
                            th:text="${#messages.msgOrNull(parent.label) ?: parent.label}"
