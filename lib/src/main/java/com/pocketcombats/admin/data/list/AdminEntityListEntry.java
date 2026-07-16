@@ -20,6 +20,6 @@ public class AdminEntityListEntry implements Serializable {
     }
 
     public @Nullable Object getAttributeByIndex(int index) {
-        return attributes.get(index);
+        return index >= 0 && index < attributes.size() ? attributes.get(index) : null;
     }
 }
