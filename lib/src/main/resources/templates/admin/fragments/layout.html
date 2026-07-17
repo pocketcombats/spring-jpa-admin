@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <th:block th:fragment="head-assets">
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+        <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+        <!-- Font Awesome -->
+        <link rel="stylesheet"
+              th:href="@{/webjars/font-awesome/css/all.min.css}"
+              href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+        <!-- Google Fonts Roboto -->
+        <link rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
+        <!-- MDB -->
+        <link rel="stylesheet"
+              th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
+              href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
+    </th:block>
+    <title>Spring JPA Admin fragments</title>
+</head>
+<body>
+<!--/* Site header shell. `spacing` sets the per-page bottom spacing classes; `content` is a
+       breadcrumb/actions block selected from the calling template (pass ~{} for none). */-->
+<header th:fragment="site-header(spacing, content)"
+        class="bg-light shadow-4"
+        th:classappend="${spacing}">
+    <div class="container">
+        <h1><a href="../index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
+        <th:block th:replace="${content}"/>
+    </div>
+</header>
+<!--/* Scripts are loaded at the end of <body> on every page: no inline page script calls MDB
+       APIs while parsing, and MDB self-initializes on DOMContentLoaded. */-->
+<th:block th:fragment="body-scripts">
+    <script type="text/javascript"
+            th:src="@{/webjars/mdb-ui-kit/js/mdb.min.js}"
+            src="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/js/mdb.min.js"></script>
+</th:block>
+</body>
+</html>

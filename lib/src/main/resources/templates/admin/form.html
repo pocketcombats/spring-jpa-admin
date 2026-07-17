@@ -4,21 +4,8 @@
 <!--/*@thymesVar id="entity" type="com.pocketcombats.admin.data.form.EntityDetails"*/-->
 <!--/*@thymesVar id="errors" type="org.springframework.validation.Errors"*/-->
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <th:block th:replace="~{admin/fragments/layout :: head-assets}"/>
     <title th:text="#{spring-jpa-admin.action.edit(${entityLabel})}">Edit Model One</title>
-    <!-- Font Awesome -->
-    <link rel="stylesheet"
-          th:href="@{/webjars/font-awesome/css/all.min.css}"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
-    <!-- Google Fonts Roboto -->
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
-    <!-- MDB -->
-    <link rel="stylesheet"
-          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
-          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
     <!-- Custom styles -->
     <style>
         .form-row {
@@ -40,10 +27,11 @@
     </style>
 </head>
 <body>
-<header class="bg-light shadow-4 pt-4 pb-3">
+<header th:replace="~{admin/fragments/layout :: site-header('pt-4 pb-3', ~{:: .admin-header-nav})}"
+        class="bg-light shadow-4 pt-4 pb-3">
     <div class="container">
-        <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
-        <div class="row row-cols-auto align-items-center mt-4">
+        <h1><a href="index.html" class="text-dark">Spring JPA Admin</a></h1>
+        <div class="admin-header-nav row row-cols-auto align-items-center mt-4">
             <div class="col col-lg-9 col-xl-10">
                 <h4><a href="list.html"
                        th:href="@{/admin/{adminModel}/(adminModel=${entity.modelName})}"
@@ -177,8 +165,6 @@
         </div>
     </div>
 </form>
-<script type="text/javascript"
-        th:src="@{/webjars/mdb-ui-kit/js/mdb.min.js}"
-        src="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/js/mdb.min.js"></script>
+<th:block th:replace="~{admin/fragments/layout :: body-scripts}"/>
 </body>
 </html>

@@ -4,21 +4,8 @@
 <!--/*@thymesVar id="historyEnabled" type="boolean"*/-->
 <!--/*@thymesVar id="history" type="java.util.List<com.pocketcombats.admin.data.history.HistoryEntry>"*/-->
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <th:block th:replace="~{admin/fragments/layout :: head-assets}"/>
     <title>Spring JPA Admin</title>
-    <!-- Font Awesome -->
-    <link rel="stylesheet"
-          th:href="@{/webjars/font-awesome/css/all.min.css}"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
-    <!-- Google Fonts Roboto -->
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
-    <!-- MDB -->
-    <link rel="stylesheet"
-          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
-          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
     <style>
         .history .list-group-item {
             font-size: 0.9rem;
@@ -38,9 +25,10 @@
     </style>
 </head>
 <body>
-<header class="bg-light shadow-4 pt-4 pb-4 mb-4">
+<header th:replace="~{admin/fragments/layout :: site-header('pt-4 pb-4 mb-4', ~{})}"
+        class="bg-light shadow-4 pt-4 pb-4 mb-4">
     <div class="container">
-        <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
+        <h1><a href="index.html" class="text-dark">Spring JPA Admin</a></h1>
     </div>
 </header>
 <div class="container mb-5">
@@ -52,7 +40,11 @@
                 th:each="modelGroup: ${modelGroups}">
                     <table class="table table-striped">
                         <thead th:if="${!#strings.isEmpty(modelGroup.label)}">
-                        <th class="h5" th:text="${#messages.msgOrNull(modelGroup.label) ?: modelGroup.label}">Blog</th>
+                        <tr>
+                            <th class="h5" th:text="${#messages.msgOrNull(modelGroup.label) ?: modelGroup.label}">
+                                Blog
+                            </th>
+                        </tr>
                         </thead>
                         <tbody class="table-group-divider table-divider-color">
                         <tr th:each="model: ${modelGroup.models}">
@@ -72,7 +64,9 @@
                 <div class="table-responsive" th:remove="all">
                     <table class="table table-striped">
                         <thead>
-                        <th class="h5">Users</th>
+                        <tr>
+                            <th class="h5">Users</th>
+                        </tr>
                         </thead>
                         <tbody class="table-group-divider table-divider-color">
                         <tr>
@@ -134,5 +128,6 @@
         </div>
     </div>
 </div>
+<th:block th:replace="~{admin/fragments/layout :: body-scripts}"/>
 </body>
 </html>

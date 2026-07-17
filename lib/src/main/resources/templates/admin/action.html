@@ -2,28 +2,12 @@
 <html lang="en" th:lang="${#locale.toLanguageTag()}">
 <!--/*@thymesVar id="prompt" type="com.pocketcombats.admin.data.action.ActionPrompt"*/-->
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-    <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+    <th:block th:replace="~{admin/fragments/layout :: head-assets}"/>
     <title th:if="${#strings.isEmpty(prompt.description)}" th:text="#{spring-jpa-admin.action.generic.confirmation}">
         Confirm the deletion of the following entities
     </title>
     <title th:unless="${#strings.isEmpty(prompt.description)}"
            th:text="${#messages.msgOrNull(prompt.description) ?: prompt.description}"></title>
-    <!-- Font Awesome -->
-    <link rel="stylesheet"
-          th:href="@{/webjars/font-awesome/css/all.min.css}"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
-    <!-- Google Fonts Roboto -->
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"/>
-    <!-- MDB -->
-    <link rel="stylesheet"
-          th:href="@{/webjars/mdb-ui-kit/css/mdb.min.css}"
-          href="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/css/mdb.min.css"/>
-    <script type="text/javascript"
-            th:src="@{/webjars/mdb-ui-kit/js/mdb.min.js}"
-            src="https://cdn.jsdelivr.net/npm/mdb-ui-kit@6.3.0/js/mdb.min.js"></script>
     <!-- Custom styles -->
     <style>
         main th {
@@ -33,10 +17,11 @@
     </style>
 </head>
 <body>
-<header class="bg-light shadow-4 pt-4 pb-3 mb-4">
+<header th:replace="~{admin/fragments/layout :: site-header('pt-4 pb-3 mb-4', ~{:: .admin-header-nav})}"
+        class="bg-light shadow-4 pt-4 pb-3 mb-4">
     <div class="container">
-        <h1><a href="index.html" th:href="@{/admin/}" class="text-dark">Spring JPA Admin</a></h1>
-        <div class="row row-cols-auto align-items-center mt-4">
+        <h1><a href="index.html" class="text-dark">Spring JPA Admin</a></h1>
+        <div class="admin-header-nav row row-cols-auto align-items-center mt-4">
             <div class="col">
                 <h4><a href="list.html"
                        th:href="@{/admin/{adminModel}/(adminModel=${prompt.modelName})}"
@@ -139,5 +124,6 @@
         </div>
     </div>
 </div>
+<th:block th:replace="~{admin/fragments/layout :: body-scripts}"/>
 </body>
 </html>
