@@ -44,9 +44,9 @@
 
 <form method="post"
       class="pt-4"
-      th:with="actionUrl=${entity.id == null ? '/admin/{adminModel}/create/' : '/admin/{adminModel}/edit/{id}/'},
-               actionParams=${entity.id == null ? 'adminModel=${entity.modelName}' : 'adminModel=${entity.modelName}, id=${entity.id}'}"
-      th:action="@{${actionUrl}(__${actionParams}__)}">
+      th:action="${entity.id == null}
+                 ? @{/admin/{adminModel}/create/(adminModel=${entity.modelName})}
+                 : @{/admin/{adminModel}/edit/{id}/(adminModel=${entity.modelName}, id=${entity.id})}">
     <div class="container">
         <div class="row">
             <div class="col-12 col-lg-9 col-xl-10"

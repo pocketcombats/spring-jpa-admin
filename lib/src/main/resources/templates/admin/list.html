@@ -154,8 +154,8 @@
                 </h6>
                 <a class="list-group-item list-group-item-action px-3"
                    href="#"
-                   th:with="urlParams=${@adminUrlParamsHelper.join(param, filterParam, '')}"
-                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, __${urlParams}__)}"
+                   th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, filterParam, '')}"
+                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName})} + ${urlQuery}"
                    th:class="${'list-group-item list-group-item-action px-3' + (#strings.isEmpty(param.get(filterParam)?.get(0)) ? ' active' : '')}"
                    th:text="#{spring-jpa-admin.filter.all}">
                     All
@@ -163,8 +163,8 @@
                 <a th:each="filterOption: ${filter.options()}"
                    class="list-group-item list-group-item-action px-3"
                    href="#"
-                   th:with="urlParams=${@adminUrlParamsHelper.join(param, filterParam, filterOption.value())}"
-                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName}, __${urlParams}__)}"
+                   th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, filterParam, filterOption.value())}"
+                   th:href="@{/admin/{adminModel}/(adminModel=${entities.modelName})} + ${urlQuery}"
                    th:class="${'list-group-item list-group-item-action px-3' + ((param.get(filterParam)?.get(0) == filterOption.value()) ? ' active' : '')}">
                     <th:block th:text="${#messages.msgOrNull(filterOption.label) ?: filterOption.label}">Yes</th:block>
                 </a>
@@ -228,8 +228,8 @@
                                 <a th:if="${column.sortable}"
                                    th:switch="${modelRequest.sort}"
                                    href="list.html"
-                                   th:with="urlParams=${@adminUrlParamsHelper.join(param, 'sort', (modelRequest.sort==column.name ? '-' : '') + column.name)}"
-                                   th:href="@{${baseUrl}(adminModel=${entities.modelName}, __${urlParams}__)}"
+                                   th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, 'sort', (modelRequest.sort==column.name ? '-' : '') + column.name)}"
+                                   th:href="@{${baseUrl}(adminModel=${entities.modelName})} + ${urlQuery}"
                                    class="d-block">
                                     <i th:case="${column.name}" th:class="'sort-icon active fas fa-arrow-up'"></i>
                                     <i th:case="'-' + ${column.name}" class="sort-icon active fas fa-arrow-down"></i>
@@ -332,8 +332,8 @@
                         <a th:if="${entities.page > 1}"
                            class="page-link d-none"
                            th:class="page-link"
-                           th:with="urlParams=${@adminUrlParamsHelper.join(param, 'page', entities.page - 1)}"
-                           th:href="@{${baseUrl}(adminModel=${entities.modelName}, __${urlParams}__)}"
+                           th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, 'page', entities.page - 1)}"
+                           th:href="@{${baseUrl}(adminModel=${entities.modelName})} + ${urlQuery}"
                            href="#"
                            th:text="#{spring-jpa-admin.pagination.prev}">Previous</a>
                         <span th:unless="${entities.page > 1}" class="page-link"
@@ -343,8 +343,8 @@
                         class="page-item d-none"
                         th:class="page-item">
                         <a class="page-link"
-                           th:with="urlParams=${@adminUrlParamsHelper.join(param, 'page', 1)}"
-                           th:href="@{${baseUrl}(adminModel=${entities.modelName}, __${urlParams}__)}">1</a>
+                           th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, 'page', 1)}"
+                           th:href="@{${baseUrl}(adminModel=${entities.modelName})} + ${urlQuery}">1</a>
                     </li>
                     <li th:if="${entities.page > 4}"
                         class="page-item skip d-none"
@@ -354,8 +354,8 @@
                         class="page-item">
                         <a class="page-link"
                            href="#"
-                           th:with="urlParams=${@adminUrlParamsHelper.join(param, 'page', page)}"
-                           th:href="@{${baseUrl}(adminModel=${entities.modelName}, __${urlParams}__)}"
+                           th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, 'page', page)}"
+                           th:href="@{${baseUrl}(adminModel=${entities.modelName})} + ${urlQuery}"
                            th:text="${page}">1</a>
                     </li>
                     <li class="page-item active" aria-current="page">
@@ -370,8 +370,8 @@
                         class="page-item">
                         <a class="page-link"
                            href="#"
-                           th:with="urlParams=${@adminUrlParamsHelper.join(param, 'page', page)}"
-                           th:href="@{${baseUrl}(adminModel=${entities.modelName}, __${urlParams}__)}"
+                           th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, 'page', page)}"
+                           th:href="@{${baseUrl}(adminModel=${entities.modelName})} + ${urlQuery}"
                            th:text="${page}">3</a>
                     </li>
                     <li th:if="${entities.page < entities.pagesCount - 3}"
@@ -380,8 +380,8 @@
                         class="page-item">
                         <a class="page-link"
                            href="#"
-                           th:with="urlParams=${@adminUrlParamsHelper.join(param, 'page', entities.pagesCount)}"
-                           th:href="@{${baseUrl}(adminModel=${entities.modelName}, __${urlParams}__)}"
+                           th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, 'page', entities.pagesCount)}"
+                           th:href="@{${baseUrl}(adminModel=${entities.modelName})} + ${urlQuery}"
                            th:text="${entities.pagesCount}">99</a>
                     </li>
                     <li class="page-item"
@@ -389,8 +389,8 @@
                         <a th:if="${entities.page < entities.pagesCount}"
                            class="page-link"
                            href="#"
-                           th:with="urlParams=${@adminUrlParamsHelper.join(param, 'page', entities.page + 1)}"
-                           th:href="@{${baseUrl}(adminModel=${entities.modelName}, __${urlParams}__)}"
+                           th:with="urlQuery=${@adminUrlParamsHelper.queryString(param, 'page', entities.page + 1)}"
+                           th:href="@{${baseUrl}(adminModel=${entities.modelName})} + ${urlQuery}"
                            th:text="#{spring-jpa-admin.pagination.next}">Next</a>
                         <span th:unless="${entities.page < entities.pagesCount}" class="page-link d-none"
                               th:class="page-link" th:text="#{spring-jpa-admin.pagination.next}">Next</span>
