@@ -8,6 +8,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.apache.commons.lang3.StringUtils;
@@ -18,6 +19,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -233,6 +235,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
             Root<?> root,
             CriteriaBuilder cb
     ) {
+        List<Order> orders = new ArrayList<>(2);
         if (StringUtils.isEmpty(sortString)) {
             sortString = model.defaultOrder();
         }
@@ -247,27 +250,27 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
                 asc = true;
             }
 
-            applySorting(model, query, root, cb, sortFieldName, asc);
+            createOrder(model, root, cb, sortFieldName, asc).ifPresent(orders::add);
         }
+        orders.add(cb.asc(root.get(model.entityDetails().idAttribute().getName())));
+        query.orderBy(orders);
     }
 
-    private void applySorting(
+    private Optional<Order> createOrder(
             AdminRegisteredModel model,
-            CriteriaQuery<?> query,
             Root<?> root,
             CriteriaBuilder cb,
             String sortFieldName,
             boolean asc
     ) {
-        model.listFields().stream()
+        return model.listFields().stream()
                 .filter(listField -> listField.name().equals(sortFieldName))
                 .findAny()
                 .flatMap(listField -> Optional.ofNullable(listField.sortExpressionFactory()))
                 .map(sortExpressionFactory -> {
                     Expression<?> sortExpression = sortExpressionFactory.createExpression(root);
                     return asc ? cb.asc(sortExpression) : cb.desc(sortExpression);
-                })
-                .ifPresent(query::orderBy);
+                });
     }
 
     private static List<ListFilter> collectListFilters(
