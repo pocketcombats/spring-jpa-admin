@@ -57,7 +57,7 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
      */
     private static boolean hasAnyPermission(String[] permissions) {
         // If no permissions are required, allow access
-        if (permissions == null || permissions.length == 0) {
+        if (permissions.length == 0) {
             LOG.trace("No permissions required, access allowed");
             return true;
         }
@@ -69,10 +69,6 @@ public class AdminPermissionServiceImpl implements AdminPermissionService {
         }
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        if (authorities == null) {
-            LOG.warn("User has no authorities, access denied");
-            return false;
-        }
 
         boolean hasPermission = Arrays.stream(permissions)
                 .anyMatch(permission -> authorities.stream()

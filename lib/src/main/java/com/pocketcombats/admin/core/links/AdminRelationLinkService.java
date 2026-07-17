@@ -21,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -126,11 +127,19 @@ public class AdminRelationLinkService {
     @Transactional(readOnly = true)
     public Parent getParentInfo(EntityRelation relation) throws UnknownModelException {
         AdminRegisteredModel model = modelRegistry.resolve(relation.model());
+        if (!permissionService.canView(model)) {
+            throw new AccessDeniedException("You don't have permission to view " + relation.model());
+        }
         Object id = conversionService.convert(
                 relation.id(),
                 model.entityDetails().idAttribute().getJavaType()
         );
         Object entity = em.find(model.entityDetails().entityClass(), id);
+        if (entity == null) {
+            throw new UnknownModelException(
+                    "Entity " + relation.id() + " of model " + relation.model() + " does not exist"
+            );
+        }
         AdminRelationPreview preview = createPreview(model, entity, null);
         return new Parent(model.label(), model.modelName(), preview);
     }
