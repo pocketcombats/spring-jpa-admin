@@ -1,7 +1,6 @@
 package com.pocketcombats.admin.history;
 
 import com.pocketcombats.admin.core.AdminModelListEntityMapper;
-import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
@@ -41,11 +40,10 @@ public class AdminHistoryWriterImpl implements AdminHistoryWriter {
     public void record(AdminRegisteredModel model, String action, Collection<?> entities) {
         Instant now = Instant.now();
         String username = resolveUsername();
-        AdminModelListField representationField = model.listFields().get(0);
         for (Object entity : entities) {
             String id = resolveId(entity);
             String representation = StringUtils.abbreviate(
-                    Objects.toString(mapper.fieldValue(representationField, entity), ""),
+                    Objects.toString(mapper.entityRepresentation(model, entity), ""),
                     MAX_REPR_LENGTH
             );
 

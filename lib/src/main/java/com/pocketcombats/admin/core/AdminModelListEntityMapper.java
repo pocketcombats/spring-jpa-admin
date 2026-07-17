@@ -48,4 +48,16 @@ public class AdminModelListEntityMapper {
     private String resolveId(Object entity) {
         return EntityUtils.getEntityStringId(em, conversionService, entity);
     }
+
+    /**
+     * Human-readable representation of an entity: the value of the model's first list field,
+     * falling back to the stringified entity id when the model declares no list fields.
+     */
+    public @Nullable Object entityRepresentation(AdminRegisteredModel model, Object entity) {
+        List<AdminModelListField> listFields = model.listFields();
+        if (listFields.isEmpty()) {
+            return resolveId(entity);
+        }
+        return fieldValue(listFields.get(0), entity);
+    }
 }

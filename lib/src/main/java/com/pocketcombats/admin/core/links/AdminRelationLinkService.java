@@ -1,7 +1,6 @@
 package com.pocketcombats.admin.core.links;
 
 import com.pocketcombats.admin.core.AdminModelListEntityMapper;
-import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminModelRegistry;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.core.UnknownModelException;
@@ -115,8 +114,7 @@ public class AdminRelationLinkService {
         if (formatter != null) {
             return new AdminRelationPreview(resolveId(entity), formatter.format(entity));
         } else {
-            AdminModelListField firstListField = model.listFields().get(0);
-            Object representation = mapper.fieldValue(firstListField, entity);
+            Object representation = mapper.entityRepresentation(model, entity);
             return new AdminRelationPreview(resolveId(entity), Objects.toString(representation, null));
         }
     }
