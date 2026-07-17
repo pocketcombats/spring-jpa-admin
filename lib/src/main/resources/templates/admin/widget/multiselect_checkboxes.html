@@ -16,7 +16,9 @@
                th:checked="${field.value.contains(option.id)}"
                th:disabled="${field.readonly}"/>
         <label th:for="${'model-field-' + field.name + '-' + option.id}"
-               th:text="${option.label}"
-               class="form-check-label"></label>
+               class="form-check-label">
+            <th:block th:if="${option.localize}" th:text="#{${option.label}}"/>
+            <th:block th:unless="${option.localize}" th:text="${option.label}"/>
+        </label>
     </div>
 </div>
