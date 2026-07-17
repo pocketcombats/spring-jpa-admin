@@ -9,6 +9,7 @@ import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
 
+import java.util.Comparator;
 import java.util.List;
 
 public abstract class AbstractAttributeFilterOptionsCollector implements FilterOptionsCollector {
@@ -39,8 +40,20 @@ public abstract class AbstractAttributeFilterOptionsCollector implements FilterO
                 cb.isNotNull(root.get(attribute.getName()))
         );
         query.where(where);
+        boolean isAssociation = attribute.isAssociation();
+        if (!isAssociation) {
+            // Deterministic option order for basic attributes
+            query.orderBy(cb.asc(root.get(attribute.getName())));
+        }
         List<?> resultList = em.createQuery(query).getResultList();
-        return mapResults(resultList);
+        List<ModelFilterOption> options = mapResults(resultList);
+        if (isAssociation) {
+            // Association options have no meaningful SQL order and are sorted by their formatted label
+            options = options.stream()
+                    .sorted(Comparator.comparing(ModelFilterOption::label))
+                    .toList();
+        }
+        return options;
     }
 
     protected abstract List<ModelFilterOption> mapResults(List<?> resultList);

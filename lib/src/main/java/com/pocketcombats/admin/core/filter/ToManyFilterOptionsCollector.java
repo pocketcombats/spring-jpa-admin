@@ -12,6 +12,7 @@ import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.PluralAttribute;
 import org.springframework.core.convert.ConversionService;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class ToManyFilterOptionsCollector implements FilterOptionsCollector {
@@ -50,6 +51,7 @@ public class ToManyFilterOptionsCollector implements FilterOptionsCollector {
         List<?> resultList = em.createQuery(query).getResultList();
         return resultList.stream()
                 .map(relation -> new ModelFilterOption(getEntityStringValue(relation), getEntityStringId(relation)))
+                .sorted(Comparator.comparing(ModelFilterOption::label))
                 .toList();
     }
 
