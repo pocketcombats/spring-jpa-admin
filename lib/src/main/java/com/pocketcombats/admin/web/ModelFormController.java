@@ -89,11 +89,7 @@ public class ModelFormController {
             );
         } else {
             if (data.containsKey("save-continue")) {
-                EntityDetails entity = adminModelFormService.details(model, id);
-                return new ModelAndView(
-                        properties.getTemplates().form(),
-                        Map.of("entity", entity)
-                );
+                return new ModelAndView("redirect:/admin/" + model + "/edit/" + id + "/");
             } else {
                 return new ModelAndView("redirect:/admin/" + model + "/");
             }
