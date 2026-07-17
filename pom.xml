@@ -100,8 +100,6 @@
                             <arguments>--strict-checksums</arguments>
                             <tagNameFormat>v@{project.version}</tagNameFormat>
                             <autoVersionSubmodules>true</autoVersionSubmodules>
-                            <useReleaseProfile>true</useReleaseProfile>
-                            <releaseProfiles>release</releaseProfiles>
                             <goals>deploy</goals>
                         </configuration>
                     </plugin>
@@ -200,6 +198,31 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.15.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-XDcompilePolicy=simple</arg>
+                        <arg>--should-stop=ifError=FLOW</arg>
+                        <!-- Required by NullAway JSpecify mode on JDK below 22; needs OpenJDK 17.0.19+ / 21.0.8+ (no-op on 22+) -->
+                        <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
+                        <arg>-Xplugin:ErrorProne -XepDisableAllChecks -XepExcludedPaths:.*/src/test/.*
+                            -Xep:NullAway:ERROR -XepOpt:NullAway:JSpecifyMode=true
+                            -XepOpt:NullAway:OnlyNullMarked=true
+                            -XepOpt:NullAway:AssertsEnabled=true
+                        </arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.errorprone</groupId>
+                            <artifactId>error_prone_core</artifactId>
+                            <!-- 2.42.0 is the last Error Prone version that runs on JDK 17 -->
+                            <version>2.42.0</version>
+                        </path>
+                        <path>
+                            <groupId>com.uber.nullaway</groupId>
+                            <artifactId>nullaway</artifactId>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

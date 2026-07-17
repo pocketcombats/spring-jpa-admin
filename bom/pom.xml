@@ -2,35 +2,101 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.pocketcombats.spring-jpa-admin</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.4-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
+    <!-- Deliberately parentless: inheriting the project parent would leak the entire
+         spring-boot-starter-parent dependencyManagement into consumers importing this BOM. -->
+    <groupId>com.pocketcombats.spring-jpa-admin</groupId>
     <artifactId>bom</artifactId>
+    <version>1.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Spring JPA Admin BOM</name>
+    <description>Bill of Materials for Spring JPA Admin artifacts.</description>
+    <url>https://github.com/pocketcombats/spring-jpa-admin</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Maksim Zakharov</name>
+            <email>zakharov@pocketcombats.com</email>
+            <organization>Pocket Combats</organization>
+            <organizationUrl>https://pocketcombats.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/pocketcombats/spring-jpa-admin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/pocketcombats/spring-jpa-admin.git</developerConnection>
+        <url>https://github.com/pocketcombats/spring-jpa-admin/tree/master/</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>Central Repository OSSRH</name>
+        </repository>
+    </distributionManagement>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.pocketcombats.spring-jpa-admin</groupId>
                 <artifactId>annotation</artifactId>
-                <version>1.0.4-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.pocketcombats.spring-jpa-admin</groupId>
                 <artifactId>spring-jpa-admin</artifactId>
-                <version>1.0.4-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.pocketcombats.spring-jpa-admin.plugin</groupId>
                 <artifactId>auth</artifactId>
-                <version>1.0.4-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.7.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <tokenAuth>true</tokenAuth>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>
