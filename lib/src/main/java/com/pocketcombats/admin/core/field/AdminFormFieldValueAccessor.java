@@ -12,7 +12,11 @@ public interface AdminFormFieldValueAccessor {
 
     Class<?> getReaderJavaType();
 
-    @Nullable Class<?> getWriterJavaType();
+    /**
+     * The type this accessor writes, or {@link Void#TYPE} when the field is not writable.
+     * Use {@link #isWritable()}, not a comparison against this value.
+     */
+    Class<?> getWriterJavaType();
 
     boolean isWritable();
 
