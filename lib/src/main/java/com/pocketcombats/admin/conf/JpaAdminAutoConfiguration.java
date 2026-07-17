@@ -1,12 +1,7 @@
 package com.pocketcombats.admin.conf;
 
 import com.pocketcombats.admin.AdminModel;
-import com.pocketcombats.admin.core.AdminModelEntitiesListService;
-import com.pocketcombats.admin.core.AdminModelEntitiesListServiceImpl;
-import com.pocketcombats.admin.core.AdminModelFormService;
-import com.pocketcombats.admin.core.AdminModelFormServiceImpl;
-import com.pocketcombats.admin.core.AdminModelListEntityMapper;
-import com.pocketcombats.admin.core.AdminModelRegistry;
+import com.pocketcombats.admin.core.*;
 import com.pocketcombats.admin.core.action.AdminModelAction;
 import com.pocketcombats.admin.core.action.AdminModelActionService;
 import com.pocketcombats.admin.core.action.AdminModelActionServiceImpl;
@@ -177,6 +172,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
     @ConditionalOnMissingBean
     public AdminHistoryCompiler historyCompiler(
             AdminModelRegistry registry,
+            AdminPermissionService permissionService,
             EntityManager em
     ) {
         if (properties.isDisableHistory()) {
@@ -184,7 +180,7 @@ public class JpaAdminAutoConfiguration implements Ordered {
         } else {
             LOG.debug("Registering default AdminHistoryCompiler");
 
-            return new AdminHistoryCompilerImpl(registry, em);
+            return new AdminHistoryCompilerImpl(registry, permissionService, em);
         }
     }
 
