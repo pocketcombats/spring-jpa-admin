@@ -15,6 +15,7 @@ import org.springframework.validation.BindingResult;
 import java.beans.PropertyDescriptor;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,9 +46,9 @@ class EmbeddedFormFieldAccessorTest {
     void readValueOfNullEmbeddableYieldsNullProperties() {
         Map<String, Object> values = accessor.readValue(new Order());
 
-        assertEquals(List.of("street", "city", "zip", "unit"), List.copyOf(values.keySet()));
-        assertNull(values.get("street"));
-        assertNull(values.get("unit"));
+        // Key order is not part of the contract — the template iterates _properties, not this map.
+        assertEquals(Set.of("street", "city", "zip", "unit"), values.keySet());
+        values.forEach((name, value) -> assertNull(value, name));
     }
 
     @Test
@@ -65,7 +66,7 @@ class EmbeddedFormFieldAccessorTest {
 
     @Test
     void modelAttributesExposePropertiesInDeclarationOrder() {
-        List<?> properties = (List<?>) accessor.getModelAttributes().get("_properties");
+        List<?> properties = (List<?>) accessor.getModelAttributes(new Order()).get("_properties");
 
         assertEquals(
                 List.of("street", "city", "zip", "unit"),
@@ -126,7 +127,10 @@ class EmbeddedFormFieldAccessorTest {
         BindingResult bindingResult = bind(order, data("Baker Street", "London", "NW1", "not-a-number"));
 
         assertTrue(bindingResult.hasFieldErrors("address.unit"));
-        assertEquals("typeMismatch", bindingResult.getFieldError("address.unit").getCode());
+        assertEquals(
+                "spring-jpa-admin.validation.constraints.ValidValue.message",
+                bindingResult.getFieldError("address.unit").getCode()
+        );
         // Remaining properties still bound despite the rejected one.
         assertEquals("Baker Street", order.getAddress().getStreet());
         assertNull(order.getAddress().getUnit());

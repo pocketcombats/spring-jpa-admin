@@ -55,7 +55,12 @@
                     class="d-none"
                     th:class="'text-danger list-unstyled'">
                     <li th:each="globalError: ${errors.globalErrors}"
-                        th:utext="${@messageHelper.getMessage(globalError)}"></li>
+                        th:with="conflict=${@messageHelper.uniquenessViolation(globalError)}">
+                        <th:block th:text="${@messageHelper.getMessage(globalError)}"/>
+                        <a th:if="${conflict != null}"
+                           th:href="@{/admin/{model}/edit/{id}/(model=${conflict.conflictingModel}, id=${conflict.conflictingEntityId})}"
+                           target="_blank" rel="noopener"
+                           th:text="${#messages.msgOrNull('spring-jpa-admin.validation.uniqueness-violation.view') ?: 'View conflicting entity'}">View conflicting entity</a></li>
                 </ul>
                 <div th:each="fieldGroup: ${entity.fieldGroups}">
                     <!--/*@thymesVar id="fieldGroup" type="com.pocketcombats.admin.data.form.AdminFormFieldGroup"*/-->

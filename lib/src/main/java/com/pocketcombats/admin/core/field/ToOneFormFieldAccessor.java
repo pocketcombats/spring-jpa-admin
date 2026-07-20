@@ -66,7 +66,7 @@ public class ToOneFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public Map<String, Object> getModelAttributes() {
+    public Map<String, Object> getModelAttributes(Object instance) {
         List<Option> valueOptions = collectValueOptions();
         List<Option> options;
         if (optional) {

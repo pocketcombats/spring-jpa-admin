@@ -20,6 +20,7 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
         implements AdminFormFieldSingularValueAccessor {
 
     private final Enum<?>[] universe;
+    private final boolean optional;
     private final List<Option> options;
 
     public EnumFormFieldValueAccessor(
@@ -33,6 +34,7 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
         super(name, reader, writer);
 
         this.universe = type.getEnumConstants();
+        this.optional = optional;
         this.options = constructOptions(this.universe, optional, valueFormatter);
     }
 
@@ -71,16 +73,34 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
     @Override
     public void setValue(Object instance, @Nullable String value, BindingResult bindingResult) {
         if (Option.EMPTY.id().equals(value)) {
-            getWriter().setValue(instance, null);
-        } else {
-            int index = Integer.parseInt(value);
-            Enum<?> resolvedValue = universe[index];
-            getWriter().setValue(instance, resolvedValue);
+            if (optional) {
+                getWriter().setValue(instance, null);
+            } else {
+                // A required field's select never offers the empty option; a submitted sentinel is a
+                // stale or hand-crafted form and must not write null into a non-optional attribute.
+                bindingResult.rejectValue(getName(), "jakarta.validation.constraints.NotNull.message");
+            }
+            return;
         }
+        // A missing parameter, non-numeric text, or an ordinal outside the universe (a stale form
+        // submitted after the enum changed) must yield a field error, not a server error
+        int ordinal = -1;
+        if (value != null) {
+            try {
+                ordinal = Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                // Falls through to the range check below
+            }
+        }
+        if (ordinal < 0 || ordinal >= universe.length) {
+            bindingResult.rejectValue(getName(), "spring-jpa-admin.validation.constraints.ValidValue.message");
+            return;
+        }
+        getWriter().setValue(instance, universe[ordinal]);
     }
 
     @Override
-    public Map<String, Object> getModelAttributes() {
+    public Map<String, @Nullable Object> getModelAttributes(Object instance) {
         return Map.of("_options", options);
     }
 }

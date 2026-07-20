@@ -32,18 +32,19 @@ public class BooleanFormFieldValueAccessor extends AbstractFormFieldValueAccesso
     @Override
     public void setValue(Object instance, @Nullable String value, BindingResult bindingResult) {
         if (value == null) {
+            // Unchecked checkboxes are not submitted at all
             getWriter().setValue(instance, false);
         } else if ("true".equals(value)) {
             getWriter().setValue(instance, true);
         } else if ("false".equals(value)) {
             getWriter().setValue(instance, false);
         } else {
-            throw new IllegalArgumentException("Unexpected boolean value: " + value);
+            bindingResult.rejectValue(getName(), "spring-jpa-admin.validation.constraints.ValidValue.message");
         }
     }
 
     @Override
-    public Map<String, Object> getModelAttributes() {
+    public Map<String, @Nullable Object> getModelAttributes(Object instance) {
         return Collections.emptyMap();
     }
 }

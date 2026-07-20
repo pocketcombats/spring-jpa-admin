@@ -25,5 +25,8 @@ public interface AdminFormFieldValueAccessor {
      */
     @Nullable Object readValue(Object instance);
 
-    Map<String, Object> getModelAttributes();
+    /**
+     * Template attributes; may depend on the edited instance (a fresh entity when creating).
+     */
+    Map<String, ? extends @Nullable Object> getModelAttributes(Object instance);
 }

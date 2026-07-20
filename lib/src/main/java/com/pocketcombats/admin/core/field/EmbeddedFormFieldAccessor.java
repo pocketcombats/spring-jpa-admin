@@ -31,7 +31,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor
     private final ConversionService conversionService;
     private final Class<?> embeddableType;
     private final List<EmbeddedFormFieldProperty> properties;
-    private final Map<String, Object> modelAttributes;
+    private final Map<String, @Nullable Object> modelAttributes;
 
     public EmbeddedFormFieldAccessor(
             ConversionService conversionService,
@@ -55,9 +55,9 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public Map<String, Object> readValue(Object instance) {
+    public Map<String, @Nullable Object> readValue(Object instance) {
         Object embeddable = getReader().getValue(instance);
-        Map<String, Object> values = new LinkedHashMap<>(properties.size());
+        Map<String, @Nullable Object> values = new LinkedHashMap<>(properties.size());
         for (EmbeddedFormFieldProperty property : properties) {
             values.put(property.name(), embeddable == null ? null : property.read(embeddable));
         }
@@ -65,7 +65,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public Map<String, Object> getModelAttributes() {
+    public Map<String, @Nullable Object> getModelAttributes(Object instance) {
         return modelAttributes;
     }
 
@@ -105,8 +105,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor
                 LOG.debug("Failed to convert value for {}.{}", embeddableType.getSimpleName(), property.name(), e);
                 bindingResult.rejectValue(
                         getName() + "." + property.name(),
-                        "typeMismatch",
-                        "Invalid value"
+                        "spring-jpa-admin.validation.constraints.ValidValue.message"
                 );
             }
         }

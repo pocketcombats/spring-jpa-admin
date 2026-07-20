@@ -14,6 +14,8 @@ import com.pocketcombats.admin.data.form.EntityDetails;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
 import com.pocketcombats.admin.util.EntityUtils;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.FlushModeType;
+import jakarta.persistence.PersistenceUnitUtil;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.core.convert.ConversionException;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Propagation;
@@ -35,7 +38,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.SmartValidator;
-import org.springframework.web.util.HtmlUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -75,8 +77,9 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         this.messageSource = messageSource;
     }
 
-    private @Nullable String resolveId(Object entity) {
-        if (!em.contains(entity)) {
+    private @Nullable String resolveId(Object entity, FormAction action) {
+        if (action == FormAction.CREATE && !em.contains(entity)) {
+            // Not persisted (yet): the form must keep posting to the create endpoint
             return null;
         }
         return EntityUtils.getEntityStringId(em, conversionService, entity);
@@ -103,7 +106,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 : relationLinkService.collectRelationLinks(model, entity);
         return new EntityDetails(
                 model.modelName(),
-                resolveId(entity),
+                resolveId(entity, action),
                 model.label(),
                 formFieldGroups,
                 links,
@@ -112,9 +115,14 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private Object findEntity(AdminRegisteredModel model, String stringId) {
+    private Object findEntity(AdminRegisteredModel model, String stringId) throws UnknownModelException {
         RegisteredEntityDetails entityDetails = model.entityDetails();
-        Object id = conversionService.convert(stringId, entityDetails.idAttribute().getJavaType());
+        Object id;
+        try {
+            id = conversionService.convert(stringId, entityDetails.idAttribute().getJavaType());
+        } catch (ConversionException e) {
+            throw new UnknownModelException("No " + model.modelName() + " with id " + stringId);
+        }
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<?> q = cb.createQuery(entityDetails.entityClass());
         Root<?> root = q.from(entityDetails.entityClass());
@@ -122,10 +130,10 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 cb.equal(root.get((SingularAttribute) entityDetails.idAttribute()), id)
                 // TODO: support additional predicates from config
         );
-        List<?> resultList = em.createQuery(q).setMaxResults(2).getResultList();
-        // TODO: Handle 0 and 2 result list size
-        @SuppressWarnings("redundant")
-        Object entity = resultList.get(0);
+        Object entity = em.createQuery(q).getSingleResultOrNull();
+        if (entity == null) {
+            throw new UnknownModelException("No " + model.modelName() + " with id " + stringId);
+        }
         return entity;
     }
 
@@ -147,7 +155,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                                         !isEditable(model, field, action),
                                         field.template(),
                                         field.valueAccessor().readValue(entity),
-                                        field.valueAccessor().getModelAttributes()
+                                        field.valueAccessor().getModelAttributes(entity)
                                 ))
                                 .toList()
                 ))
@@ -190,13 +198,16 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         if (model.updatable()) {
             historyWriter.record(model, "edit", entity);
 
-            initializeWriteableField(model, entity);
-            em.detach(entity);
+            // Bind straight into the managed entity, deferring every flush to the transaction
+            // outcome: on binding errors the transaction rolls back and nothing is written, but the
+            // re-render's queries (option lists, autocomplete probes) must not auto-flush a
+            // half-bound — possibly invalid — entity in the meantime. Keeping the entity managed is
+            // also what lets the re-render read lazy relations, read-only to-many fields included.
+            // The persistence context is transaction-scoped, so the mode needs no restoring.
+            em.setFlushMode(FlushModeType.COMMIT);
             bindingResult = bind(model, entity, FormAction.UPDATE, rawData);
             if (bindingResult.hasErrors()) {
-                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            } else {
-                entity = em.merge(entity);
+                setRollbackOnly();
             }
         } else {
             bindingResult = new BeanPropertyBindingResult(entity, model.modelName());
@@ -208,14 +219,9 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         );
     }
 
-    private void initializeWriteableField(AdminRegisteredModel model, Object entity) {
-        List<AdminModelField> writeableFields = model.fieldsets().stream()
-                .flatMap(fieldset -> fieldset.fields().stream())
-                .filter(field -> isEditable(model, field, FormAction.UPDATE))
-                .toList();
-        for (AdminModelField field : writeableFields) {
-            field.valueAccessor().readValue(entity);
-        }
+    // Overridable seam: lets tests invoke the service outside a Spring-managed transaction
+    protected void setRollbackOnly() {
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
     }
 
     private BindingResult bind(
@@ -251,6 +257,9 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
     }
 
     private void checkUniqueness(AdminRegisteredModel model, Object entity, FormAction action, BindingResult bindingResult) {
+        if (model.uniqueConstraints().isEmpty()) {
+            return;
+        }
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<?> query = cb.createQuery(model.entityDetails().entityClass());
         Root<?> root = query.from(model.entityDetails().entityClass());
@@ -258,15 +267,29 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
                 .map(constraint -> constraint.createPredicate(cb, root, entity))
                 .toArray(Predicate[]::new);
         query.where(cb.or(predicates));
+        // COMMIT flush mode: the edited entity is managed and possibly dirty (updates bind into
+        // the managed instance); auto-flush would write the candidate value and make the entity
+        // conflict with itself
         List<?> resultList = em.createQuery(query)
+                .setFlushMode(FlushModeType.COMMIT)
                 .setMaxResults(1)
                 .getResultList();
         if (!resultList.isEmpty()) {
             var existingEntity = resultList.get(0);
-            if ((action == FormAction.UPDATE && !entity.equals(existingEntity)) || action == FormAction.CREATE) {
+            if (action == FormAction.CREATE || !isSameEntity(entity, existingEntity)) {
                 rejectWithConstraintViolation(model, entity, existingEntity, bindingResult);
             }
         }
+    }
+
+    // The edited instance may be transient (create) while existingEntity is managed, so "same row"
+    // must be decided by identifier, not by instance equality
+    private boolean isSameEntity(Object entity, Object existingEntity) {
+        PersistenceUnitUtil persistenceUnitUtil = em.getEntityManagerFactory().getPersistenceUnitUtil();
+        return Objects.equals(
+                persistenceUnitUtil.getIdentifier(entity),
+                persistenceUnitUtil.getIdentifier(existingEntity)
+        );
     }
 
     private void rejectWithConstraintViolation(
@@ -275,38 +298,52 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             Object conflictingEntity,
             BindingResult bindingResult
     ) {
-        String conflictingEntityId = Objects.requireNonNull(resolveId(conflictingEntity));
+        String conflictingEntityId = EntityUtils.getEntityStringId(em, conversionService, conflictingEntity);
         for (var constraint : model.uniqueConstraints()) {
             if (constraint.matches(entity, conflictingEntity)) {
-                // These args end up in a th:utext block; escape them so only the message template controls markup
                 String violatingFields = constraint.getFieldLabels().stream()
                         .map(label -> {
                             String resolved = messageSource.getMessage(label, null, label, LocaleContextHolder.getLocale());
-                            return "<b>" + HtmlUtils.htmlEscape(resolved != null ? resolved : label) + "</b>";
+                            return resolved != null ? resolved : label;
                         })
                         .collect(Collectors.joining(", "));
-                var errorArgs = new String[]{
-                        HtmlUtils.htmlEscape(model.modelName()),
-                        HtmlUtils.htmlEscape(conflictingEntityId),
-                        violatingFields
-                };
-                bindingResult.reject(
+                addConflictError(
+                        bindingResult,
                         "spring-jpa-admin.validation.uniqueness-violation.fields.message",
-                        errorArgs,
-                        null
+                        new String[]{model.modelName(), conflictingEntityId, violatingFields},
+                        model,
+                        conflictingEntityId
                 );
                 return;
             }
         }
         LOG.warn("Could not detect constraint violation for {}", model.modelName());
-        bindingResult.reject(
+        addConflictError(
+                bindingResult,
                 "spring-jpa-admin.validation.uniqueness-violation.message",
-                new String[]{
-                        HtmlUtils.htmlEscape(model.modelName()),
-                        HtmlUtils.htmlEscape(conflictingEntityId)
-                },
-                null
+                new String[]{model.modelName(), conflictingEntityId},
+                model,
+                conflictingEntityId
         );
+    }
+
+    // Equivalent to BindingResult.reject, but the error additionally carries the conflicting
+    // entity's coordinates so the form can render a "view conflicting entity" link next to the
+    // plain-text message.
+    private void addConflictError(
+            BindingResult bindingResult,
+            String code,
+            String[] args,
+            AdminRegisteredModel model,
+            String conflictingEntityId
+    ) {
+        bindingResult.addError(new UniquenessViolationError(
+                bindingResult.getObjectName(),
+                bindingResult.resolveMessageCodes(code),
+                args,
+                model.modelName(),
+                conflictingEntityId
+        ));
     }
 
     @Override
@@ -323,11 +360,10 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             throw new AccessDeniedException("You don't have permission to edit " + modelName);
         }
 
-        AdminModelField field = model.fieldsets().stream()
-                .flatMap(fieldset -> fieldset.fields().stream())
-                .filter(candidate -> candidate.name().equals(fieldName))
-                .findAny()
-                .orElseThrow();
+        AdminModelField field = model.findFormField(fieldName)
+                .orElseThrow(() -> new UnknownModelException(
+                        "Model " + modelName + " has no field " + fieldName
+                ));
         if (!isEditable(model, field, FormAction.UPDATE)) {
             LOG.error("Model {} field {} is not editable", modelName, fieldName);
             throw new UnknownModelException();
@@ -341,9 +377,10 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
         } else {
             LOG.error("Can't resolve value accessor type for field {} of model {}", field.name(), model.modelName());
         }
+        checkUniqueness(model, entity, FormAction.UPDATE, bindingResult);
         validator.validate(entity, bindingResult, AdminValidation.class, Default.class);
         if (bindingResult.hasErrors()) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            setRollbackOnly();
         }
         return bindingResult;
     }
@@ -382,7 +419,7 @@ public class AdminModelFormServiceImpl implements AdminModelFormService {
             historyWriter.record(model, "create", entity);
         } else {
             LOG.debug("Binding result has errors, can't save new {}", model.modelName());
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            setRollbackOnly();
         }
 
         return new AdminModelEditingResult(

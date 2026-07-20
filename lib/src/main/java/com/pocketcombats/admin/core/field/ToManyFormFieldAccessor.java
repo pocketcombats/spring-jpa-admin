@@ -91,7 +91,7 @@ public class ToManyFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public Map<String, Object> getModelAttributes() {
+    public Map<String, Object> getModelAttributes(Object instance) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<?> query = cb.createQuery(attributeElementJavaType);
         query.from(attributeElementJavaType);
