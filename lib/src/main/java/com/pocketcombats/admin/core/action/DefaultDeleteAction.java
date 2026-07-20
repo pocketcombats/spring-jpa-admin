@@ -1,12 +1,8 @@
 package com.pocketcombats.admin.core.action;
 
 import com.pocketcombats.admin.core.AdminRegisteredModel;
-import com.pocketcombats.admin.core.RegisteredEntityDetails;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaDelete;
-import jakarta.persistence.criteria.Root;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -14,6 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Default "delete" action. Removes each entity via {@link EntityManager#remove}, so JPA cascade
+ * {@code REMOVE}, {@code orphanRemoval} and entity lifecycle callbacks (e.g. {@code @PreRemove}) apply.
+ */
 public class DefaultDeleteAction implements AdminModelAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultDeleteAction.class);
@@ -41,20 +41,17 @@ public class DefaultDeleteAction implements AdminModelAction {
 
     @Override
     @Transactional(propagation = Propagation.MANDATORY, rollbackFor = Exception.class)
-    @SuppressWarnings({"rawtypes", "unchecked"})
     public void run(EntityManager em, AdminRegisteredModel model, List<?> entities) {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Performing delete action for {} entities", entities.size());
         }
         recordHistory(model, entities);
 
-        // Perform batch delete rather than deleting entities one-by-one
-        RegisteredEntityDetails entityDetails = model.entityDetails();
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaDelete query = cb.createCriteriaDelete(entityDetails.entityClass());
-        Root<?> root = query.from(entityDetails.entityClass());
-        query.where(root.in(entities));
-        em.createQuery(query).executeUpdate();
+        // The entities are already managed (loaded by the action service); em.remove is what
+        // lets cascades and lifecycle callbacks run, unlike a bulk CriteriaDelete
+        for (Object entity : entities) {
+            em.remove(entity);
+        }
     }
 
     protected void recordHistory(AdminRegisteredModel model, List<?> entities) {
