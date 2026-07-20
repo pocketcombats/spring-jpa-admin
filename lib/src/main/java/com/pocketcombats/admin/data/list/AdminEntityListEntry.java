@@ -8,9 +8,9 @@ import java.util.List;
 public class AdminEntityListEntry implements Serializable {
 
     private final String id;
-    private final List<@Nullable Object> attributes;
+    private final List<? extends @Nullable Object> attributes;
 
-    public AdminEntityListEntry(String id, List<@Nullable Object> attributes) {
+    public AdminEntityListEntry(String id, List<? extends @Nullable Object> attributes) {
         this.id = id;
         this.attributes = attributes;
     }
