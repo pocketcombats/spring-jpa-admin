@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.DefaultRedirectStrategy;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Controller
 public class AdminLoginController {
@@ -48,9 +50,11 @@ public class AdminLoginController {
 
     @PostMapping("/admin/login/success")
     public void success(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof SpringJpaAdminUser adminUser) {
-            service.logAuthentication(adminUser.getId(), request);
+        // This handler only runs after successful authentication, so the authentication and the
+        // persisted user's id are always present; assert it to keep the callee's non-null contract.
+        Authentication authentication = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication());
+        if (authentication.getPrincipal() instanceof SpringJpaAdminUser adminUser) {
+            service.logAuthentication(Objects.requireNonNull(adminUser.getId()), request);
         }
 
         SavedRequest savedRequest = this.requestCache.getRequest(request, response);
