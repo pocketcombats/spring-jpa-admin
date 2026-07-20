@@ -9,7 +9,8 @@ import java.lang.annotation.Target;
 /**
  * Annotate admin model or entity method to create custom admin bulk action.
  * Annotated method must accept single argument of type {@code List<EntityType>}.
- * Annotated entity method must be declared static.
+ * Annotated entity method must be declared static;
+ * in Kotlin, declare entity actions in the entity's companion object.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
