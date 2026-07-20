@@ -5,6 +5,7 @@ import com.pocketcombats.admin.AdminFieldOverride;
 import com.pocketcombats.admin.AdminModel;
 import com.pocketcombats.admin.core.AdminModelField;
 import com.pocketcombats.admin.core.AdminModelListField;
+import com.pocketcombats.admin.core.EntityOptionMapper;
 import com.pocketcombats.admin.core.field.*;
 import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.filter.BasicFilterOptionsCollector;
@@ -233,14 +234,12 @@ public class FieldFactory {
         Attribute.PersistentAttributeType attributeType = attribute.getPersistentAttributeType();
         return switch (attributeType) {
             case ONE_TO_ONE, MANY_TO_ONE -> new ToOneFilterOptionsCollector(
-                    em, conversionService,
-                    entity, attribute,
-                    createValueFormatter(name)
+                    em, entity, attribute,
+                    createOptionMapper(name)
             );
             case ONE_TO_MANY, MANY_TO_MANY -> new ToManyFilterOptionsCollector(
-                    em, conversionService,
-                    entity, attribute,
-                    createValueFormatter(name)
+                    em, entity, attribute,
+                    createOptionMapper(name)
             );
             case BASIC -> TypeUtils.isBoolean(attribute.getJavaType())
                     ? new BooleanFilterOptionsCollector(em, entity, attribute)
@@ -654,6 +653,10 @@ public class FieldFactory {
                     reader, writer, createValueFormatter(name)
             );
         }
+    }
+
+    private EntityOptionMapper createOptionMapper(String fieldName) {
+        return new EntityOptionMapper(em, conversionService, createValueFormatter(fieldName));
     }
 
     private ValueFormatter createValueFormatter(String fieldName) {

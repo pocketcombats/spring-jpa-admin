@@ -1,45 +1,30 @@
 package com.pocketcombats.admin.core.filter;
 
-import com.pocketcombats.admin.core.formatter.ValueFormatter;
-import com.pocketcombats.admin.util.EntityUtils;
+import com.pocketcombats.admin.core.EntityOptionMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
-import org.springframework.core.convert.ConversionService;
 
 import java.util.List;
 
 public class ToOneFilterOptionsCollector extends AbstractAttributeFilterOptionsCollector {
 
-    private final EntityManager em;
-    private final ConversionService conversionService;
-    private final ValueFormatter valueFormatter;
+    private final EntityOptionMapper optionMapper;
 
     public ToOneFilterOptionsCollector(
             EntityManager em,
-            ConversionService conversionService,
             EntityType<?> entityType,
             Attribute<?, ?> attribute,
-            ValueFormatter valueFormatter
+            EntityOptionMapper optionMapper
     ) {
         super(em, entityType, attribute);
-        this.em = em;
-        this.conversionService = conversionService;
-        this.valueFormatter = valueFormatter;
+        this.optionMapper = optionMapper;
     }
 
     @Override
     protected List<ModelFilterOption> mapResults(List<?> resultList) {
         return resultList.stream()
-                .map(relation -> new ModelFilterOption(getEntityStringValue(relation), getEntityStringId(relation)))
+                .map(relation -> new ModelFilterOption(optionMapper.label(relation), optionMapper.stringId(relation)))
                 .toList();
-    }
-
-    protected String getEntityStringId(Object entity) {
-        return EntityUtils.getEntityStringId(em, conversionService, entity);
-    }
-
-    protected String getEntityStringValue(Object entity) {
-        return valueFormatter.format(entity);
     }
 }
