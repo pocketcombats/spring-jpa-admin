@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.beans.PropertyDescriptor;
@@ -282,6 +283,9 @@ public class FieldFactory {
                         (AnnotatedElement) attribute.getJavaMember(),
                         AdminField.class
                 );
+                if (annotation == null) {
+                    annotation = findPairedMemberFieldConfig(attribute);
+                }
                 if (annotation != null) {
                     return annotation;
                 }
@@ -294,16 +298,52 @@ public class FieldFactory {
         if (adminModelBean != null) {
             Method method = findModelAdminPropertyReader(adminModelBean.modelClass(), name, targetClass);
             if (method != null) {
-                AdminField annotation = AnnotationUtils.getAnnotation(
+                return AnnotationUtils.getAnnotation(
                         method,
                         AdminField.class
                 );
-                if (annotation != null) {
-                    return annotation;
-                }
             }
         }
 
+        return null;
+    }
+
+    /**
+     * The JPA metamodel exposes a single java member per attribute: the field under field access,
+     * the getter under property access. {@code @AdminField} placed on the other member would be
+     * silently ignored — in Kotlin this is an easy trap, since a bare {@code @AdminField} on a
+     * property annotates the backing field even when JPA access is via getters. Check the paired
+     * member so the configuration is honored under either access type.
+     */
+    private static @Nullable AdminField findPairedMemberFieldConfig(Attribute<?, ?> attribute) {
+        Member javaMember = attribute.getJavaMember();
+        Class<?> declaringClass = javaMember.getDeclaringClass();
+        String name = attribute.getName();
+        if (javaMember instanceof Method) {
+            // Kotlin "is"-prefixed properties keep the prefix in the backing field name:
+            // getter isActive() derives attribute "active", but the field is "isActive"
+            for (String fieldName : List.of(name, "is" + StringUtils.capitalize(name))) {
+                Field field = ReflectionUtils.findField(declaringClass, fieldName);
+                if (field != null) {
+                    AdminField annotation = AnnotationUtils.getAnnotation(field, AdminField.class);
+                    if (annotation != null) {
+                        return annotation;
+                    }
+                }
+            }
+        } else if (javaMember instanceof Field) {
+            String capitalized = StringUtils.capitalize(name);
+            // The bare name covers Kotlin "is"-prefixed properties, whose getter is the field name itself
+            for (String getterName : List.of("get" + capitalized, "is" + capitalized, name)) {
+                Method getter = ReflectionUtils.findMethod(declaringClass, getterName);
+                if (getter != null) {
+                    AdminField annotation = AnnotationUtils.getAnnotation(getter, AdminField.class);
+                    if (annotation != null) {
+                        return annotation;
+                    }
+                }
+            }
+        }
         return null;
     }
 
