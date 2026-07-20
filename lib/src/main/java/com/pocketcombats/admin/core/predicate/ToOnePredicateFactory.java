@@ -1,6 +1,7 @@
 package com.pocketcombats.admin.core.predicate;
 
 
+import com.pocketcombats.admin.util.ConversionUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
@@ -41,9 +42,10 @@ public class ToOnePredicateFactory implements ValuePredicateFactory {
         if (attribute.getJavaType().isAssignableFrom(value.getClass())) {
             reference = value;
         } else {
-            Object id = attributeIdType.isAssignableFrom(value.getClass())
-                    ? value
-                    : conversionService.convert(value, attributeIdType);
+            Object id = ConversionUtils.tryConvert(conversionService, value, attributeIdType);
+            if (id == null) {
+                return cb.disjunction();
+            }
             reference = em.getReference(attribute.getJavaType(), id);
         }
         return cb.equal(root.get(attribute.getName()), reference);

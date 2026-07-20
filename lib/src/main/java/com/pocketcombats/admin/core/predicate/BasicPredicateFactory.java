@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core.predicate;
 
+import com.pocketcombats.admin.util.ConversionUtils;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -26,9 +27,10 @@ public class BasicPredicateFactory implements ValuePredicateFactory {
             return cb.isNull(root.get(attribute.getName()));
         }
 
-        Object value = attribute.getJavaType().isAssignableFrom(rawValue.getClass())
-                ? rawValue
-                : conversionService.convert(rawValue, attribute.getJavaType());
+        Object value = ConversionUtils.tryConvert(conversionService, rawValue, attribute.getJavaType());
+        if (value == null) {
+            return cb.disjunction();
+        }
         return cb.equal(root.get(attribute.getName()), value);
     }
 }

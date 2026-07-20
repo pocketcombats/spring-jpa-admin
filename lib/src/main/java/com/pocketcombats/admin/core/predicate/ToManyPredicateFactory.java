@@ -1,5 +1,6 @@
 package com.pocketcombats.admin.core.predicate;
 
+import com.pocketcombats.admin.util.ConversionUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
@@ -40,9 +41,10 @@ public class ToManyPredicateFactory implements ValuePredicateFactory {
     @Contract("_, _, null -> fail")
     public Predicate createPredicate(CriteriaBuilder cb, Root<?> root, @Nullable Object value) {
         Objects.requireNonNull(value);
-        Object id = attributeIdType.isAssignableFrom(value.getClass())
-                ? value
-                : conversionService.convert(value, attributeIdType);
+        Object id = ConversionUtils.tryConvert(conversionService, value, attributeIdType);
+        if (id == null) {
+            return cb.disjunction();
+        }
         Object reference = em.getReference(attributeElementType, id);
         return cb.isMember(reference, root.get(attribute.getName()));
     }
