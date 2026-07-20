@@ -5,6 +5,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
+import java.util.Locale;
 import java.util.Optional;
 
 public class TextSearchPredicateFactory implements SearchPredicateFactory {
@@ -20,7 +21,9 @@ public class TextSearchPredicateFactory implements SearchPredicateFactory {
         return Optional.of(
                 cb.like(
                         cb.lower(PathUtils.resolve(root, path)),
-                        "%" + AdminStringUtils.escapeLikeClause(searchQuery.toLowerCase()) + "%",
+                        // Locale.ROOT keeps the query side in sync with the database's LOWER()
+                        // (the default locale would break e.g. under Turkish dotless-i rules)
+                        "%" + AdminStringUtils.escapeLikeClause(searchQuery.toLowerCase(Locale.ROOT)) + "%",
                         '\\'
                 )
         );
