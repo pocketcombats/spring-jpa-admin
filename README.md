@@ -57,6 +57,18 @@ allowing you to control who can view, edit, or create entities for each model. S
 
 For authentication, you can use the [Authentication Plugin](#authentication-plugin) or integrate with your existing authentication.
 
+Two properties tune the security auto-configuration:
+- `spring.jpa-admin.configure-security` (default: `true`) — registers a filter chain permitting the static `/webjars/**` resources used by the admin UI. Disable it if your application manages its own filter chains.
+- `spring.jpa-admin.method-security` (default: `true`) — enables `@Secured` method security, which enforces the role checks on all admin endpoints. Disable it only if your application already enables `@Secured` support itself, e.g. via its own `@EnableMethodSecurity(securedEnabled = true)`.
+
+> **Upgrade note:** earlier versions enabled `@Secured` enforcement only when `configure-security` was on,
+> so setting `spring.jpa-admin.configure-security=false` used to leave the role checks inert.
+> Method security is now a separate, default-on switch: it stays active regardless of `configure-security`,
+> and admin users therefore always need the `ROLE_JPA_ADMIN` role (endpoints return 403 otherwise).
+> This fail-closed default is deliberate — a custom filter chain that forgets to cover `/admin/**` no longer
+> leaves the admin endpoints unprotected. If your application intentionally guards them some other way,
+> set `spring.jpa-admin.method-security=false`.
+
 ## Quick start
 To quickly grasp the capabilities of Spring JPA Admin, we recommend exploring the included `demo` application.
 This application serves as a practical showcase of various features, allowing you to replicate and customize them in your own project.  
