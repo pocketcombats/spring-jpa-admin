@@ -43,7 +43,7 @@ public class ModelActionController {
     ) throws UnknownModelException, UnknownActionException {
         List<String> ids = request.id();
         if (ids == null || ids.isEmpty()) {
-            return new ModelAndView("redirect:/admin/" + model + "/");
+            return new ModelAndView("redirect:/admin/{model}/");
         }
 
         ActionPrompt prompt = service.prompt(model, request.action(), ids);
@@ -63,6 +63,6 @@ public class ModelActionController {
         if (ids != null && !ids.isEmpty()) {
             service.perform(model, confirmation.action(), ids);
         }
-        return "redirect:/admin/" + model + "/";
+        return "redirect:/admin/{model}/";
     }
 }

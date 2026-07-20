@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Controller
 public class ModelFormController {
@@ -54,9 +55,16 @@ public class ModelFormController {
             );
         } else {
             if (data.containsKey("save-continue")) {
-                return new ModelAndView("redirect:/admin/" + model + "/edit/" + result.entityDetails().id() + "/");
+                // A URI template, not concatenation: RedirectView percent-encodes each expanded
+                // variable, which string concatenation would skip — breaking string ids containing
+                // reserved characters. {model} fills from the current request's path variable; the
+                // new entity's id is not a request variable and is supplied through the model.
+                return new ModelAndView(
+                        "redirect:/admin/{model}/edit/{id}/",
+                        Map.of("id", Objects.requireNonNull(result.entityDetails().id()))
+                );
             } else {
-                return new ModelAndView("redirect:/admin/" + model + "/");
+                return new ModelAndView("redirect:/admin/{model}/");
             }
         }
     }
@@ -89,9 +97,11 @@ public class ModelFormController {
             );
         } else {
             if (data.containsKey("save-continue")) {
-                return new ModelAndView("redirect:/admin/" + model + "/edit/" + id + "/");
+                // URI template so RedirectView re-encodes {model} and {id} from the request's path
+                // variables; concatenating the decoded values would corrupt ids with reserved characters
+                return new ModelAndView("redirect:/admin/{model}/edit/{id}/");
             } else {
-                return new ModelAndView("redirect:/admin/" + model + "/");
+                return new ModelAndView("redirect:/admin/{model}/");
             }
         }
     }
