@@ -17,12 +17,13 @@ public class CompositeSearchPredicateFactory implements SearchPredicateFactory {
 
     @Override
     public Optional<Predicate> build(CriteriaBuilder cb, Root<?> root, String searchQuery) {
-        return Optional.of(
-                cb.or(
-                        factories.stream()
-                                .flatMap(factory -> factory.build(cb, root, searchQuery).stream())
-                                .toArray(Predicate[]::new)
-                )
-        );
+        List<Predicate> predicates = factories.stream()
+                .flatMap(factory -> factory.build(cb, root, searchQuery).stream())
+                .toList();
+        return switch (predicates.size()) {
+            case 0 -> Optional.empty();
+            case 1 -> Optional.of(predicates.get(0));
+            default -> Optional.of(cb.or(predicates.toArray(new Predicate[0])));
+        };
     }
 }
