@@ -1,6 +1,5 @@
 package com.pocketcombats.admin.util;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -26,13 +25,9 @@ public class AdminStringUtilsTest {
             "a_b,a\\_b",
             "50%_off,50\\%\\_off",
             "[test],\\[test\\]",
+            "a\\b,a\\\\b",
     })
     public void escapesLikeWildcards(String input, String expectedOutput) {
         assertEquals(expectedOutput, AdminStringUtils.escapeLikeClause(input));
-    }
-
-    @Test
-    public void escapesBackslashWithSingleBackslash() {
-        assertEquals("a\\\\b", AdminStringUtils.escapeLikeClause("a\\b"));
     }
 }
