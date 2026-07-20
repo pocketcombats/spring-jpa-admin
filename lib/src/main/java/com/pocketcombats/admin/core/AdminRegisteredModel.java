@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Represents a registered admin model in the system.
@@ -102,4 +103,13 @@ public record AdminRegisteredModel(
         AdminModelPermissions permissions
 ) {
 
+    /**
+     * The named form field, searched across all fieldsets.
+     */
+    public Optional<AdminModelField> findFormField(String fieldName) {
+        return fieldsets.stream()
+                .flatMap(fieldset -> fieldset.fields().stream())
+                .filter(field -> field.name().equals(fieldName))
+                .findFirst();
+    }
 }

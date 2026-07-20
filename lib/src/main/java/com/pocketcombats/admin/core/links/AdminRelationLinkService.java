@@ -60,10 +60,8 @@ public class AdminRelationLinkService {
     }
 
     private @Nullable AdminRelationLink createRelationLink(Object entity, AdminModelLink modelLink) {
-        AdminRegisteredModel targetModel;
-        try {
-            targetModel = modelRegistry.resolve(modelLink.target().getSimpleName());
-        } catch (UnknownModelException e) {
+        AdminRegisteredModel targetModel = modelRegistry.findByEntityClass(modelLink.target()).orElse(null);
+        if (targetModel == null) {
             LOG.error("Class {} isn't a registered admin model", modelLink.target());
             return null;
         }
