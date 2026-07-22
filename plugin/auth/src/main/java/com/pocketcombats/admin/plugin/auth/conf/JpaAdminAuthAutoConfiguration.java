@@ -31,7 +31,7 @@ public class JpaAdminAuthAutoConfiguration implements ApplicationListener<Contex
     public JpaAdminAuthAutoConfiguration(
             JpaAdminAuthProperties properties
     ) {
-        this.passwordStrength = properties.passWordStrength();
+        this.passwordStrength = properties.passwordStrength();
         this.createDefaultAdmin = properties.createDefaultAdmin();
     }
 

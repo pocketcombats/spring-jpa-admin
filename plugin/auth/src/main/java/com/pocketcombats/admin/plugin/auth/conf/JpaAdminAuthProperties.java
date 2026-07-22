@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties("spring.jpa-admin.auth")
 public record JpaAdminAuthProperties(
-        @DefaultValue("10") int passWordStrength,
+        @DefaultValue("10") int passwordStrength,
         @DefaultValue("false") boolean createDefaultAdmin
 ) {
 }
