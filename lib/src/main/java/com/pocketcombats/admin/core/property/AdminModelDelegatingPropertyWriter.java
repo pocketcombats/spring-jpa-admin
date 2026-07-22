@@ -14,11 +14,16 @@ public class AdminModelDelegatingPropertyWriter implements AdminModelPropertyWri
     private final Class<?> javaType;
 
     public AdminModelDelegatingPropertyWriter(String propertyName, Object adminModel, Method method) {
+        if (method.getParameterCount() != 2) {
+            throw new IllegalArgumentException(
+                    "Admin model property writer method must accept (entity, value): " + method
+            );
+        }
         this.propertyName = propertyName;
         this.adminModel = adminModel;
         this.method = method;
         ReflectionUtils.makeAccessible(method);
-        this.javaType = method.getReturnType();
+        this.javaType = method.getParameterTypes()[1];
     }
 
     @Override

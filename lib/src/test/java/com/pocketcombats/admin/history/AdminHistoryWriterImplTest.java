@@ -3,16 +3,15 @@ package com.pocketcombats.admin.history;
 import com.pocketcombats.admin.core.AdminModelListEntityMapper;
 import com.pocketcombats.admin.core.AdminModelListField;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.TestCategory;
 import com.pocketcombats.admin.test.TestModels;
 import com.pocketcombats.admin.test.TestPost;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.core.convert.support.DefaultConversionService;
 
 import java.util.List;
@@ -21,28 +20,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AdminHistoryWriterImplTest {
 
-    private static EntityManagerFactory emf;
+    @RegisterExtension
+    static JpaTestHarness jpa =
+            JpaTestHarness.withEntities(AdminHistoryLog.class, TestCategory.class, TestPost.class);
 
     private final DefaultConversionService conversionService = new DefaultConversionService();
 
-    @BeforeAll
-    static void createFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory(AdminHistoryLog.class, TestCategory.class, TestPost.class);
-    }
-
-    @AfterAll
-    static void closeFactory() {
-        emf.close();
-    }
-
     @BeforeEach
-    void setUp() {
-        JpaTestUtils.inTransaction(emf, em -> {
-            em.createQuery("DELETE FROM AdminHistoryLog").executeUpdate();
-            em.createQuery("DELETE FROM TestPost").executeUpdate();
-            em.createQuery("DELETE FROM TestCategory").executeUpdate();
-            em.persist(new TestCategory(1L, "Category 1"));
-        });
+    void seedCategory() {
+        JpaTestUtils.inTransaction(jpa.emf(), em -> em.persist(new TestCategory(1L, "Category 1")));
     }
 
     @Test
@@ -64,7 +50,7 @@ class AdminHistoryWriterImplTest {
     }
 
     private void record(AdminRegisteredModel model) {
-        JpaTestUtils.inTransaction(emf, em -> {
+        JpaTestUtils.inTransaction(jpa.emf(), em -> {
             AdminHistoryWriterImpl writer = new AdminHistoryWriterImpl(
                     new AdminModelListEntityMapper(em, conversionService),
                     em,
@@ -75,7 +61,7 @@ class AdminHistoryWriterImplTest {
     }
 
     private AdminHistoryLog singleLog() {
-        try (EntityManager em = emf.createEntityManager()) {
+        try (EntityManager em = jpa.emf().createEntityManager()) {
             List<AdminHistoryLog> logs = em
                     .createQuery("SELECT l FROM AdminHistoryLog l", AdminHistoryLog.class)
                     .getResultList();

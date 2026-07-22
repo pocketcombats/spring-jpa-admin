@@ -1,52 +1,26 @@
 package com.pocketcombats.admin.core.search;
 
-import com.pocketcombats.admin.test.JpaTestUtils;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.TestCategory;
 import com.pocketcombats.admin.test.TestComment;
 import com.pocketcombats.admin.test.TestPost;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PathUtilsTest {
 
-    private static EntityManagerFactory emf;
-
-    private EntityManager em;
-
-    @BeforeAll
-    static void createEntityManagerFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory();
-    }
-
-    @AfterAll
-    static void closeEntityManagerFactory() {
-        emf.close();
-    }
-
-    @BeforeEach
-    void openEntityManager() {
-        em = emf.createEntityManager();
-    }
-
-    @AfterEach
-    void closeEntityManager() {
-        em.close();
-    }
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withDefaultEntities();
 
     private <T> Root<T> root(Class<T> entityClass) {
-        return em.getCriteriaBuilder().createQuery(entityClass).from(entityClass);
+        return jpa.em().getCriteriaBuilder().createQuery(entityClass).from(entityClass);
     }
 
     @Test

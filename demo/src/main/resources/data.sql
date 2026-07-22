@@ -22,3 +22,13 @@ INSERT INTO post_tags (post_id, tag_id)
 VALUES (1, 1),
        (2, 1),
        (2, 2);
+
+INSERT INTO demo_comment (id, post_id, post_time, author_id, text)
+VALUES (1, 1, '2023-06-18T11:00Z', 1, 'Great first post!'),
+       (2, 1, '2023-06-18T12:15Z', 2, 'Thanks for reading, glad you liked it.'),
+       (3, 4, '2023-06-19T00:45Z', 3, 'Looking forward to the next one.');
+
+-- Restart the Hibernate-managed id sequences.
+-- demo_user, tag and demo_post_reaction ids are assigned manually (no @GeneratedValue).
+ALTER SEQUENCE demo_post_seq RESTART WITH 100;
+ALTER SEQUENCE demo_comment_seq RESTART WITH 100;

@@ -1,8 +1,9 @@
 package com.pocketcombats.admin.core.search;
 
+import jakarta.persistence.criteria.AbstractQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import org.springframework.core.convert.ConversionException;
 import org.springframework.core.convert.ConversionService;
 
@@ -21,7 +22,7 @@ public class NumberSearchPredicateFactory implements SearchPredicateFactory {
     }
 
     @Override
-    public Optional<Predicate> build(CriteriaBuilder cb, Root<?> root, String searchQuery) {
+    public Optional<Predicate> build(CriteriaBuilder cb, AbstractQuery<?> query, From<?, ?> from, String searchQuery) {
         Number value;
         try {
             value = conversionService.convert(searchQuery, type);
@@ -29,6 +30,6 @@ public class NumberSearchPredicateFactory implements SearchPredicateFactory {
             return Optional.empty();
         }
 
-        return Optional.of(cb.equal(PathUtils.resolve(root, path), value));
+        return Optional.of(cb.equal(PathUtils.resolve(from, path), value));
     }
 }

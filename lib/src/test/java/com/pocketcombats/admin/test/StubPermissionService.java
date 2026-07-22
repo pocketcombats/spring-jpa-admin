@@ -6,27 +6,37 @@ import com.pocketcombats.admin.core.permission.AdminPermissionService;
 import java.util.HashSet;
 import java.util.Set;
 
-/** Permits everything until models are {@link #deny denied} view access by name. */
+/** Permits everything until the name denies models view, edit, or create access. */
 public final class StubPermissionService implements AdminPermissionService {
 
-    private final Set<String> denied = new HashSet<>();
+    private final Set<String> deniedView = new HashSet<>();
+    private final Set<String> deniedEdit = new HashSet<>();
+    private final Set<String> deniedCreate = new HashSet<>();
 
     public void deny(String... modelNames) {
-        denied.addAll(Set.of(modelNames));
+        deniedView.addAll(Set.of(modelNames));
+    }
+
+    public void denyEdit(String... modelNames) {
+        deniedEdit.addAll(Set.of(modelNames));
+    }
+
+    public void denyCreate(String... modelNames) {
+        deniedCreate.addAll(Set.of(modelNames));
     }
 
     @Override
     public boolean canView(AdminRegisteredModel model) {
-        return !denied.contains(model.modelName());
+        return !deniedView.contains(model.modelName());
     }
 
     @Override
     public boolean canEdit(AdminRegisteredModel model) {
-        return true;
+        return !deniedEdit.contains(model.modelName());
     }
 
     @Override
     public boolean canCreate(AdminRegisteredModel model) {
-        return true;
+        return !deniedCreate.contains(model.modelName());
     }
 }

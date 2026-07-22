@@ -16,6 +16,8 @@ public class TestPost {
     @ManyToOne(fetch = FetchType.LAZY)
     private TestCategory category;
 
+    private String title;
+
     private Instant postTime;
 
     protected TestPost() {
@@ -30,6 +32,12 @@ public class TestPost {
         this.category = category;
     }
 
+    public TestPost(Long id, TestCategory category, String title) {
+        this.id = id;
+        this.category = category;
+        this.title = title;
+    }
+
     public Long getId() {
         return id;
     }
@@ -38,8 +46,8 @@ public class TestPost {
         return category;
     }
 
-    public void setCategory(TestCategory category) {
-        this.category = category;
+    public String getTitle() {
+        return title;
     }
 
     public Instant getPostTime() {

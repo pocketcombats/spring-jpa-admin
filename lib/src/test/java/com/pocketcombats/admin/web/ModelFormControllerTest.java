@@ -4,81 +4,112 @@ import com.pocketcombats.admin.conf.JpaAdminProperties;
 import com.pocketcombats.admin.core.AdminModelEditingResult;
 import com.pocketcombats.admin.core.AdminModelFormService;
 import com.pocketcombats.admin.data.form.EntityDetails;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 import java.util.List;
-import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.pocketcombats.admin.test.TestForms.formData;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class ModelFormControllerTest {
 
     private static final JpaAdminProperties PROPERTIES = new JpaAdminProperties(
-            null, false, 10, true, true,
+            /* autoConfigurationOrder */ null,
+            /* disableHistory */ false,
+            /* historySize */ 10,
+            /* maxPreloadedOptions */ 100,
+            /* maxCountedOptions */ 1000,
+            /* autocompletePageSize */ 20,
+            /* methodSecurity */ true,
+            /* configureSecurity */ true,
             new JpaAdminProperties.Templates("admin/index", "admin/list", "admin/form", "admin/action")
     );
 
-    private final StubFormService formService = new StubFormService();
+    private final AdminModelFormService formService = mock(AdminModelFormService.class, invocation -> {
+        throw new UnsupportedOperationException("not stubbed: " + invocation.getMethod().getName());
+    });
     private final ModelFormController controller = new ModelFormController(PROPERTIES, formService);
+    private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller)
+            .setViewResolvers(new InternalResourceViewResolver())
+            .build();
 
     @Test
     void successfulUpdateWithSaveContinueRedirectsToEditForm() throws Exception {
-        formService.updateResult = result("1", false);
+        doReturn(result("1", false)).when(formService)
+                .update("post", "1", formData("model-field-name", "Renamed", "save-continue", ""));
 
-        ModelAndView mav = controller.update("post", "1", formData("save-continue"));
-
-        // Redirect (POST-redirect-GET) so a browser refresh doesn't re-submit the form.
-        // A URI template, not a concatenated URL: RedirectView re-expands {model}/{id} from the
-        // request's path variables and percent-encodes them, which keeps string ids with
-        // reserved characters intact.
-        assertEquals("redirect:/admin/{model}/edit/{id}/", mav.getViewName());
+        mockMvc.perform(post("/admin/post/edit/1/")
+                        .param("model-field-name", "Renamed")
+                        .param("save-continue", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/post/edit/1/"));
     }
 
     @Test
     void successfulUpdateRedirectsToList() throws Exception {
-        formService.updateResult = result("1", false);
+        doReturn(result("1", false)).when(formService).update("post", "1", formData("save", ""));
 
-        ModelAndView mav = controller.update("post", "1", formData("save"));
+        mockMvc.perform(post("/admin/post/edit/1/").param("save", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/post/"));
+    }
 
-        assertEquals("redirect:/admin/{model}/", mav.getViewName());
+    @Test
+    void updateRedirectPercentEncodesReservedCharactersInThePathVariables() throws Exception {
+        doReturn(result("a b&c", false)).when(formService)
+                .update("post", "a b&c", formData("save-continue", ""));
+
+        mockMvc.perform(post("/admin/post/edit/{id}/", "a b&c").param("save-continue", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/post/edit/a%20b&c/"));
     }
 
     @Test
     void updateWithErrorsRerendersForm() throws Exception {
-        formService.updateResult = result("1", true);
+        AdminModelEditingResult result = result("1", true);
+        doReturn(result).when(formService).update("post", "1", formData("save", ""));
 
-        ModelAndView mav = controller.update("post", "1", formData("save"));
+        // No redirect on validation failure
+        ModelAndView mav = mockMvc.perform(post("/admin/post/edit/1/").param("save", ""))
+                .andExpect(status().isOk())
+                .andExpect(forwardedUrl("admin/form"))
+                .andReturn().getModelAndView();
 
-        assertEquals("admin/form", mav.getViewName());
-        assertSame(formService.updateResult.entityDetails(), mav.getModel().get("entity"));
-        assertSame(formService.updateResult.bindingResult(), mav.getModel().get("errors"));
+        assertNotNull(mav);
+        assertSame(result.entityDetails(), mav.getModel().get("entity"));
+        assertSame(result.bindingResult(), mav.getModel().get("errors"));
     }
 
     @Test
     void successfulCreateWithSaveContinueRedirectsToEditFormOfNewEntity() throws Exception {
-        formService.createResult = result("42", false);
+        doReturn(result("42", false)).when(formService)
+                .create("post", formData("model-field-name", "Fresh", "save-continue", ""));
 
-        ModelAndView mav = controller.create("post", formData("save-continue"));
-
-        assertEquals("redirect:/admin/{model}/edit/{id}/", mav.getViewName());
-        // The new entity's id is not a request path variable; it must be supplied for expansion
-        assertEquals("42", mav.getModel().get("id"));
+        mockMvc.perform(post("/admin/post/create/")
+                        .param("model-field-name", "Fresh")
+                        .param("save-continue", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/post/edit/42/"));
     }
 
     @Test
     void successfulCreateRedirectsToList() throws Exception {
-        formService.createResult = result("42", false);
+        doReturn(result("42", false)).when(formService).create("post", formData("save", ""));
 
-        ModelAndView mav = controller.create("post", formData("save"));
-
-        assertEquals("redirect:/admin/{model}/", mav.getViewName());
+        mockMvc.perform(post("/admin/post/create/").param("save", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/post/"));
     }
 
     private static AdminModelEditingResult result(String id, boolean hasErrors) {
@@ -90,43 +121,5 @@ class ModelFormControllerTest {
                 new EntityDetails("post", id, "Post", List.of(), List.of(), true),
                 bindingResult
         );
-    }
-
-    private static MultiValueMap<String, String> formData(String submitButton) {
-        LinkedMultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-        data.add(submitButton, "");
-        return data;
-    }
-
-    // Returns canned results; everything the controller must not call throws.
-    private static final class StubFormService implements AdminModelFormService {
-
-        @Nullable AdminModelEditingResult updateResult;
-        @Nullable AdminModelEditingResult createResult;
-
-        @Override
-        public EntityDetails details(String modelName, String id) {
-            throw new UnsupportedOperationException("not stubbed");
-        }
-
-        @Override
-        public AdminModelEditingResult update(String modelName, String id, MultiValueMap<String, String> data) {
-            return Objects.requireNonNull(updateResult);
-        }
-
-        @Override
-        public BindingResult updateField(String modelName, String stringId, String fieldName, @Nullable String value) {
-            throw new UnsupportedOperationException("not stubbed");
-        }
-
-        @Override
-        public EntityDetails create(String modelName) {
-            throw new UnsupportedOperationException("not stubbed");
-        }
-
-        @Override
-        public AdminModelEditingResult create(String modelName, MultiValueMap<String, String> data) {
-            return Objects.requireNonNull(createResult);
-        }
     }
 }

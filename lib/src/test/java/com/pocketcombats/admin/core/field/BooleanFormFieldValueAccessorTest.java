@@ -10,13 +10,10 @@ import org.springframework.validation.BindingResult;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.pocketcombats.admin.test.TestMessages.INVALID_VALUE_CODE;
+import static org.junit.jupiter.api.Assertions.*;
 
 class BooleanFormFieldValueAccessorTest {
-
-    private static final String INVALID_VALUE_CODE = "spring-jpa-admin.validation.constraints.ValidValue.message";
 
     @Test
     void missingParameterMeansUnchecked() {

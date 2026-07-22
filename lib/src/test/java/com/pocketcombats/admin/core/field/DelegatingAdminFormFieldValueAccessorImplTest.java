@@ -12,18 +12,14 @@ import org.springframework.validation.BindingResult;
 import java.time.Instant;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.pocketcombats.admin.test.TestMessages.INVALID_VALUE_CODE;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Malformed form input must surface as a field error on the {@link BindingResult} — an escaping
  * conversion exception would fail the whole request with a server error.
  */
 class DelegatingAdminFormFieldValueAccessorImplTest {
-
-    private static final String INVALID_VALUE_CODE = "spring-jpa-admin.validation.constraints.ValidValue.message";
 
     @Test
     void convertsAndWritesSubmittedValue() {

@@ -29,6 +29,13 @@ public @interface AdminModel {
     Class<?> entity() default Void.class;
 
     /**
+     * Registry name of this model, used for identification in admin URLs.
+     * Defaults to the entity's simple class name; set explicitly to disambiguate
+     * entities that share a simple name.
+     */
+    String name() default "";
+
+    /**
      * Defines permission requirements for different actions on this admin model.
      * <p>
      * See {@link AdminModelPermissions} for more details on how to configure permissions.
@@ -41,6 +48,11 @@ public @interface AdminModel {
 
     int pageSize() default 20;
 
+    /**
+     * Attributes matched by the list view search box. Entries may be dotted paths through
+     * relations, including to-many ones: {@code "posts.title"} matches entities containing
+     * at least one such element, without duplicating result rows.
+     */
     String[] searchFields() default {};
 
     String[] filterFields() default {};

@@ -1,20 +1,12 @@
 package com.pocketcombats.admin.core.search;
 
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.TestCategory;
 import com.pocketcombats.admin.test.TestComment;
 import com.pocketcombats.admin.test.TestPost;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.List;
 import java.util.Locale;
@@ -23,46 +15,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TextSearchPredicateFactoryTest {
 
-    private static EntityManagerFactory emf;
-
-    private EntityManager em;
-    private CriteriaBuilder cb;
-
-    @BeforeAll
-    static void createEntityManagerFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory();
-    }
-
-    @AfterAll
-    static void closeEntityManagerFactory() {
-        emf.close();
-    }
-
-    @BeforeEach
-    void openEntityManager() {
-        em = emf.createEntityManager();
-        cb = em.getCriteriaBuilder();
-    }
-
-    @AfterEach
-    void closeEntityManagerAndWipeData() {
-        em.close();
-        JpaTestUtils.wipeData(emf);
-    }
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withDefaultEntities();
 
     private List<Long> searchCategories(String searchQuery) {
-        CriteriaQuery<TestCategory> query = cb.createQuery(TestCategory.class);
-        Root<TestCategory> root = query.from(TestCategory.class);
-        query.where(new TextSearchPredicateFactory("name").build(cb, root, searchQuery).orElseThrow());
-        return em.createQuery(query).getResultList().stream()
-                .map(TestCategory::getId)
-                .sorted()
-                .toList();
+        return JpaTestUtils.idsMatching(jpa.em(), TestCategory.class, (cb, query, root) ->
+                new TextSearchPredicateFactory("name").build(cb, query, root, searchQuery).orElseThrow());
     }
 
     @Test
     void matchesSubstringCaseInsensitively() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             tx.persist(new TestCategory(1L, "Alpha Bravo"));
             tx.persist(new TestCategory(2L, "Charlie"));
         });
@@ -72,7 +35,7 @@ class TextSearchPredicateFactoryTest {
 
     @Test
     void escapesLikeWildcardsInQuery() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             tx.persist(new TestCategory(1L, "100% done"));
             tx.persist(new TestCategory(2L, "1000 done"));
         });
@@ -88,7 +51,7 @@ class TextSearchPredicateFactoryTest {
         Locale originalLocale = Locale.getDefault();
         Locale.setDefault(Locale.forLanguageTag("tr-TR"));
         try {
-            JpaTestUtils.inTransaction(emf, tx -> tx.persist(new TestCategory(1L, "title")));
+            JpaTestUtils.inTransaction(jpa.emf(), tx -> tx.persist(new TestCategory(1L, "title")));
 
             assertEquals(List.of(1L), searchCategories("TITLE"));
         } finally {
@@ -98,30 +61,25 @@ class TextSearchPredicateFactoryTest {
 
     @Test
     void dottedPathKeepsRowsWithNullRelation() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             TestCategory category = new TestCategory(1L, "Alpha");
             tx.persist(category);
             tx.persist(new TestPost(1L, category));
             tx.persist(new TestPost(2L));
         });
-        CriteriaQuery<TestPost> query = cb.createQuery(TestPost.class);
-        Root<TestPost> root = query.from(TestPost.class);
-        Predicate search = new TextSearchPredicateFactory("category.name").build(cb, root, "alpha").orElseThrow();
         // Post 1 matches by category name; post 2 (no category) matches the other or-branch
         // and must not be excluded by the join the dotted path introduces
-        query.where(cb.or(search, cb.equal(root.get("id"), 2L)));
-
-        List<Long> ids = em.createQuery(query).getResultList().stream()
-                .map(TestPost::getId)
-                .sorted()
-                .toList();
+        List<Long> ids = JpaTestUtils.idsMatching(jpa.em(), TestPost.class, (cb, query, root) -> cb.or(
+                new TextSearchPredicateFactory("category.name").build(cb, query, root, "alpha").orElseThrow(),
+                cb.equal(root.get("id"), 2L)
+        ));
 
         assertEquals(List.of(1L, 2L), ids);
     }
 
     @Test
     void multiHopDottedPathKeepsRowsWithNullIntermediateRelation() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             TestCategory category = new TestCategory(1L, "Alpha");
             tx.persist(category);
             TestPost post = new TestPost(1L, category);
@@ -129,17 +87,10 @@ class TextSearchPredicateFactoryTest {
             tx.persist(new TestComment(1L, null));
             tx.persist(new TestComment(2L, post));
         });
-        CriteriaQuery<TestComment> query = cb.createQuery(TestComment.class);
-        Root<TestComment> root = query.from(TestComment.class);
-        Predicate search = new TextSearchPredicateFactory("post.category.name")
-                .build(cb, root, "alpha")
-                .orElseThrow();
-        query.where(cb.or(search, cb.equal(root.get("id"), 1L)));
-
-        List<Long> ids = em.createQuery(query).getResultList().stream()
-                .map(TestComment::getId)
-                .sorted()
-                .toList();
+        List<Long> ids = JpaTestUtils.idsMatching(jpa.em(), TestComment.class, (cb, query, root) -> cb.or(
+                new TextSearchPredicateFactory("post.category.name").build(cb, query, root, "alpha").orElseThrow(),
+                cb.equal(root.get("id"), 1L)
+        ));
 
         assertEquals(List.of(1L, 2L), ids);
     }

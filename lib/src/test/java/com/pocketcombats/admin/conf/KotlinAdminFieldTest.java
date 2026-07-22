@@ -1,20 +1,10 @@
 package com.pocketcombats.admin.conf;
 
-import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
-import com.pocketcombats.admin.test.JpaTestUtils;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.KotlinFieldAccessPost;
 import com.pocketcombats.admin.test.KotlinPropertyAccessPost;
-import com.pocketcombats.admin.test.TestModels;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.convert.support.DefaultConversionService;
-
-import java.util.Set;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,29 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class KotlinAdminFieldTest {
 
-    private static EntityManagerFactory emf;
-
-    private EntityManager em;
-
-    @BeforeAll
-    static void createEntityManagerFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory(KotlinPropertyAccessPost.class, KotlinFieldAccessPost.class);
-    }
-
-    @AfterAll
-    static void closeEntityManagerFactory() {
-        emf.close();
-    }
-
-    @BeforeEach
-    void openEntityManager() {
-        em = emf.createEntityManager();
-    }
-
-    @AfterEach
-    void closeEntityManager() {
-        em.close();
-    }
+    @RegisterExtension
+    static JpaTestHarness jpa =
+            JpaTestHarness.withEntities(KotlinPropertyAccessPost.class, KotlinFieldAccessPost.class);
 
     @Test
     void bareAnnotationOnPropertyAccessEntityIsFoundOnBackingField() {
@@ -75,12 +45,9 @@ class KotlinAdminFieldTest {
     }
 
     private String label(Class<?> entityClass, String fieldName) {
-        FieldFactory factory = new FieldFactory(
-                em,
-                new DefaultConversionService(),
-                new SpelExpressionContextFactory(),
-                entityClass.getSimpleName(), TestModels.adminModelDefaults(), entityClass, em.getMetamodel().entity(entityClass), null
-        );
-        return factory.constructListField(fieldName).label();
+        return TestFieldFactory.forEntity(jpa.em(), entityClass)
+                .build()
+                .constructListField(fieldName)
+                .label();
     }
 }

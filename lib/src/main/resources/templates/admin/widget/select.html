@@ -15,3 +15,10 @@
         <th:block th:unless="${option.localize}" th:text="${option.label}"/>
     </option>
 </select>
+<!--/* Rendered only when a widget caps its preloaded options.
+       Widgets that never truncate (enums, small tables) omit the "_truncated" contract. */-->
+<div th:if="${field.templateData['_truncated']}"
+     class="form-text text-warning"
+     role="status"
+     th:text="${#messages.msgOrNull('spring-jpa-admin.widget.select.truncated', field.templateData['_shownCount'], field.templateData['_totalApprox'])
+               ?: ('Showing ' + field.templateData['_shownCount'] + ' of ' + field.templateData['_totalApprox'] + ' options')}">Showing some options</div>

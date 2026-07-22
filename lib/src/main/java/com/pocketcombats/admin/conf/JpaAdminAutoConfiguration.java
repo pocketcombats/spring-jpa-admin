@@ -21,6 +21,7 @@ import com.pocketcombats.admin.thymeleaf.AdminUrlParamsHelper;
 import com.pocketcombats.admin.thymeleaf.MessageHelper;
 import com.pocketcombats.admin.web.IndexController;
 import com.pocketcombats.admin.web.ModelActionController;
+import com.pocketcombats.admin.web.ModelFieldOptionsController;
 import com.pocketcombats.admin.web.ModelFormController;
 import com.pocketcombats.admin.web.ModelListController;
 import jakarta.persistence.EntityManager;
@@ -76,7 +77,9 @@ public class JpaAdminAutoConfiguration implements Ordered {
                 conversionService,
                 spelExpressionContextFactory,
                 linksFactory,
-                actionsFactory
+                actionsFactory,
+                properties.getMaxPreloadedOptions(),
+                properties.getMaxCountedOptions()
         );
         for (Class<?> annotatedModel : annotatedModels) {
             registryBuilder.addModel(annotatedModel);
@@ -255,6 +258,22 @@ public class JpaAdminAutoConfiguration implements Ordered {
             AdminRelationLinkService relationLinkService
     ) {
         return new ModelListController(properties, entitiesListService, relationLinkService);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public AdminModelOptionsService adminModelOptionsService(
+            AdminModelRegistry modelRegistry,
+            AdminPermissionService permissionService
+    ) {
+        LOG.debug("Registering default AdminModelOptionsService");
+
+        return new AdminModelOptionsServiceImpl(modelRegistry, permissionService, properties.getAutocompletePageSize());
+    }
+
+    @Bean
+    public ModelFieldOptionsController adminModelFieldOptionsController(AdminModelOptionsService service) {
+        return new ModelFieldOptionsController(service);
     }
 
     @Bean

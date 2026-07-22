@@ -189,7 +189,7 @@ public class AdminModelEntitiesListServiceImpl implements AdminModelEntitiesList
         if (!StringUtils.isEmpty(query.getSearch()) && searchPredicateFactory != null) {
             q.where(
                     cb.and(
-                            cb.or(searchPredicateFactory.build(cb, root, query.getSearch()).stream().toArray(Predicate[]::new))
+                            cb.or(searchPredicateFactory.build(cb, q, root, query.getSearch()).stream().toArray(Predicate[]::new))
                             // TODO: additional predicates from config
                     )
             );

@@ -24,6 +24,9 @@ public class JpaAdminProperties {
     private final int autoConfigurationOrder;
     private final boolean disableHistory;
     private final int historySize;
+    private final int maxPreloadedOptions;
+    private final int maxCountedOptions;
+    private final int autocompletePageSize;
     private final boolean methodSecurity;
     private final boolean configureSecurity;
     private final Templates templates;
@@ -32,15 +35,36 @@ public class JpaAdminProperties {
             @Nullable Integer autoConfigurationOrder,
             @DefaultValue("false") boolean disableHistory,
             @DefaultValue("10") int historySize,
+            @DefaultValue("100") int maxPreloadedOptions,
+            @DefaultValue("1000") int maxCountedOptions,
+            @DefaultValue("20") int autocompletePageSize,
             @DefaultValue("true") boolean methodSecurity,
             @DefaultValue("true") boolean configureSecurity,
             @DefaultValue Templates templates
     ) {
+        if (historySize < 0) {
+            throw new IllegalArgumentException(
+                    "spring.jpa-admin.history-size must not be negative: " + historySize
+            );
+        }
+        if (maxCountedOptions < 1) {
+            throw new IllegalArgumentException(
+                    "spring.jpa-admin.max-counted-options must be at least 1: " + maxCountedOptions
+            );
+        }
+        if (autocompletePageSize < 1) {
+            throw new IllegalArgumentException(
+                    "spring.jpa-admin.autocomplete-page-size must be at least 1: " + autocompletePageSize
+            );
+        }
         this.autoConfigurationOrder = autoConfigurationOrder == null
                 ? Ordered.LOWEST_PRECEDENCE
                 : autoConfigurationOrder;
         this.disableHistory = disableHistory;
         this.historySize = historySize;
+        this.maxPreloadedOptions = maxPreloadedOptions;
+        this.maxCountedOptions = maxCountedOptions;
+        this.autocompletePageSize = autocompletePageSize;
         this.methodSecurity = methodSecurity;
         this.configureSecurity = configureSecurity;
         this.templates = templates;
@@ -57,6 +81,30 @@ public class JpaAdminProperties {
 
     public int getHistorySize() {
         return historySize;
+    }
+
+    /**
+     * The most options a to-one field preloads into a {@code <select>}. When the target has more
+     * rows, the field renders as searchable autocomplete if it can, otherwise a select capped at
+     * this many options (plus the current selection) with a "more exist" note. {@code 0} always
+     * autocompletes when possible; negative opts out entirely (an uncapped select box).
+     */
+    public int getMaxPreloadedOptions() {
+        return maxPreloadedOptions;
+    }
+
+    /**
+     * Upper bound on the id probe that computes the "N of M" note for a truncated to-one preload.
+     * Once a target table is known to exceed {@link #getMaxPreloadedOptions()}, the total is only
+     * counted up to this many rows; past it the note reports "M+" rather than scanning the whole
+     * (by definition large) table. Must be at least {@code 1}.
+     */
+    public int getMaxCountedOptions() {
+        return maxCountedOptions;
+    }
+
+    public int getAutocompletePageSize() {
+        return autocompletePageSize;
     }
 
     /**

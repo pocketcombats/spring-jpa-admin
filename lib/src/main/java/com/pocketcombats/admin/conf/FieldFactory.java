@@ -22,6 +22,7 @@ import com.pocketcombats.admin.core.predicate.ToManyPredicateFactory;
 import com.pocketcombats.admin.core.predicate.ToOnePredicateFactory;
 import com.pocketcombats.admin.core.predicate.ValuePredicateFactory;
 import com.pocketcombats.admin.core.property.*;
+import com.pocketcombats.admin.core.search.SearchPredicateFactory;
 import com.pocketcombats.admin.core.sort.PathSortExpressionFactory;
 import com.pocketcombats.admin.core.sort.SimpleSortExpressionFactory;
 import com.pocketcombats.admin.core.sort.SortExpressionFactory;
@@ -34,6 +35,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EmbeddableType;
 import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.PluralAttribute;
 import jakarta.persistence.metamodel.SingularAttribute;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -66,6 +68,12 @@ public class FieldFactory {
     private final EntityManager em;
     private final ConversionService conversionService;
     private final SpelExpressionContextFactory spelExpressionContextFactory;
+    private final int maxPreloadedOptions;
+    private final int maxCountedOptions;
+    // Target entity class -> the search factory of its primary searchable admin model. Membership
+    // decides autocomplete capability; the value is baked into the to-one accessor so option
+    // collection needs no request-time registry lookup.
+    private final Map<Class<?>, SearchPredicateFactory> searchFactoriesByEntity;
 
     private final String modelName;
     private final EntityType<?> entity;
@@ -73,13 +81,16 @@ public class FieldFactory {
     private final @Nullable AdminModelBean adminModelBean;
 
     private final Map<String, AdminField> fieldOverrides;
-    private final Map<String, AdminField> resolvedFieldsConfigurations = new HashMap<>();
+    private final Map<String, @Nullable AdminField> resolvedFieldsConfigurations = new HashMap<>();
     private final Map<String, ValueFormatter> fieldValueFormatters = new HashMap<>();
 
     public FieldFactory(
             EntityManager em,
             ConversionService conversionService,
             SpelExpressionContextFactory spelExpressionContextFactory,
+            int maxPreloadedOptions,
+            int maxCountedOptions,
+            Map<Class<?>, SearchPredicateFactory> searchFactoriesByEntity,
             String modelName,
             AdminModel modelAnnotation,
             Class<?> targetClass,
@@ -89,6 +100,9 @@ public class FieldFactory {
         this.em = em;
         this.conversionService = conversionService;
         this.spelExpressionContextFactory = spelExpressionContextFactory;
+        this.maxPreloadedOptions = maxPreloadedOptions;
+        this.maxCountedOptions = maxCountedOptions;
+        this.searchFactoriesByEntity = searchFactoriesByEntity;
 
         this.modelName = modelName;
         this.entity = entity;
@@ -157,7 +171,7 @@ public class FieldFactory {
         }
         Annotation columnAnnotation = resolveColumnAnnotation(name);
         if (columnAnnotation != null) {
-            @SuppressWarnings("NullAway") Map<String, @Nullable Object> annotationAttributes
+            Map<String, ? extends @Nullable Object> annotationAttributes
                     = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
             insertable = insertable && Boolean.TRUE.equals(annotationAttributes.get("insertable"));
             updatable = updatable && Boolean.TRUE.equals(annotationAttributes.get("updatable"));
@@ -385,7 +399,7 @@ public class FieldFactory {
 
     private @Nullable AdminModelPropertyReader findEntityPropertyReader(String name) {
         PropertyDescriptor pd = BeanUtils.getPropertyDescriptor(targetClass, name);
-        if (pd != null) {
+        if (pd != null && pd.getReadMethod() != null) {
             return new MethodPropertyReader(pd.getName(), pd.getReadMethod());
         }
         return null;
@@ -478,11 +492,17 @@ public class FieldFactory {
             String name,
             Class<?> targetClass
     ) {
-        Method method = BeanUtils.findMethod(modelAdminClass, "set" + name, targetClass);
-        if (method == null) {
-            method = BeanUtils.findMethod(modelAdminClass, name, targetClass);
+        String methodName = "set" + name;
+        for (Class<?> search = modelAdminClass; search != null && search != Object.class; search = search.getSuperclass()) {
+            for (Method method : search.getDeclaredMethods()) {
+                if (method.getName().equals(methodName)
+                        && method.getParameterCount() == 2
+                        && method.getParameterTypes()[0].isAssignableFrom(targetClass)) {
+                    return method;
+                }
+            }
         }
-        return method;
+        return null;
     }
 
     private AdminFormFieldValueAccessor resolveFormFieldAccessor(@Nullable AdminField fieldConfig, String name) {
@@ -496,11 +516,11 @@ public class FieldFactory {
         }
 
         AdminModelPropertyReader reader = resolveFormFieldReader(name);
-        // Custom form fields are only supported for "simple" types.
         if (attribute == null && !isCustomFormFieldSupportedType(reader.getJavaType())) {
             throw new IllegalStateException(
                     "Unsupported type for custom model admin form field: " + reader.getJavaType().getName() +
-                            " (field " + name + " of model " + modelName + ")"
+                            " (field " + name + " of model " + modelName + ");" +
+                            " the type must be convertible to and from String via ConversionService"
             );
         } else {
             // TODO: validate reader and attribute types matching?
@@ -538,7 +558,10 @@ public class FieldFactory {
     }
 
     private boolean isCustomFormFieldSupportedType(Class<?> type) {
-        return TypeUtils.isBasicType(type);
+        // Custom (admin-model-level) form fields are rendered and bound through String form values,
+        // so the real requirement is that the ConversionService can round-trip the type.
+        return conversionService.canConvert(String.class, type)
+                && conversionService.canConvert(type, String.class);
     }
 
     private AdminFormFieldValueAccessor constructFormFieldValueAccessor(
@@ -558,7 +581,7 @@ public class FieldFactory {
                 );
                 case MANY_TO_MANY, ONE_TO_MANY -> new ToManyFormFieldAccessor(
                         em, conversionService,
-                        attribute, reader, writer, createValueFormatter(name)
+                        (PluralAttribute<?, ?, ?>) attribute, reader, writer, createOptionMapper(name)
                 );
                 case BASIC -> selectBasicFormFieldAccessor(name, isOptional(fieldConfig, attribute), reader, writer);
                 case EMBEDDED -> createEmbeddedFormFieldAccessor(name, attribute, reader, writer);
@@ -646,11 +669,18 @@ public class FieldFactory {
                     reader, writer
             );
         } else {
+            boolean autocompleteCapable = (fieldConfig == null || !StringUtils.hasText(fieldConfig.template()))
+                    && searchFactoriesByEntity.containsKey(attribute.getJavaType());
             return new ToOneFormFieldAccessor(
                     em, conversionService,
-                    attribute,
+                    (SingularAttribute<?, ?>) attribute,
                     isOptional(fieldConfig, attribute),
-                    reader, writer, createValueFormatter(name)
+                    autocompleteCapable,
+                    resolveMaxPreloadedOptions(fieldConfig, maxPreloadedOptions),
+                    maxCountedOptions,
+                    reader, writer,
+                    createOptionMapper(name),
+                    searchFactoriesByEntity.get(attribute.getJavaType())
             );
         }
     }
@@ -684,6 +714,13 @@ public class FieldFactory {
             return false;
         }
         return ((SingularAttribute<?, ?>) attribute).isOptional();
+    }
+
+    private static int resolveMaxPreloadedOptions(@Nullable AdminField fieldConfig, int globalMaxPreloadedOptions) {
+        if (fieldConfig != null && fieldConfig.maxPreloadedOptions() != AdminField.INHERIT) {
+            return fieldConfig.maxPreloadedOptions();
+        }
+        return globalMaxPreloadedOptions;
     }
 
     @SuppressWarnings("unchecked")

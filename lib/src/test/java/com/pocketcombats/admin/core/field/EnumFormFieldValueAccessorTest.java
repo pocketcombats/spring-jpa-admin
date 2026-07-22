@@ -12,14 +12,10 @@ import org.springframework.validation.BindingResult;
 
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.pocketcombats.admin.test.TestMessages.INVALID_VALUE_CODE;
+import static org.junit.jupiter.api.Assertions.*;
 
 class EnumFormFieldValueAccessorTest {
-
-    private static final String INVALID_VALUE_CODE = "spring-jpa-admin.validation.constraints.ValidValue.message";
 
     @Test
     void submittedOrdinalSelectsEnumConstant() {
@@ -65,7 +61,7 @@ class EnumFormFieldValueAccessorTest {
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = {"", "abc", "3", "-2"})
-    void unresolvableOrdinalIsRejectedWithoutModifyingField(@Nullable String value) {
+    void unresolvableValueIsRejectedWithoutModifyingField(@Nullable String value) {
         Article article = new Article();
         BindingResult binding = binding(article);
 

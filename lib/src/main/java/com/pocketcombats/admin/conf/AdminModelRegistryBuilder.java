@@ -13,11 +13,8 @@ import com.pocketcombats.admin.core.filter.AdminModelFilter;
 import com.pocketcombats.admin.core.formatter.SpelExpressionContextFactory;
 import com.pocketcombats.admin.core.links.AdminModelLink;
 import com.pocketcombats.admin.core.links.AdminModelLinkFactory;
-import com.pocketcombats.admin.core.search.CompositeSearchPredicateFactory;
-import com.pocketcombats.admin.core.search.NumberSearchPredicateFactory;
 import com.pocketcombats.admin.core.search.SearchPredicateFactory;
-import com.pocketcombats.admin.core.search.TextSearchPredicateFactory;
-import com.pocketcombats.admin.core.search.UUIDSearchPredicateFactory;
+import com.pocketcombats.admin.core.search.SearchPredicateFactoryResolver;
 import com.pocketcombats.admin.core.uniqueness.AdminUniqueConstraint;
 import com.pocketcombats.admin.core.uniqueness.CompositeAdminUniqueConstraint;
 import com.pocketcombats.admin.util.AdminStringUtils;
@@ -28,7 +25,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +32,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.MultiValueMapAdapter;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -48,8 +42,7 @@ import java.util.stream.Collectors;
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminModelRegistryBuilder.class);
 
-    private final Map<String, AdminRegisteredModel> models = new HashMap<>();
-    private final MultiValueMap<PackageInfo, AdminRegisteredModel> categorizedModels = new MultiValueMapAdapter<>(new TreeMap<>());
+    private final Map<String, AdminModelDescriptor> descriptors = new HashMap<>();
 
     private final EntityManager em;
     private final AutowireCapableBeanFactory beanFactory;
@@ -57,6 +50,9 @@ import java.util.stream.Collectors;
     private final SpelExpressionContextFactory spelExpressionContextFactory;
     private final AdminModelLinkFactory linksFactory;
     private final ActionsFactory actionsFactory;
+    private final SearchPredicateFactoryResolver searchPredicateFactoryResolver;
+    private final int maxPreloadedOptions;
+    private final int maxCountedOptions;
 
     public AdminModelRegistryBuilder(
             EntityManager em,
@@ -64,7 +60,9 @@ import java.util.stream.Collectors;
             ConversionService conversionService,
             SpelExpressionContextFactory spelExpressionContextFactory,
             AdminModelLinkFactory linksFactory,
-            ActionsFactory actionsFactory
+            ActionsFactory actionsFactory,
+            int maxPreloadedOptions,
+            int maxCountedOptions
     ) {
         this.em = em;
         this.beanFactory = beanFactory;
@@ -72,11 +70,16 @@ import java.util.stream.Collectors;
         this.spelExpressionContextFactory = spelExpressionContextFactory;
         this.linksFactory = linksFactory;
         this.actionsFactory = actionsFactory;
+        this.searchPredicateFactoryResolver = new SearchPredicateFactoryResolver(conversionService);
+        this.maxPreloadedOptions = maxPreloadedOptions;
+        this.maxCountedOptions = maxCountedOptions;
     }
 
+    /**
+     * Registers a class's metadata: name, target entity, and search configuration.
+     * Construction is deferred to {@link #build()}.
+     */
     public AdminModelRegistryBuilder addModel(Class<?> annotatedClass) {
-        long timeStart = System.nanoTime();
-
         AdminModel modelAnnotation = AnnotationUtils.getAnnotation(annotatedClass, AdminModel.class);
         assert modelAnnotation != null;
         Class<?> targetClass;
@@ -90,27 +93,39 @@ import java.util.stream.Collectors;
         }
 
         String modelName = resolveModelName(modelAnnotation, targetClass);
-        if (models.containsKey(modelName)) {
+        if (modelAnnotation.pageSize() <= 0) {
+            throw new AdminConfigurationException(
+                    "Admin model " + modelName + " declares invalid pageSize "
+                            + modelAnnotation.pageSize() + "; pageSize must be positive"
+            );
+        }
+        AdminModelDescriptor existing = descriptors.get(modelName);
+        if (existing != null) {
             throw new IllegalArgumentException(
-                    "AdminModel " + modelName + " is already registered"
+                    "Admin model name \"" + modelName + "\" is already registered for "
+                            + existing.targetClass().getName()
+                            + " and can't be reused for " + targetClass.getName()
+                            + ". Model names default to the entity's simple class name;"
+                            + " set @AdminModel(name = ...) to disambiguate."
             );
         }
-        AdminRegisteredModel model = constructAdminModel(modelName, modelAnnotation, annotatedClass, targetClass);
-        models.put(modelName, model);
-        PackageInfo packageInfo = resolvePackageInfo(annotatedClass, targetClass);
-        categorizedModels.add(packageInfo, model);
 
-        if (LOG.isTraceEnabled()) {
-            LOG.trace(
-                    "Spent {} nanoseconds constructing {} AdminRegisteredModel",
-                    System.nanoTime() - timeStart,
-                    modelName
-            );
-        }
+        EntityType<?> entity = em.getEntityManagerFactory().getMetamodel().entity(targetClass);
+        SearchPredicateFactory searchPredicateFactory = searchPredicateFactoryResolver.resolve(
+                modelName, entity, modelAnnotation.searchFields()
+        );
+        PackageInfo packageInfo = resolvePackageInfo(annotatedClass, targetClass);
+
+        descriptors.put(modelName, new AdminModelDescriptor(
+                modelName, modelAnnotation, annotatedClass, targetClass, entity, searchPredicateFactory, packageInfo
+        ));
         return this;
     }
 
     private String resolveModelName(AdminModel modelAnnotation, Class<?> targetClass) {
+        if (!modelAnnotation.name().isEmpty()) {
+            return modelAnnotation.name();
+        }
         return targetClass.getSimpleName();
     }
 
@@ -139,19 +154,22 @@ import java.util.stream.Collectors;
     }
 
     /**
-     * Constructs an {@link AdminRegisteredModel} from an {@link AdminModel} annotation.
+     * Constructs an {@link AdminRegisteredModel} from a previously-collected {@link AdminModelDescriptor}.
      * <p>
-     * This method processes the annotation and creates a fully configured admin model
-     * with all the necessary components, such as fields, actions, filters, and permissions.
-     * It also resolves entity details, creates search predicates, and collects unique constraints.
+     * This method builds all the necessary components, such as fields, actions, filters, and
+     * permissions. It also resolves entity details and collects unique constraints.
      */
     private AdminRegisteredModel constructAdminModel(
-            String modelName,
-            AdminModel modelAnnotation,
-            Class<?> annotatedClass,
-            Class<?> targetClass
+            AdminModelDescriptor descriptor,
+            Map<Class<?>, SearchPredicateFactory> searchFactoriesByEntity
     ) {
-        EntityType<?> entity = em.getEntityManagerFactory().getMetamodel().entity(targetClass);
+        long timeStart = System.nanoTime();
+        String modelName = descriptor.modelName();
+        AdminModel modelAnnotation = descriptor.modelAnnotation();
+        Class<?> annotatedClass = descriptor.annotatedClass();
+        Class<?> targetClass = descriptor.targetClass();
+        EntityType<?> entity = descriptor.entity();
+
         Class<?> adminModelClass = annotatedClass != targetClass ? annotatedClass : null;
         AdminModelBean adminModelBean = adminModelClass != null
                 ? new AdminModelBean(adminModelClass, beanFactory.createBean(adminModelClass))
@@ -160,14 +178,9 @@ import java.util.stream.Collectors;
                 ? AdminStringUtils.toHumanReadableName(modelName)
                 : modelAnnotation.label();
 
-        SearchPredicateFactory searchPredicateFactory = createModelSearchPredicateFactory(
-                modelName,
-                modelAnnotation,
-                entity
-        );
-
         FieldFactory fieldFactory = new FieldFactory(
                 em, conversionService, spelExpressionContextFactory,
+                maxPreloadedOptions, maxCountedOptions, searchFactoriesByEntity,
                 modelName, modelAnnotation, targetClass, entity, adminModelBean
         );
         List<AdminModelListField> listFields = createListFields(
@@ -195,7 +208,7 @@ import java.util.stream.Collectors;
                 entity.getId(entity.getIdType().getJavaType())
         );
         int priority = getPriority(annotatedClass, targetClass);
-        return new AdminRegisteredModel(
+        AdminRegisteredModel model = new AdminRegisteredModel(
                 modelName,
                 priority,
                 label,
@@ -205,7 +218,7 @@ import java.util.stream.Collectors;
                 modelAnnotation.pageSize(),
                 listFields,
                 modelAnnotation.defaultOrder(),
-                searchPredicateFactory,
+                descriptor.searchPredicateFactory(),
                 filters,
                 fieldsets,
                 links,
@@ -213,6 +226,14 @@ import java.util.stream.Collectors;
                 uniqueConstraints,
                 modelAnnotation.permissions()
         );
+        if (LOG.isTraceEnabled()) {
+            LOG.trace(
+                    "Spent {} nanoseconds constructing {} AdminRegisteredModel",
+                    System.nanoTime() - timeStart,
+                    modelName
+            );
+        }
+        return model;
     }
 
     private int getPriority(Class<?> annotatedClass, Class<?> targetClass) {
@@ -224,72 +245,6 @@ import java.util.stream.Collectors;
             return priorityAnnotation.value();
         } else {
             return 0;
-        }
-    }
-
-    private @Nullable SearchPredicateFactory createModelSearchPredicateFactory(
-            String modelName,
-            AdminModel modelAnnotation,
-            EntityType<?> entity
-    ) {
-        if (modelAnnotation.searchFields().length > 0) {
-            if (modelAnnotation.searchFields().length == 1) {
-                return getSearchPredicateFactory(
-                        modelName,
-                        entity,
-                        modelAnnotation.searchFields()[0]
-                );
-            } else {
-                return new CompositeSearchPredicateFactory(
-                        Arrays.stream(modelAnnotation.searchFields())
-                                .map(searchField -> getSearchPredicateFactory(
-                                        modelName,
-                                        entity,
-                                        searchField
-                                ))
-                                .toList()
-                );
-            }
-        } else {
-            return null;
-        }
-    }
-
-    private SearchPredicateFactory getSearchPredicateFactory(
-            String resolvedName,
-            EntityType<?> entity,
-            String searchField
-    ) {
-        final Attribute<?, ?> attribute;
-        if (searchField.contains(".")) {
-            var bits = StringUtils.split(searchField, '.');
-            var sub = entity;
-            for (int i = 0; i < bits.length - 1; i++) {
-                sub = em.getEntityManagerFactory().getMetamodel()
-                        .entity(entity.getAttribute(bits[i]).getJavaType());
-            }
-            attribute = sub.getAttribute(bits[bits.length - 1]);
-        } else {
-            attribute = entity.getAttribute(searchField);
-        }
-        Class<?> javaType = attribute.getJavaType();
-        if (Number.class.isAssignableFrom(javaType)) {
-            //noinspection unchecked
-            return new NumberSearchPredicateFactory(
-                    searchField,
-                    (Class<? extends Number>) attribute.getJavaType(),
-                    conversionService
-            );
-        } else if (CharSequence.class.isAssignableFrom(javaType)) {
-            return new TextSearchPredicateFactory(searchField);
-        } else if (UUID.class.isAssignableFrom(javaType)) {
-            return new UUIDSearchPredicateFactory(searchField);
-        } else {
-            // Do we need to support search over boolean attributes?
-            throw new IllegalStateException(
-                    "Can't enable search for model " + resolvedName + ", field " + searchField +
-                            ": unsupported type " + javaType
-            );
         }
     }
 
@@ -471,7 +426,7 @@ import java.util.stream.Collectors;
                     if (columnAnnotation == null) {
                         return false;
                     }
-                    @SuppressWarnings("NullAway") Map<String, @Nullable Object> annotationAttributes
+                    Map<String, ? extends @Nullable Object> annotationAttributes
                             = AnnotationUtils.getAnnotationAttributes(columnAnnotation);
                     return Boolean.TRUE.equals(annotationAttributes.get("unique"));
                 })
@@ -510,18 +465,53 @@ import java.util.stream.Collectors;
     }
 
     public AdminModelRegistry build() {
-        Map<String, List<AdminRegisteredModel>> models = categorizedModels.entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> entry.getKey().label(),
-                        Map.Entry::getValue,
-                        (a, b) -> {
-                            List<AdminRegisteredModel> result = new ArrayList<>(a);
-                            result.addAll(b);
-                            return result;
-                        },
-                        LinkedHashMap::new
+        Map<Class<?>, SearchPredicateFactory> searchFactoriesByEntity = resolvePrimarySearchFactories();
+        // Sorted by PackageInfo (priority, then package name), then grouped by category label:
+        // distinct packages sharing a label (or none) merge into one entry, in that sorted order.
+        Map<String, List<AdminRegisteredModel>> models = descriptors.values().stream()
+                .sorted(Comparator.comparing(AdminModelDescriptor::packageInfo)
+                        // Deterministic, meaningful order within a category (same PackageInfo): higher
+                        // model priority first, then model name.
+                        .thenComparing(Comparator.comparingInt(
+                                (AdminModelDescriptor d) -> getPriority(d.annotatedClass(), d.targetClass())).reversed())
+                        .thenComparing(AdminModelDescriptor::modelName))
+                .collect(Collectors.groupingBy(
+                        descriptor -> descriptor.packageInfo().label(),
+                        LinkedHashMap::new,
+                        Collectors.mapping(
+                                descriptor -> constructAdminModel(descriptor, searchFactoriesByEntity),
+                                Collectors.toList())
                 ));
         return new AdminModelRegistryImpl(models);
+    }
+
+    /**
+     * One search factory per entity class, taken from its primary searchable registration.
+     */
+    private Map<Class<?>, SearchPredicateFactory> resolvePrimarySearchFactories() {
+        Map<Class<?>, SearchPredicateFactory> factories = new HashMap<>();
+        descriptors.values().stream()
+                .sorted(Comparator.comparing((AdminModelDescriptor d) ->
+                                !d.modelName().equals(d.targetClass().getSimpleName()))
+                        .thenComparing(AdminModelDescriptor::modelName))
+                .forEach(descriptor -> {
+                    SearchPredicateFactory factory = descriptor.searchPredicateFactory();
+                    if (factory != null) {
+                        factories.putIfAbsent(descriptor.targetClass(), factory);
+                    }
+                });
+        return factories;
+    }
+
+    private record AdminModelDescriptor(
+            String modelName,
+            AdminModel modelAnnotation,
+            Class<?> annotatedClass,
+            Class<?> targetClass,
+            EntityType<?> entity,
+            @Nullable SearchPredicateFactory searchPredicateFactory,
+            PackageInfo packageInfo
+    ) {
     }
 
     private record FieldsetTemplate(
@@ -542,7 +532,7 @@ import java.util.stream.Collectors;
         @Override
         public int compareTo(PackageInfo o) {
             if (o.priority != priority) {
-                return o.priority - priority;
+                return Integer.compare(o.priority, priority);
             }
             return packageName.compareTo(o.packageName);
         }

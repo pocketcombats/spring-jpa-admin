@@ -1,19 +1,12 @@
 package com.pocketcombats.admin.core.predicate;
 
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.TestComment;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Root;
 import jakarta.persistence.metamodel.Attribute;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -24,33 +17,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BasicPredicateFactoryTest {
 
-    private static EntityManagerFactory emf;
-
-    private EntityManager em;
-
-    @BeforeAll
-    static void createEntityManagerFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory();
-    }
-
-    @AfterAll
-    static void closeEntityManagerFactory() {
-        emf.close();
-    }
-
-    @BeforeEach
-    void openEntityManager() {
-        em = emf.createEntityManager();
-    }
-
-    @AfterEach
-    void closeEntityManagerAndWipeData() {
-        em.close();
-        JpaTestUtils.wipeData(emf);
-    }
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withDefaultEntities();
 
     private static void seedComments() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             tx.persist(new TestComment(1L, null, 3));
             tx.persist(new TestComment(2L, null, 5));
         });
@@ -61,16 +32,10 @@ class BasicPredicateFactoryTest {
     }
 
     private List<Long> matchingCommentIds(String attributeName, @Nullable Object filterValue) {
-        Attribute<?, ?> attribute = em.getMetamodel().entity(TestComment.class).getAttribute(attributeName);
+        Attribute<?, ?> attribute = jpa.emf().getMetamodel().entity(TestComment.class).getAttribute(attributeName);
         BasicPredicateFactory factory = new BasicPredicateFactory(new DefaultConversionService(), attribute);
-        CriteriaBuilder cb = em.getCriteriaBuilder();
-        CriteriaQuery<TestComment> query = cb.createQuery(TestComment.class);
-        Root<TestComment> root = query.from(TestComment.class);
-        query.where(factory.createPredicate(cb, root, filterValue));
-        return em.createQuery(query).getResultList().stream()
-                .map(TestComment::getId)
-                .sorted()
-                .toList();
+        return JpaTestUtils.idsMatching(jpa.em(), TestComment.class,
+                (cb, query, root) -> factory.createPredicate(cb, root, filterValue));
     }
 
     @Test
@@ -89,7 +54,7 @@ class BasicPredicateFactoryTest {
 
     @Test
     void nullFilterValueMatchesRowsWithNullAttribute() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             tx.persist(new TestComment(1L, null, 3));
             TestComment flagged = new TestComment(2L, null, 5);
             flagged.setModerationNote("spam");

@@ -29,7 +29,7 @@ import java.util.List;
         filterFields = "enabled",
         fieldsets = @AdminFieldset(fields = {"enabled", "username"}),
         links = {
-                @AdminLink(target = Post.class, preview = 3, sortBy = "-postTime"),
+                @AdminLink(target = Post.class, mappedBy = "author", preview = 3, sortBy = "-postTime"),
                 @AdminLink(target = Comment.class, sortBy = "-postTime")
         },
         // Prohibit direct demo users creation or deletion

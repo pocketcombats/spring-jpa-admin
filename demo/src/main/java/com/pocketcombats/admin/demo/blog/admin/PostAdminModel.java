@@ -24,6 +24,7 @@ import org.springframework.core.convert.ConversionService;
                                 "approved",
                                 "postTime",
                                 "author",
+                                "editor",
                                 "text"
                         }
                 ),
@@ -46,6 +47,13 @@ import org.springframework.core.convert.ConversionService;
                         field = @AdminField(
                                 sortBy = "username",
                                 representation = "username"
+                        )
+                ),
+                @AdminFieldOverride(
+                        name = "editor",
+                        field = @AdminField(
+                                representation = "username",
+                                maxPreloadedOptions = 0
                         )
                 ),
                 @AdminFieldOverride(

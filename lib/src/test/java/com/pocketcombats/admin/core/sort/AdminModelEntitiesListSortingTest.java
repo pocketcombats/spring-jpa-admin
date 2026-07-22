@@ -9,6 +9,7 @@ import com.pocketcombats.admin.core.formatter.ToStringValueFormatter;
 import com.pocketcombats.admin.data.list.AdminEntityListEntry;
 import com.pocketcombats.admin.data.list.AdminModelEntitiesList;
 import com.pocketcombats.admin.data.list.ModelRequest;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.StubPermissionService;
 import com.pocketcombats.admin.test.TestCategory;
@@ -16,13 +17,10 @@ import com.pocketcombats.admin.test.TestFields;
 import com.pocketcombats.admin.test.TestModels;
 import com.pocketcombats.admin.test.TestPost;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.core.convert.support.DefaultConversionService;
 
 import java.util.List;
@@ -38,29 +36,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class AdminModelEntitiesListSortingTest {
 
-    private static EntityManagerFactory emf;
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withDefaultEntities();
 
     private EntityManager em;
 
-    @BeforeAll
-    static void createEntityManagerFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory();
-    }
-
-    @AfterAll
-    static void closeEntityManagerFactory() {
-        emf.close();
-    }
-
     @BeforeEach
     void openEntityManager() {
-        em = emf.createEntityManager();
-    }
-
-    @AfterEach
-    void closeEntityManagerAndWipeData() {
-        em.close();
-        JpaTestUtils.wipeData(emf);
+        em = jpa.em();
     }
 
     private AdminModelEntitiesListServiceImpl service(int pageSize) {
@@ -89,7 +72,7 @@ class AdminModelEntitiesListSortingTest {
     }
 
     private static void seedScrambledPosts() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             TestCategory alpha = new TestCategory(1L, "alpha");
             TestCategory beta = new TestCategory(2L, "beta");
             tx.persist(alpha);

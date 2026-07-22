@@ -8,18 +8,16 @@ import com.pocketcombats.admin.data.form.AdminRelationLink;
 import com.pocketcombats.admin.data.form.AdminRelationPreview;
 import com.pocketcombats.admin.data.list.EntityRelation;
 import com.pocketcombats.admin.data.list.Parent;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.StubPermissionService;
 import com.pocketcombats.admin.test.TestCategory;
 import com.pocketcombats.admin.test.TestModels;
 import com.pocketcombats.admin.test.TestPost;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -30,32 +28,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AdminRelationLinkServiceTest {
 
-    private static EntityManagerFactory emf;
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withDefaultEntities();
 
     private final StubPermissionService permissions = new StubPermissionService();
     private final DefaultConversionService conversionService = new DefaultConversionService();
     private EntityManager em;
 
-    @BeforeAll
-    static void createFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory();
-    }
-
-    @AfterAll
-    static void closeFactory() {
-        emf.close();
-    }
-
     @BeforeEach
     void setUp() {
-        JpaTestUtils.wipeData(emf);
-        JpaTestUtils.seedCategories(emf, 1);
-        em = emf.createEntityManager();
-    }
-
-    @AfterEach
-    void tearDown() {
-        em.close();
+        em = jpa.em();
+        JpaTestUtils.seedCategories(jpa.emf(), 1);
     }
 
     @Test
@@ -130,7 +113,7 @@ class AdminRelationLinkServiceTest {
     @Test
     void relationPreviewsFallBackToEntityIdWhenTargetHasNoListFields() {
         JpaTestUtils.inTransaction(
-                emf,
+                jpa.emf(),
                 txEm -> txEm.persist(new TestPost(10L, txEm.getReference(TestCategory.class, 1L)))
         );
         AdminRegisteredModel categoryModel = categoryModel(List.of(TestModels.categoryNameField()), List.of(postsLink(5)));

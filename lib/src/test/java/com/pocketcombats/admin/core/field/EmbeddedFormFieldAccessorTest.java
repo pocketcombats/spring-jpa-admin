@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.pocketcombats.admin.test.TestMessages.INVALID_VALUE_CODE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EmbeddedFormFieldAccessorTest {
@@ -128,7 +129,7 @@ class EmbeddedFormFieldAccessorTest {
 
         assertTrue(bindingResult.hasFieldErrors("address.unit"));
         assertEquals(
-                "spring-jpa-admin.validation.constraints.ValidValue.message",
+                INVALID_VALUE_CODE,
                 bindingResult.getFieldError("address.unit").getCode()
         );
         // Remaining properties still bound despite the rejected one.

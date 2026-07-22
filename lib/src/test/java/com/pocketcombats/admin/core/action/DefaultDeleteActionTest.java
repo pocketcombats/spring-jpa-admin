@@ -2,18 +2,16 @@ package com.pocketcombats.admin.core.action;
 
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.history.NoOpAdminHistoryWriter;
-import com.pocketcombats.admin.test.JpaTestUtils;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.TestModels;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,21 +27,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  */
 class DefaultDeleteActionTest {
 
-    private static EntityManagerFactory emf;
-
-    @BeforeAll
-    static void createFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory(Owner.class, Pet.class);
-    }
-
-    @AfterAll
-    static void closeFactory() {
-        emf.close();
-    }
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withEntities(Owner.class, Pet.class);
 
     @Test
     void deleteRemovesSelectedEntitiesAndCascadedChildrenOnly() {
-        inTransaction(emf, em -> {
+        inTransaction(jpa.emf(), em -> {
             Owner first = new Owner(1L);
             Owner second = new Owner(2L);
             em.persist(first);
@@ -54,11 +43,11 @@ class DefaultDeleteActionTest {
         });
 
         DefaultDeleteAction action = new DefaultDeleteAction(new NoOpAdminHistoryWriter());
-        inTransaction(emf, em ->
+        inTransaction(jpa.emf(), em ->
                 // The action service hands the action already-managed entities
                 action.run(em, ownerModel(), List.of(em.find(Owner.class, 1L))));
 
-        inTransaction(emf, em -> {
+        inTransaction(jpa.emf(), em -> {
             assertNull(em.find(Owner.class, 1L));
             // The JPA REMOVE cascade must delete owner 1's pets — the whole point of not bulk-deleting.
             assertNull(em.find(Pet.class, 11L));

@@ -57,7 +57,7 @@ public class DelegatingAdminFormFieldValueAccessorImpl extends AbstractFormField
     }
 
     @Override
-    public Map<String, @Nullable Object> getModelAttributes(Object instance) {
+    public Map<String, Object> getModelAttributes(Object instance) {
         return Collections.emptyMap();
     }
 }

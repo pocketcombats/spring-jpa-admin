@@ -4,7 +4,6 @@ import com.pocketcombats.admin.AdminAction;
 import com.pocketcombats.admin.AdminModel;
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.core.action.AdminModelAction;
-import com.pocketcombats.admin.core.action.StaticMethodDelegatingAction;
 import com.pocketcombats.admin.history.NoOpAdminHistoryWriter;
 import com.pocketcombats.admin.test.KotlinActionEntity;
 import com.pocketcombats.admin.test.TestModels;
@@ -68,22 +67,22 @@ class ActionsFactoryTest {
 
     @Test
     void entityActionOverridesDefaultActionOfTheSameName() {
-        ActionsFactory factory = new ActionsFactory(new NoOpAdminHistoryWriter(), List.of(new StubDeleteAction()));
-
-        Map<String, AdminModelAction> actions = factory.createActions(
+        Map<String, AdminModelAction> actions = factoryWithDefaultDelete().createActions(
                 TestModels.adminModelDefaults(),
                 DeleteOverridingPost.class,
                 null
         );
 
-        assertInstanceOf(StaticMethodDelegatingAction.class, actions.get("delete"));
+        // Entity's own static delete marks the post, while the default StubDeleteAction is a no-op,
+        // so a set flag proves the override won.
+        List<DeleteOverridingPost> posts = List.of(new DeleteOverridingPost());
+        actions.get("delete").run(null, model(DeleteOverridingPost.class), posts);
+        assertTrue(posts.get(0).deleted, "the entity's own delete action must run, not the default");
     }
 
     @Test
     void disabledActionsAreRemoved() {
-        ActionsFactory factory = new ActionsFactory(new NoOpAdminHistoryWriter(), List.of(new StubDeleteAction()));
-
-        Map<String, AdminModelAction> actions = factory.createActions(
+        Map<String, AdminModelAction> actions = factoryWithDefaultDelete().createActions(
                 NoDeleteModel.class.getAnnotation(AdminModel.class),
                 ArchivablePost.class,
                 null
@@ -95,6 +94,10 @@ class ActionsFactoryTest {
 
     private Map<String, AdminModelAction> actions(Class<?> entityClass) {
         return factory.createActions(TestModels.adminModelDefaults(), entityClass, null);
+    }
+
+    private static ActionsFactory factoryWithDefaultDelete() {
+        return new ActionsFactory(new NoOpAdminHistoryWriter(), List.of(new StubDeleteAction()));
     }
 
     private static AdminRegisteredModel model(Class<?> entityClass) {
@@ -152,8 +155,13 @@ class ActionsFactoryTest {
 
     public static class DeleteOverridingPost {
 
+        boolean deleted;
+
         @AdminAction
         public static void delete(List<DeleteOverridingPost> posts) {
+            for (DeleteOverridingPost post : posts) {
+                post.deleted = true;
+            }
         }
     }
 

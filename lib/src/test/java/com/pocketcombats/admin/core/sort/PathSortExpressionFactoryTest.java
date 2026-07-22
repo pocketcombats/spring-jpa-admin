@@ -1,19 +1,16 @@
 package com.pocketcombats.admin.core.sort;
 
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.TestCategory;
 import com.pocketcombats.admin.test.TestPost;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Root;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.util.List;
 
@@ -22,34 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PathSortExpressionFactoryTest {
 
-    private static EntityManagerFactory emf;
-
-    private EntityManager em;
-    private CriteriaBuilder cb;
-
-    @BeforeAll
-    static void createEntityManagerFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory();
-    }
-
-    @AfterAll
-    static void closeEntityManagerFactory() {
-        emf.close();
-    }
-
-    @BeforeEach
-    void openEntityManager() {
-        em = emf.createEntityManager();
-        cb = em.getCriteriaBuilder();
-    }
-
-    @AfterEach
-    void closeEntityManagerAndWipeData() {
-        em.close();
-        JpaTestUtils.wipeData(emf);
-    }
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withDefaultEntities();
 
     private List<Long> sortedPostIds(String path, boolean asc) {
+        EntityManager em = jpa.em();
+        CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<TestPost> query = cb.createQuery(TestPost.class);
         Root<TestPost> root = query.from(TestPost.class);
         Expression<?> expression = new PathSortExpressionFactory(path).createExpression(root);
@@ -61,7 +36,7 @@ class PathSortExpressionFactoryTest {
 
     @Test
     void sortsBySingleAttributePath() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             tx.persist(new TestPost(2L));
             tx.persist(new TestPost(1L));
             tx.persist(new TestPost(3L));
@@ -72,7 +47,7 @@ class PathSortExpressionFactoryTest {
 
     @Test
     void sortingByRelationAttributeKeepsRowsWithNullRelation() {
-        JpaTestUtils.inTransaction(emf, tx -> {
+        JpaTestUtils.inTransaction(jpa.emf(), tx -> {
             TestCategory beta = new TestCategory(1L, "beta");
             TestCategory alpha = new TestCategory(2L, "alpha");
             tx.persist(beta);

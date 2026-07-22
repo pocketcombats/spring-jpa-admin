@@ -26,6 +26,10 @@ public class Post implements Serializable {
     @JoinColumn(name = "author_id", nullable = false, updatable = false)
     private DemoUser author;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "editor_id")
+    private DemoUser editor;
+
     @Column(name = "text", nullable = false)
     @NotBlank(groups = AdminValidation.class)
     private String text;
@@ -76,6 +80,14 @@ public class Post implements Serializable {
 
     public void setAuthor(DemoUser author) {
         this.author = author;
+    }
+
+    public DemoUser getEditor() {
+        return editor;
+    }
+
+    public void setEditor(DemoUser editor) {
+        this.editor = editor;
     }
 
     public String getText() {

@@ -2,54 +2,28 @@ package com.pocketcombats.admin.test;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.PersistenceConfiguration;
+import jakarta.persistence.criteria.AbstractQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Helpers for tests that exercise real JPA behavior against an in-memory H2 database
- * (entities {@link TestCategory}, {@link TestPost}, {@link TestComment} and {@link TestCompositeTag}).
+ * Helpers for tests that exercise real JPA behavior against the in-memory H2 database set up by
+ * {@link JpaTestHarness} (entities {@link TestCategory}, {@link TestPost}, {@link TestComment}
+ * and {@link TestCompositeTag}).
  */
 public final class JpaTestUtils {
-
-    // Each factory gets its own database so test classes can never observe each other's data.
-    private static final AtomicInteger DB_SEQUENCE = new AtomicInteger();
 
     private JpaTestUtils() {
     }
 
     /**
-     * Creates the H2-backed factory; the caller is responsible for closing it.
+     * Runs the given work in its own committed transaction on a dedicated {@link EntityManager}.
      */
-    public static EntityManagerFactory createEntityManagerFactory() {
-        return createEntityManagerFactory(
-                TestCategory.class,
-                TestPost.class,
-                TestComment.class,
-                TestCompositeTag.class
-        );
-    }
-
-    /**
-     * Creates an H2-backed factory managing the given classes; the caller is responsible for closing it.
-     */
-    public static EntityManagerFactory createEntityManagerFactory(Class<?>... managedClasses) {
-        String name = "spring-jpa-admin-test-" + DB_SEQUENCE.incrementAndGet();
-        PersistenceConfiguration configuration = new PersistenceConfiguration(name);
-        for (Class<?> managedClass : managedClasses) {
-            configuration.managedClass(managedClass);
-        }
-        return configuration
-                .property(PersistenceConfiguration.JDBC_DRIVER, "org.h2.Driver")
-                .property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:mem:" + name + ";DB_CLOSE_DELAY=-1")
-                .property(PersistenceConfiguration.JDBC_USER, "sa")
-                .property(PersistenceConfiguration.JDBC_PASSWORD, "")
-                .property(PersistenceConfiguration.SCHEMAGEN_DATABASE_ACTION, "drop-and-create")
-                .createEntityManagerFactory();
-    }
-
-    /** Runs the given work in its own committed transaction on a dedicated {@link EntityManager}. */
     public static void inTransaction(EntityManagerFactory emf, Consumer<EntityManager> work) {
         EntityManager em = emf.createEntityManager();
         try {
@@ -64,17 +38,31 @@ public final class JpaTestUtils {
         }
     }
 
-    /** Deletes all rows of the test entities, in FK-safe order. */
-    public static void wipeData(EntityManagerFactory emf) {
-        inTransaction(emf, em -> {
-            em.createQuery("DELETE FROM TestComment").executeUpdate();
-            em.createQuery("DELETE FROM TestCompositeTag").executeUpdate();
-            em.createQuery("DELETE FROM TestPost").executeUpdate();
-            em.createQuery("DELETE FROM TestCategory").executeUpdate();
-        });
+    /**
+     * Builds the predicate under test against the query being executed.
+     */
+    @FunctionalInterface
+    public interface PredicateSource {
+        Predicate create(CriteriaBuilder cb, AbstractQuery<?> query, Root<?> root);
     }
 
-    /** Persists {@link TestCategory} rows with ids {@code 1..count} named {@code "Category <id>"}. */
+    /**
+     * Ids of {@code entityClass} rows (Long-id entities only) matching the predicate, in ascending
+     * id order and including duplicates — a row-multiplying predicate shows up as a repeated id.
+     */
+    public static List<Long> idsMatching(EntityManager em, Class<?> entityClass, PredicateSource predicate) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> criteria = cb.createQuery(Long.class);
+        Root<?> root = criteria.from(entityClass);
+        criteria.select(root.get("id"));
+        criteria.where(predicate.create(cb, criteria, root));
+        criteria.orderBy(cb.asc(root.get("id")));
+        return em.createQuery(criteria).getResultList();
+    }
+
+    /**
+     * Persists {@link TestCategory} rows with ids {@code 1..count} named {@code "Category <id>"}.
+     */
     public static void seedCategories(EntityManagerFactory emf, int count) {
         inTransaction(emf, em -> {
             for (long id = 1; id <= count; id++) {
@@ -83,7 +71,9 @@ public final class JpaTestUtils {
         });
     }
 
-    /** Persists {@link TestCompositeTag} rows {@code "ns:Tag 1".."ns:Tag <count>"}. */
+    /**
+     * Persists {@link TestCompositeTag} rows {@code "ns:Tag 1".."ns:Tag <count>"}.
+     */
     public static void seedCompositeTags(EntityManagerFactory emf, int count) {
         inTransaction(emf, em -> {
             for (int i = 1; i <= count; i++) {

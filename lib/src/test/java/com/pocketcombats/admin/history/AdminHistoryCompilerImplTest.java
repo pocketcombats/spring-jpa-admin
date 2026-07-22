@@ -2,16 +2,12 @@ package com.pocketcombats.admin.history;
 
 import com.pocketcombats.admin.core.AdminRegisteredModel;
 import com.pocketcombats.admin.data.history.HistoryEntry;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.StubPermissionService;
 import com.pocketcombats.admin.test.TestModels;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,31 +18,10 @@ class AdminHistoryCompilerImplTest {
 
     private static final Instant BASE = Instant.parse("2026-01-01T00:00:00Z");
 
-    private static EntityManagerFactory emf;
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withEntities(AdminHistoryLog.class);
 
     private final StubPermissionService permissions = new StubPermissionService();
-    private EntityManager em;
-
-    @BeforeAll
-    static void createFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory(AdminHistoryLog.class);
-    }
-
-    @AfterAll
-    static void closeFactory() {
-        emf.close();
-    }
-
-    @BeforeEach
-    void setUp() {
-        JpaTestUtils.inTransaction(emf, txEm -> txEm.createQuery("DELETE FROM AdminHistoryLog").executeUpdate());
-        em = emf.createEntityManager();
-    }
-
-    @AfterEach
-    void tearDown() {
-        em.close();
-    }
 
     @Test
     void entriesOfModelsTheUserCannotViewAreDropped() {
@@ -92,11 +67,11 @@ class AdminHistoryCompilerImplTest {
     }
 
     private AdminHistoryCompilerImpl compiler(AdminRegisteredModel... models) {
-        return new AdminHistoryCompilerImpl(TestModels.registry(models), permissions, em);
+        return new AdminHistoryCompilerImpl(TestModels.registry(models), permissions, jpa.em());
     }
 
     private void persistLog(String model, String entityId, int secondsAfterBase) {
-        JpaTestUtils.inTransaction(emf, txEm -> {
+        JpaTestUtils.inTransaction(jpa.emf(), txEm -> {
             AdminHistoryLog log = new AdminHistoryLog();
             log.setTime(BASE.plusSeconds(secondsAfterBase));
             log.setAction("update");

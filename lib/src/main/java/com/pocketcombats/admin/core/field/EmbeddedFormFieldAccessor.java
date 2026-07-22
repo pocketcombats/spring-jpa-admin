@@ -31,7 +31,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor
     private final ConversionService conversionService;
     private final Class<?> embeddableType;
     private final List<EmbeddedFormFieldProperty> properties;
-    private final Map<String, @Nullable Object> modelAttributes;
+    private final Map<String, Object> modelAttributes;
 
     public EmbeddedFormFieldAccessor(
             ConversionService conversionService,
@@ -65,7 +65,7 @@ public class EmbeddedFormFieldAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public Map<String, @Nullable Object> getModelAttributes(Object instance) {
+    public Map<String, Object> getModelAttributes(Object instance) {
         return modelAttributes;
     }
 

@@ -100,7 +100,7 @@ public class EnumFormFieldValueAccessor extends AbstractFormFieldValueAccessor
     }
 
     @Override
-    public Map<String, @Nullable Object> getModelAttributes(Object instance) {
+    public Map<String, Object> getModelAttributes(Object instance) {
         return Map.of("_options", options);
     }
 }

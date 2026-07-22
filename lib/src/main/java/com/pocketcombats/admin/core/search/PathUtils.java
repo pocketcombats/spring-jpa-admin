@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Resolves dotted attribute paths against a query root.
+ * Resolves dotted attribute paths against a query root or join.
  * Association segments are navigated with left joins (reusing compatible existing joins),
  * so rows with {@code null} relations are not silently dropped from results.
  */
@@ -23,18 +23,18 @@ public final class PathUtils {
     private PathUtils() {
     }
 
-    public static <T> Path<T> resolve(Root<?> root, String path) {
+    public static <T> Path<T> resolve(From<?, ?> from, String path) {
         if (!path.contains(".")) {
-            return root.get(path);
+            return from.get(path);
         }
         String[] parts = StringUtils.split(path, '.');
-        Path<?> target = root;
-        ManagedType<?> type = root.getModel();
+        Path<?> target = from;
+        ManagedType<?> type = managedType(from);
         for (int i = 0; i < parts.length - 1; i++) {
             String part = parts[i];
             Attribute<?, ?> attribute = type == null ? null : type.getAttribute(part);
-            if (attribute != null && attribute.isAssociation() && target instanceof From<?, ?> from) {
-                target = leftJoin(from, part);
+            if (attribute != null && attribute.isAssociation() && target instanceof From<?, ?> targetFrom) {
+                target = leftJoin(targetFrom, part);
             } else {
                 target = target.get(part);
             }
@@ -52,6 +52,16 @@ public final class PathUtils {
             }
         }
         return from.join(attributeName, JoinType.LEFT);
+    }
+
+    private static @Nullable ManagedType<?> managedType(From<?, ?> from) {
+        if (from instanceof Root<?> root) {
+            return root.getModel();
+        }
+        if (from instanceof Join<?, ?> join) {
+            return targetManagedType(join.getAttribute());
+        }
+        return null;
     }
 
     private static @Nullable ManagedType<?> targetManagedType(@Nullable Attribute<?, ?> attribute) {

@@ -1,0 +1,40 @@
+<!--/*@thymesVar id="field" type="com.pocketcombats.admin.data.form.AdminFormField"*/-->
+<!--/*@thymesVar id="entity" type="com.pocketcombats.admin.data.form.EntityDetails"*/-->
+<!--/*@thymesVar id="hasErrors" type="boolean"*/-->
+<!--/* Small target table: preloaded select widget */-->
+<th:block th:unless="${field.templateData['_autocomplete']}">
+    <th:block th:replace="~{admin/widget/select}"/>
+</th:block>
+<!--/* Large target table: lazy-loading, searchable autocomplete */-->
+<div th:if="${field.templateData['_autocomplete']}" class="admin-autocomplete"
+     th:with="fieldId=${'model-field-' + field.name}">
+    <input type="hidden"
+           th:id="${fieldId + '-value'}"
+           th:name="${fieldId}"
+           th:value="${field.templateData['_currentId']}"/>
+    <input type="text"
+           th:id="${fieldId}"
+           class="form-control admin-autocomplete-input"
+           autocomplete="off"
+           role="combobox"
+           aria-haspopup="listbox"
+           aria-autocomplete="list"
+           aria-expanded="false"
+           th:aria-controls="${fieldId + '-listbox'}"
+           th:classappend="${hasErrors ? 'is-invalid' : ''}"
+           th:aria-invalid="${hasErrors ? 'true' : null}"
+           th:aria-describedby="${hasErrors ? fieldId + '-errors' : null}"
+           th:disabled="${field.readonly}"
+           th:value="${field.templateData['_currentLabel']}"
+           th:data-options-url="@{/admin/{model}/field/{field}/options(model=${entity.modelName}, field=${field.name})}"
+           th:data-target="${fieldId + '-value'}"
+           th:data-current="${field.templateData['_currentId']}"
+           th:data-msg-no-results="${#messages.msgOrNull('spring-jpa-admin.widget.autocomplete.no-results') ?: 'No matches'}"
+           th:data-msg-error="${#messages.msgOrNull('spring-jpa-admin.widget.autocomplete.error') ?: 'Could not load options'}"
+           th:placeholder="${#messages.msgOrNull('spring-jpa-admin.widget.autocomplete.placeholder') ?: 'Type to search…'}"/>
+    <ul class="admin-autocomplete-list"
+        role="listbox"
+        hidden="hidden"
+        th:id="${fieldId + '-listbox'}"
+        th:aria-label="${#messages.msgOrNull(field.label) ?: field.label}"></ul>
+</div>

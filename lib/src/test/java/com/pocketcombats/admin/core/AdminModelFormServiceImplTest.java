@@ -13,6 +13,7 @@ import com.pocketcombats.admin.data.form.AdminFormField;
 import com.pocketcombats.admin.data.form.EntityDetails;
 import com.pocketcombats.admin.history.AdminHistoryWriter;
 import com.pocketcombats.admin.history.NoOpAdminHistoryWriter;
+import com.pocketcombats.admin.test.JpaTestHarness;
 import com.pocketcombats.admin.test.JpaTestUtils;
 import com.pocketcombats.admin.test.StubPermissionService;
 import com.pocketcombats.admin.test.TestCategory;
@@ -20,24 +21,21 @@ import com.pocketcombats.admin.test.TestFields;
 import com.pocketcombats.admin.test.TestModels;
 import com.pocketcombats.admin.test.TestPost;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.metamodel.PluralAttribute;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.support.StaticMessageSource;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.format.support.DefaultFormattingConversionService;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ObjectError;
@@ -51,6 +49,9 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
+import static com.pocketcombats.admin.test.TestForms.formData;
+import static com.pocketcombats.admin.test.TestMessages.INVALID_VALUE_CODE;
+import static com.pocketcombats.admin.test.TestMessages.UNIQUENESS_VIOLATION_FIELDS_CODE;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -59,30 +60,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class AdminModelFormServiceImplTest {
 
-    private static EntityManagerFactory emf;
+    @RegisterExtension
+    static JpaTestHarness jpa = JpaTestHarness.withDefaultEntities();
 
     private EntityManager em;
 
-    @BeforeAll
-    static void createFactory() {
-        emf = JpaTestUtils.createEntityManagerFactory();
-    }
-
-    @AfterAll
-    static void closeFactory() {
-        emf.close();
-    }
-
     @BeforeEach
     void setUp() {
-        JpaTestUtils.wipeData(emf);
-        JpaTestUtils.seedCategories(emf, 2);
-        em = emf.createEntityManager();
-    }
-
-    @AfterEach
-    void tearDown() {
-        em.close();
+        em = jpa.em();
+        JpaTestUtils.seedCategories(jpa.emf(), 2);
     }
 
     @Test
@@ -165,7 +151,7 @@ class AdminModelFormServiceImplTest {
 
     @Test
     void errorReRenderReadsFieldsFromTheStillManagedEntity() throws Exception {
-        JpaTestUtils.inTransaction(emf, seeder ->
+        JpaTestUtils.inTransaction(jpa.emf(), seeder ->
                 seeder.persist(new TestPost(1L, seeder.find(TestCategory.class, 1L))));
         ManagedStateRecordingAccessor readOnlyAccessor = new ManagedStateRecordingAccessor("category");
         TestableFormService service = service(postModel(
@@ -183,15 +169,16 @@ class AdminModelFormServiceImplTest {
 
     @Test
     void updateWithValidationErrorRendersLazyReadOnlyToManyField() throws Exception {
-        JpaTestUtils.inTransaction(emf, seeder ->
+        JpaTestUtils.inTransaction(jpa.emf(), seeder ->
                 seeder.persist(new TestPost(1L, seeder.find(TestCategory.class, 1L))));
         TestableFormService service = service(postsModel(new ToManyFormFieldAccessor(
                 em,
                 DefaultConversionService.getSharedInstance(),
-                em.getMetamodel().entity(TestCategory.class).getAttribute("posts"),
+                (PluralAttribute<?, ?, ?>) em.getMetamodel().entity(TestCategory.class).getAttribute("posts"),
                 TestFields.reader(TestCategory.class, "posts"),
                 TestFields.writer(TestCategory.class, "posts"),
-                new ToStringValueFormatter()
+                new EntityOptionMapper(
+                        em, DefaultConversionService.getSharedInstance(), new ToStringValueFormatter())
         )));
 
         AdminModelEditingResult result = inServiceTransaction(service, () ->
@@ -207,8 +194,8 @@ class AdminModelFormServiceImplTest {
     }
 
     @Test
-    void readOnlyToManyFieldIsReadOnlyOnceForTheFinalRender() throws Exception {
-        JpaTestUtils.inTransaction(emf, seeder ->
+    void readOnlyToManyFieldIsReadExactlyOnceForTheFinalRender() throws Exception {
+        JpaTestUtils.inTransaction(jpa.emf(), seeder ->
                 seeder.persist(new TestPost(1L, seeder.find(TestCategory.class, 1L))));
         PluralReadCountingAccessor postsAccessor = new PluralReadCountingAccessor("posts");
         TestableFormService service = service(postsModel(postsAccessor));
@@ -221,10 +208,10 @@ class AdminModelFormServiceImplTest {
     }
 
     @Test
-    void partiallyBoundStateIsRolledBackRatherThanCommitted() throws Exception {
+    void partiallyBoundStateRequestsRollbackAndReRendersAppliedValues() throws Exception {
         TestableFormService service = service(TestModels.model("category", TestCategory.class)
                 .label("Category")
-                .entityType(emf.getMetamodel().entity(TestCategory.class))
+                .entityType(jpa.emf().getMetamodel().entity(TestCategory.class))
                 .fields(
                         new AdminModelField("name", "Name", null, "admin/widget/text", true, true,
                                 new ReflectiveFieldAccessor(TestCategory.class, "name", value -> value)),
@@ -259,7 +246,7 @@ class AdminModelFormServiceImplTest {
 
         assertTrue(result.bindingResult().hasFieldErrors("postTime"));
         assertEquals(
-                "spring-jpa-admin.validation.constraints.ValidValue.message",
+                INVALID_VALUE_CODE,
                 Objects.requireNonNull(result.bindingResult().getFieldError("postTime")).getCode()
         );
         assertEquals("1", result.entityDetails().id());
@@ -299,7 +286,7 @@ class AdminModelFormServiceImplTest {
 
         assertTrue(result.hasErrors());
         assertEquals(
-                "spring-jpa-admin.validation.uniqueness-violation.fields.message",
+                UNIQUENESS_VIOLATION_FIELDS_CODE,
                 result.getGlobalErrors().get(0).getCode()
         );
         assertTrue(service.rollbackRequested);
@@ -336,7 +323,7 @@ class AdminModelFormServiceImplTest {
 
         assertTrue(result.bindingResult().hasErrors());
         ObjectError error = result.bindingResult().getGlobalErrors().get(0);
-        assertEquals("spring-jpa-admin.validation.uniqueness-violation.fields.message", error.getCode());
+        assertEquals(UNIQUENESS_VIOLATION_FIELDS_CODE, error.getCode());
         // The message templates are plain text ({1} conflicting id, {2} field labels):
         // args must not be HTML-escaped or markup-wrapped
         assertArrayEquals(new Object[]{"category", "2", "Category <name>"}, error.getArguments());
@@ -357,10 +344,85 @@ class AdminModelFormServiceImplTest {
         assertEquals("2", conflict.getConflictingEntityId());
     }
 
+    @Test
+    void detailsIsDeniedWithoutViewPermission() {
+        StubPermissionService permissions = new StubPermissionService();
+        permissions.deny("category");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service(categoryModel(List.of()), permissions).details("category", "1")
+        );
+    }
+
+    @Test
+    void fieldsRenderReadOnlyWithoutEditPermission() throws Exception {
+        StubPermissionService permissions = new StubPermissionService();
+        permissions.denyEdit("category");
+
+        EntityDetails details = service(categoryModel(List.of()), permissions).details("category", "1");
+
+        AdminFormField nameField = details.fieldGroups().get(0).fields().stream()
+                .filter(field -> field.name().equals("name"))
+                .findFirst()
+                .orElseThrow();
+        assertTrue(nameField.readonly(), "a viewer without edit permission gets read-only fields");
+    }
+
+    @Test
+    void updateIsDeniedWithoutEditPermission() {
+        StubPermissionService permissions = new StubPermissionService();
+        permissions.denyEdit("category");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service(categoryModel(List.of()), permissions)
+                        .update("category", "1", formData("model-field-name", "Renamed"))
+        );
+    }
+
+    @Test
+    void singleFieldUpdateIsDeniedWithoutEditPermission() {
+        StubPermissionService permissions = new StubPermissionService();
+        permissions.denyEdit("category");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service(categoryModel(List.of()), permissions)
+                        .updateField("category", "1", "name", "Renamed")
+        );
+    }
+
+    @Test
+    void createIsDeniedWithoutCreatePermission() {
+        StubPermissionService permissions = new StubPermissionService();
+        permissions.denyCreate("category");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service(categoryModel(List.of()), permissions)
+                        .create("category", formData("model-field-id", "7", "model-field-name", "Fresh"))
+        );
+    }
+
+    @Test
+    void blankCreateFormIsDeniedWithoutCreatePermission() {
+        StubPermissionService permissions = new StubPermissionService();
+        permissions.denyCreate("category");
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> service(categoryModel(List.of()), permissions).create("category")
+        );
+    }
+
     private TestableFormService service(AdminRegisteredModel model) {
+        return service(model, new StubPermissionService());
+    }
+
+    private TestableFormService service(AdminRegisteredModel model, AdminPermissionService permissions) {
         AdminModelRegistryImpl registry = TestModels.registry(model);
         ConversionService conversionService = DefaultConversionService.getSharedInstance();
-        AdminPermissionService permissions = new StubPermissionService();
         return new TestableFormService(
                 registry,
                 new NoOpAdminHistoryWriter(),
@@ -382,7 +444,7 @@ class AdminModelFormServiceImplTest {
     private AdminRegisteredModel categoryModel(List<AdminUniqueConstraint> uniqueConstraints) {
         return TestModels.model("category", TestCategory.class)
                 .label("Category")
-                .entityType(emf.getMetamodel().entity(TestCategory.class))
+                .entityType(jpa.emf().getMetamodel().entity(TestCategory.class))
                 .fields(
                         new AdminModelField("id", "Id", null, "admin/widget/text", true, false,
                                 new ReflectiveFieldAccessor(TestCategory.class, "id", Long::valueOf)),
@@ -396,7 +458,7 @@ class AdminModelFormServiceImplTest {
     private AdminRegisteredModel postModel(AdminModelField... fields) {
         return TestModels.model("post", TestPost.class)
                 .label("Post")
-                .entityType(emf.getMetamodel().entity(TestPost.class))
+                .entityType(jpa.emf().getMetamodel().entity(TestPost.class))
                 .fields(fields)
                 .build();
     }
@@ -404,7 +466,7 @@ class AdminModelFormServiceImplTest {
     private AdminRegisteredModel postsModel(AdminFormFieldPluralValueAccessor postsAccessor) {
         return TestModels.model("category", TestCategory.class)
                 .label("Category")
-                .entityType(emf.getMetamodel().entity(TestCategory.class))
+                .entityType(jpa.emf().getMetamodel().entity(TestCategory.class))
                 .fields(
                         new AdminModelField("name", "Name", null, "admin/widget/text", true, true,
                                 new ReflectiveFieldAccessor(TestCategory.class, "name", value -> value)),
@@ -436,14 +498,14 @@ class AdminModelFormServiceImplTest {
     }
 
     private @Nullable String categoryName(long id) {
-        try (EntityManager reader = emf.createEntityManager()) {
+        try (EntityManager reader = jpa.emf().createEntityManager()) {
             TestCategory category = reader.find(TestCategory.class, id);
             return category == null ? null : category.getName();
         }
     }
 
     private void seedPostWithPostTime(Instant postTime) {
-        JpaTestUtils.inTransaction(emf, seeder -> {
+        JpaTestUtils.inTransaction(jpa.emf(), seeder -> {
             TestPost post = new TestPost(1L, seeder.find(TestCategory.class, 1L));
             post.setPostTime(postTime);
             seeder.persist(post);
@@ -451,7 +513,7 @@ class AdminModelFormServiceImplTest {
     }
 
     private @Nullable Instant postTime(long id) {
-        try (EntityManager reader = emf.createEntityManager()) {
+        try (EntityManager reader = jpa.emf().createEntityManager()) {
             TestPost post = reader.find(TestPost.class, id);
             return post == null ? null : post.getPostTime();
         }
@@ -467,14 +529,6 @@ class AdminModelFormServiceImplTest {
                         TestFields.reader(TestPost.class, "postTime"),
                         TestFields.writer(TestPost.class, "postTime")
                 ));
-    }
-
-    private static MultiValueMap<String, String> formData(String... pairs) {
-        LinkedMultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-        for (int i = 0; i < pairs.length; i += 2) {
-            data.add(pairs[i], pairs[i + 1]);
-        }
-        return data;
     }
 
     // Captures the rollback decision instead of requiring Spring transaction infrastructure.

@@ -24,6 +24,47 @@
         .form-control .form-check:first-child {
             padding-top: 0;
         }
+
+        .admin-autocomplete {
+            position: relative;
+        }
+
+        .admin-autocomplete-list {
+            position: absolute;
+            z-index: 1000;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 15rem;
+            overflow-y: auto;
+            margin: .125rem 0 0;
+            padding: 0;
+            list-style: none;
+            background-color: #fff;
+            border: 1px solid rgba(0, 0, 0, .15);
+            border-radius: .25rem;
+            box-shadow: 0 .25rem .5rem rgba(0, 0, 0, .15);
+        }
+
+        .admin-autocomplete-list[hidden] {
+            display: none;
+        }
+
+        .admin-autocomplete-option {
+            padding: .375rem .75rem;
+            cursor: pointer;
+        }
+
+        .admin-autocomplete-option:hover,
+        .admin-autocomplete-option.active {
+            background-color: #e9ecef;
+        }
+
+        .admin-autocomplete-status {
+            padding: .375rem .75rem;
+            color: #6c757d;
+            cursor: default;
+        }
     </style>
 </head>
 <body>
@@ -171,5 +212,6 @@
     </div>
 </form>
 <th:block th:replace="~{admin/fragments/layout :: body-scripts}"/>
+<script type="text/javascript" th:src="@{/admin/js/toone-autocomplete.js}"></script>
 </body>
 </html>

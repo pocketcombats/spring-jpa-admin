@@ -37,14 +37,6 @@ public class TestCategory {
         return posts;
     }
 
-    public void setPosts(List<TestPost> posts) {
-        this.posts = posts;
-    }
-
-    /**
-     * Doubles as the option label via {@code ToStringValueFormatter}; on an uninitialized proxy this
-     * triggers initialization, so a detached lazy relation fails loudly with LazyInitializationException.
-     */
     @Override
     public String toString() {
         return name;

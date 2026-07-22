@@ -12,6 +12,12 @@ import java.lang.annotation.Target;
 public @interface AdminField {
 
     /**
+     * Sentinel for {@link #maxPreloadedOptions()}: inherit the model-wide
+     * {@code spring.jpa-admin.max-preloaded-options} setting.
+     */
+    int INHERIT = Integer.MIN_VALUE;
+
+    /**
      * Custom label for this field.
      * Can be a localization key or plain text.
      */
@@ -48,6 +54,18 @@ public @interface AdminField {
      * If field should be a raw id input instead of select.
      */
     boolean rawId() default false;
+
+    /**
+     * Per-field override of {@code spring.jpa-admin.max-preloaded-options}: the most options this
+     * field preloads into a {@code <select>}.
+     * When the target has more rows than this, the field renders as a searchable autocomplete if
+     * it can; otherwise it preloads the first N (always keeping the current selection) and shows
+     * a "more exist" note.
+     * Defaults to {@link #INHERIT}, which inherits the model-wide setting; any other value
+     * overrides it. {@code 0} always autocompletes when possible; a negative value (such as
+     * {@code -1}) opts out entirely — an uncapped {@code <select>}, never an autocomplete.
+     */
+    int maxPreloadedOptions() default INHERIT;
 
     /**
      * Indicates that field is sortable.
