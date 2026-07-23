@@ -39,7 +39,7 @@ Spring JPA Admin consists of two main artifacts:
 ### Gradle
 ```kotlin
 dependencies {
-    api(platform("com.pocketcombats.spring-jpa-admin:bom:1.0.2"))
+    api(platform("com.pocketcombats.spring-jpa-admin:bom:1.0.4"))
 
     // Annotations
     implementation("com.pocketcombats.spring-jpa-admin:annotation")
@@ -174,6 +174,10 @@ To enable searching for Demo Users by their ids and usernames, modify the `@Admi
 As before, restart the admin site and try searching:
 ![Demo User list view with search field](media/listview-006.png)
 
+Search fields can also be dotted paths through relations, including to-many ones — for example
+`searchFields = "posts.title"` matches users having at least one post with a matching title.
+Matching through a collection never duplicates rows in the list view.
+
 ### Edit Restrictions
 It is possible to disable creation or modification of any particular entity.
 For example, you can disable the creation of new entities by setting `insertable = false` in the `@AdminModel` annotation.
@@ -242,6 +246,7 @@ For example, let's define custom actions to enable and disable Demo Users:
 That's it! After restarting the admin site, the custom actions will be available for selected Demo Users in the list view:
 ![Demo User list view with custom actions](media/listview-007.png)
 Methods for custom actions must be static (unless they are defined on a separate admin model class, more on this later) and must accept a single argument with the list of selected entity records.
+In Kotlin, declare them in the entity's companion object — see [Kotlin](#kotlin).
 
 #### Site-Wide Custom Action
 If you need to create a site-wide list view custom action that applies to all entities, you can implement the `AdminModelAction` interface and register it as a Spring bean.
@@ -266,7 +271,7 @@ public class DemoUser implements Serializable {
     private Integer id;
 
     @Size(min = 3, max = 15)
-    @Column(name = "username", nullable = false)
+    @Column(name = "username", unique = true, nullable = false)
     @AdminField(updatable = false, sortable = true)
     private String username;
 
@@ -407,6 +412,39 @@ We have the option to display the `author` field as a raw ID input instead of a 
 To achieve this, simply add `rawId = true` to the `@AdminField` annotation for the `author` field, without the need to change the `template` attribute.
 ![Edit Form with raw id](media/form-005.png)
 
+#### Autocomplete
+Preloading every option into a `<select>` works for a handful of Demo Users, but not for thousands. Once a
+to-one field's target exceeds a threshold, it renders as a searchable autocomplete widget that loads options
+from the server as the user types.
+
+Properties:
+- `spring.jpa-admin.max-preloaded-options` — how many options a to-one field preloads into a `<select>`.
+  Beyond it the field autocompletes if it can, otherwise preloads the first N (keeping the current selection)
+  and notes that more exist. `0` always autocompletes; a negative value opts out entirely (uncapped select,
+  never autocomplete). Overridable per field; when unset the field inherits this global value.
+- `spring.jpa-admin.autocomplete-page-size` — options per page served to the widget.
+- `spring.jpa-admin.max-counted-options` — cap on the row count probed for the "N of M" note; past it the
+  total is reported as "M+" rather than scanning the (large) table. Must be at least `1`.
+
+The demo overrides the threshold on `Post.editor`, forcing autocomplete even though `DemoUser` has few rows:
+```java
+@AdminFieldOverride(
+        name = "editor",
+        field = @AdminField(representation = "username", maxPreloadedOptions = 0)
+)
+```
+
+Options are served by `GET /admin/{model}/field/{field}/options`, secured like every other admin endpoint.
+Autocomplete requires the target to be a registered admin model with `searchFields` (typed queries match those
+fields when the user can view the model, otherwise only an exact id). Targets without `searchFields`, fields
+rendered by a custom `template`, and composite identifiers can't autocomplete — they treat the threshold as a
+preload cap: the first N options plus the current selection, a "Showing N of M options" note, and a `WARN`
+pointing at the fix (add `searchFields`, mark the field `rawId`, or raise the threshold).
+
+> **Note:** If you override the form template via `spring.jpa-admin.templates.form`, it must include
+> `/admin/js/toone-autocomplete.js` and the `admin-autocomplete` styles from the default `admin/form.html`;
+> otherwise disable autocomplete with a negative threshold.
+
 #### Embedded Fields
 JPA `@Embedded` attributes are supported out of the box. Each persistent property of the embeddable type is
 rendered as a separate input, grouped together under the embedded field's label.
@@ -464,10 +502,12 @@ We'll provide links to Posts and Comments that are associated with the currently
 To achieve this, we can include the `links` attribute in the `@AdminModel` annotation, as shown below:
 ```java
         links = {
-                @AdminLink(target = Post.class, sortBy = "-postTime"),
+                @AdminLink(target = Post.class, mappedBy = "author", sortBy = "-postTime"),
                 @AdminLink(target = Comment.class, sortBy = "-postTime")
         }
 ```
+`Post` references `DemoUser` twice (`author` and `editor`), so the link must name the owning field
+via `mappedBy = "author"`; a single reference would be resolved automatically.
 So our complete `DemoUser` admin annotation looks like this:
 ```java
 @AdminModel(
@@ -476,7 +516,7 @@ So our complete `DemoUser` admin annotation looks like this:
         filterFields = "enabled",
         fieldsets = @AdminFieldset(fields = {"enabled", "username"}),
         links = {
-                @AdminLink(target = Post.class, sortBy = "-postTime"),
+                @AdminLink(target = Post.class, mappedBy = "author", sortBy = "-postTime"),
                 @AdminLink(target = Comment.class, sortBy = "-postTime")
         },
         // Prohibit direct demo users creation or deletion
@@ -492,7 +532,7 @@ By clicking on "Blog Post", users can now quickly navigate to the `Post` list vi
 One last enhancement we want to add is previews for the latest Posts created by the user.
 To enable this, modify the `@AdminLink` annotation to include the `preview` attribute, as shown below:
 ```java
-@AdminLink(target = Post.class, preview = 3, sortBy = "-postTime")
+@AdminLink(target = Post.class, mappedBy = "author", preview = 3, sortBy = "-postTime")
 ```
 Now, when we review the updated Edit Form, we can see previews for the latest user Posts:
 ![Edit Form with link previews](media/form-007.png)  
@@ -583,13 +623,15 @@ Next, let's clean up the `Post` entity by moving the `@AdminField` annotations t
                 )
         }
 ```
-The complete `PostAdminModel` will retain all the functionality previously implemented by the annotations on the `Post` entity and will look like this:
+The complete `PostAdminModel` retains all the functionality previously implemented by the annotations on the `Post` entity and will look like this:
 ```java
 /**
  * Demonstrates JPA Admin annotations applied indirectly.
  */
 @AdminModel(
         entity = Post.class,
+        label = "demo.entity.post.label",
+        searchFields = {"author.username", "text"},
         listFields = {"textPreview", "author", "postTime", "approved"},
         filterFields = {"approved", "author", "tags"},
         fieldsets = {
@@ -598,12 +640,13 @@ The complete `PostAdminModel` will retain all the functionality previously imple
                                 "approved",
                                 "postTime",
                                 "author",
+                                "editor",
                                 "text"
                         }
                 ),
                 @AdminFieldset(
                         label = "Meta",
-                        fields = {"category", "tags"}
+                        fields = {"category", "tags", "seo"}
                 )
         },
         fieldOverrides = {
@@ -620,6 +663,13 @@ The complete `PostAdminModel` will retain all the functionality previously imple
                         field = @AdminField(
                                 sortBy = "username",
                                 representation = "username"
+                        )
+                ),
+                @AdminFieldOverride(
+                        name = "editor",
+                        field = @AdminField(
+                                representation = "username",
+                                maxPreloadedOptions = 0
                         )
                 ),
                 @AdminFieldOverride(
@@ -656,6 +706,38 @@ public class PostAdminModel {
     }
 }
 ```
+Here `label` is a localization key resolved through `MessageSource` (see [Localization](#localization)),
+and `searchFields` matches posts by author username through a dotted path, as described in [Searching](#searching).
+
+## Asynchronous bootstrap
+The admin site follows Spring Boot's `spring.jpa.bootstrap` setting. With the default (synchronous)
+bootstrap it reads entity metadata while the context refreshes. Under
+`spring.jpa.bootstrap=async` (where the `EntityManagerFactory` is built on a background thread) it
+defers reading the JPA metamodel so it no longer forces that factory to finish during startup.  
+No admin-specific configuration is required.
+
+## Kotlin
+Spring JPA Admin works with Kotlin-authored entities and admin models out of the box:
+
+- **Null safety**: the published artifacts carry [JSpecify](https://jspecify.dev/) `@NullMarked`/`@Nullable` annotations, so Kotlin (2.1+ treats them as strict) sees precise nullability for the entire API.
+- **Entities**: JPA needs a no-arg constructor, so use the standard `kotlin("plugin.jpa")` (noarg) compiler plugin, the same requirement as for any Kotlin JPA entity.
+- **`@AdminField` on properties**: a bare `@AdminField val title: String` annotates the backing field, while explicit use-site targets (`@field:AdminField`, `@get:AdminField`) pick a member directly.
+  All of these are honored under both field and getter (property) access — when the JPA metamodel reports one member, the paired field/getter is checked too.
+- **Bulk actions**: declare entity-level actions in the entity's companion object (`@JvmStatic` is not required):
+  ```kotlin
+  @Entity
+  @AdminModel(listFields = ["username", "enabled"])
+  class DemoUser {
+      // ...
+      companion object {
+          @AdminAction
+          fun disable(users: List<DemoUser>) {
+              users.forEach { it.enabled = false }
+          }
+      }
+  }
+  ```
+  Actions on [externalized admin models](#externalized-configuration) are plain member functions, as in Java.
 
 ## Localization
 Spring JPA Admin fully supports localization. You can refer to the `spring-jpa-admin-messages.properties` file for a complete list of supported keys.
@@ -668,6 +750,21 @@ With this configuration, Spring Boot will look for message properties in both th
 All core annotations in Spring JPA Admin, such as `@AdminAction`, `@AdminField`, `@AdminFieldset`, `@AdminModel`, and `@AdminPackage`, allow you to specify a `label` attribute.
 This label can be either a hard-coded string or a localization key.  
 Using a localization key allows you to provide translated labels for different languages, making your admin interface accessible to users from various locales.
+
+## History
+Spring JPA Admin keeps a history log of changes made through the admin site: every create, edit, delete,
+and custom bulk action is recorded along with the acting username and the affected entity's id and
+representation. The most recent entries appear in the "History" sidebar of the admin dashboard;
+entries for models the current user isn't allowed to view are hidden.
+
+Entries are stored in the `admin_history_log` table, mapped by the `AdminHistoryLog` entity shipped with
+the library. The entity is registered automatically; if your application declares its own `@EntityScan`,
+add `com.pocketcombats.admin.history` to the scanned packages. The table itself is created by whatever
+manages your schema (Hibernate DDL or a migration tool).
+
+Two properties control the feature:
+- `spring.jpa-admin.history-size` (default: `10`) — how many recent entries are fetched for the dashboard. The permission filter above is applied afterwards, so fewer may actually be shown.
+- `spring.jpa-admin.disable-history` (default: `false`) — set to `true` to disable recording and hide the dashboard sidebar.
 
 ## Authentication Plugin
 Spring JPA Admin provides an optional authentication plugin for applications that don't otherwise require authentication.
