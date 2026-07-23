@@ -35,11 +35,14 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.core.env.Environment;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.validation.SmartValidator;
 import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 @AutoConfiguration
 @EnableConfigurationProperties(JpaAdminProperties.class)
@@ -61,16 +64,44 @@ public class JpaAdminAutoConfiguration implements Ordered {
     @Bean
     @ConditionalOnMissingBean
     public AdminModelRegistry adminModelRegistry(
+            Environment environment,
             ApplicationContext context,
             EntityManager em,
             ConversionService conversionService,
             SpelExpressionContextFactory spelExpressionContextFactory,
             AdminModelLinkFactory linksFactory,
             ActionsFactory actionsFactory
-    ) throws Exception {
+    ) {
+        Supplier<AdminModelRegistry> factory = () -> buildRegistry(
+                context, em, conversionService, spelExpressionContextFactory, linksFactory, actionsFactory
+        );
+        if (JpaAdminBootstrap.isAsyncJpaBootstrap(environment)) {
+            // spring.jpa.bootstrap=async builds the EntityManagerFactory on a background thread; reading
+            // the metamodel now would force it to finish and defeat that. Build the registry lazily,
+            // off the refresh thread, and warm it up once the application is ready.
+            LOG.debug("Registering deferred AdminModelRegistry (spring.jpa.bootstrap=async)");
+            SimpleAsyncTaskExecutor warmUpExecutor = new SimpleAsyncTaskExecutor("jpa-admin-warmup-");
+            warmUpExecutor.setDaemon(true);
+            return new DeferredAdminModelRegistry(factory, warmUpExecutor);
+        }
         LOG.debug("Registering default AdminModelRegistry");
+        return factory.get();
+    }
 
-        Set<Class<?>> annotatedModels = new AdminModelScanner(context).scan(AdminModel.class);
+    private AdminModelRegistry buildRegistry(
+            ApplicationContext context,
+            EntityManager em,
+            ConversionService conversionService,
+            SpelExpressionContextFactory spelExpressionContextFactory,
+            AdminModelLinkFactory linksFactory,
+            ActionsFactory actionsFactory
+    ) {
+        Set<Class<?>> annotatedModels;
+        try {
+            annotatedModels = new AdminModelScanner(context).scan(AdminModel.class);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Failed to scan for @AdminModel classes", e);
+        }
         AdminModelRegistryBuilder registryBuilder = new AdminModelRegistryBuilder(
                 em,
                 context.getAutowireCapableBeanFactory(),
