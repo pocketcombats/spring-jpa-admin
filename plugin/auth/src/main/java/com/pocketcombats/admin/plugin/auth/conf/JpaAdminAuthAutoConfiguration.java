@@ -13,6 +13,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,6 +26,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @AutoConfiguration
 @EnableConfigurationProperties(JpaAdminAuthProperties.class)
 public class JpaAdminAuthAutoConfiguration implements ApplicationListener<ContextRefreshedEvent> {
+
+    /**
+     * Order of the admin {@link SecurityFilterChain}.
+     * Registered near {@link Ordered#HIGHEST_PRECEDENCE}, so the admin chain receives {@code /admin/**}
+     * requests even when the application defines an explicitly ordered catch-all chain of its own;
+     * since it matches nothing but {@code /admin/**}, it never affects other requests.
+     */
+    public static final int SECURITY_FILTER_CHAIN_ORDER = Ordered.HIGHEST_PRECEDENCE + 10;
 
     private final int passwordStrength;
     private final boolean createDefaultAdmin;
@@ -73,7 +83,8 @@ public class JpaAdminAuthAutoConfiguration implements ApplicationListener<Contex
     }
 
     @Bean
-    public SecurityFilterChain adminSecurityChain(HttpSecurity http, SpringJpaAdminUserRepository repository) throws Exception {
+    @Order(SECURITY_FILTER_CHAIN_ORDER)
+    public SecurityFilterChain adminSecurityChain(HttpSecurity http, SpringJpaAdminUserRepository repository) {
         http.securityMatchers(matchers -> matchers.requestMatchers("/admin/**"))
                 .userDetailsService(new SpringJpaAdminUserDetailsService(repository))
                 .with(new CustomFormLoginConfigurer<>(authenticationFilter()), formLogin -> formLogin
