@@ -113,6 +113,9 @@
                             <tokenAuth>true</tokenAuth>
                             <autoPublish>true</autoPublish>
                             <waitUntil>validated</waitUntil>
+                            <excludeArtifacts>
+                                <excludeArtifact>demo</excludeArtifact>
+                            </excludeArtifacts>
                         </configuration>
                     </plugin>
                 </plugins>
